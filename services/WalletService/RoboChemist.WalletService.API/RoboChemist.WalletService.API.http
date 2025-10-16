@@ -1,0 +1,6 @@
+@RoboChemist.WalletService.API_HostAddress = http://localhost:5022
+
+GET {{RoboChemist.WalletService.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
