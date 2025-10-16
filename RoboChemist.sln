@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlidesService", "SlidesService", "{07573A22-435F-4CDE-9769-9FDDE61DF157}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{BE2CBA93-72C9-4952-83D5-B89F5A002B94}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{1723D6A0-41EE-4426-93F4-885035EDFC92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.API", "services\SlidesService\RoboChemist.SlidesService.API\RoboChemist.SlidesService.API.csproj", "{B98AA162-2BA1-556F-E314-E90ADCFE2501}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Model", "services\SlidesService\RoboChemist.SlidesService.Model\RoboChemist.SlidesService.Model.csproj", "{B4328758-A3F9-634F-FBD6-568497BD9963}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Repository", "services\SlidesService\RoboChemist.SlidesService.Repository\RoboChemist.SlidesService.Repository.csproj", "{BBCE2FFF-6A4A-B181-D678-4BA727A46709}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Service", "services\SlidesService\RoboChemist.SlidesService.Service\RoboChemist.SlidesService.Service.csproj", "{CF7229A7-45B4-757C-D580-AEDCAB527127}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B98AA162-2BA1-556F-E314-E90ADCFE2501}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B98AA162-2BA1-556F-E314-E90ADCFE2501}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B98AA162-2BA1-556F-E314-E90ADCFE2501}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B98AA162-2BA1-556F-E314-E90ADCFE2501}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4328758-A3F9-634F-FBD6-568497BD9963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4328758-A3F9-634F-FBD6-568497BD9963}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4328758-A3F9-634F-FBD6-568497BD9963}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4328758-A3F9-634F-FBD6-568497BD9963}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBCE2FFF-6A4A-B181-D678-4BA727A46709}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBCE2FFF-6A4A-B181-D678-4BA727A46709}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBCE2FFF-6A4A-B181-D678-4BA727A46709}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBCE2FFF-6A4A-B181-D678-4BA727A46709}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{07573A22-435F-4CDE-9769-9FDDE61DF157} = {BE2CBA93-72C9-4952-83D5-B89F5A002B94}
+		{B98AA162-2BA1-556F-E314-E90ADCFE2501} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
+		{B4328758-A3F9-634F-FBD6-568497BD9963} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
+		{BBCE2FFF-6A4A-B181-D678-4BA727A46709} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
+		{CF7229A7-45B4-757C-D580-AEDCAB527127} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18F1979B-A815-4A51-B476-8D456C8D7B31}
+	EndGlobalSection
+EndGlobal
