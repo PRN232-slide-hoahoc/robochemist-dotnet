@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Service", "services\SlidesService\RoboChemist.SlidesService.Service\RoboChemist.SlidesService.Service.csproj", "{CF7229A7-45B4-757C-D580-AEDCAB527127}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.Common", "shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj", "{0A134375-5721-4840-9A3B-BE89E5D9BD65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.DTOs", "shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj", "{CC2D2131-2038-4B07-852B-355BF477F874}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC2D2131-2038-4B07-852B-355BF477F874}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC2D2131-2038-4B07-852B-355BF477F874}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC2D2131-2038-4B07-852B-355BF477F874}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC2D2131-2038-4B07-852B-355BF477F874}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -49,6 +61,8 @@ Global
 		{B4328758-A3F9-634F-FBD6-568497BD9963} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
 		{BBCE2FFF-6A4A-B181-D678-4BA727A46709} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
 		{CF7229A7-45B4-757C-D580-AEDCAB527127} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
+		{CC2D2131-2038-4B07-852B-355BF477F874} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18F1979B-A815-4A51-B476-8D456C8D7B31}
