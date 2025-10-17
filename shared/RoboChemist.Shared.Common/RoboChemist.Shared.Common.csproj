@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RoboChemist.SlidesService.Model\RoboChemist.SlidesService.Model.csproj" />
-    <ProjectReference Include="..\RoboChemist.SlidesService.Repository\RoboChemist.SlidesService.Repository.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.21" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
   </ItemGroup>
 
 </Project>

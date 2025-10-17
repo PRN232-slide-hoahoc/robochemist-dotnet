@@ -6,8 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\RoboChemist.SlidesService.Model\RoboChemist.SlidesService.Model.csproj" />
-  </ItemGroup>
-
 </Project>
