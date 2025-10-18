@@ -5,13 +5,13 @@ namespace RoboChemist.SlidesService.Model.Models;
 
 public partial class Sliderequest
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
-    public int? SyllabusId { get; set; }
+    public Guid SyllabusId { get; set; }
 
-    public int? UserId { get; set; }
+    public Guid UserId { get; set; }
 
-    public string? RequestType { get; set; }
+    public string RequestType { get; set; } = null!;
 
     public string? UserRequirements { get; set; }
 
@@ -31,5 +31,5 @@ public partial class Sliderequest
 
     public virtual ICollection<Generatedslide> Generatedslides { get; set; } = new List<Generatedslide>();
 
-    public virtual Syllabus? Syllabus { get; set; }
+    public virtual Syllabus Syllabus { get; set; } = null!;
 }

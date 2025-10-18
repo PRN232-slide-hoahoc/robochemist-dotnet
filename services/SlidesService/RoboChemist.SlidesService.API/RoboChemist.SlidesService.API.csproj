@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -12,10 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
     <ProjectReference Include="..\RoboChemist.SlidesService.Model\RoboChemist.SlidesService.Model.csproj" />
     <ProjectReference Include="..\RoboChemist.SlidesService.Service\RoboChemist.SlidesService.Service.csproj" />
   </ItemGroup>
