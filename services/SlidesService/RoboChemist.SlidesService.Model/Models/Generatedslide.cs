@@ -5,9 +5,9 @@ namespace RoboChemist.SlidesService.Model.Models;
 
 public partial class Generatedslide
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
-    public int? SlideRequestId { get; set; }
+    public Guid SlideRequestId { get; set; }
 
     public string? JsonContent { get; set; }
 
@@ -17,7 +17,7 @@ public partial class Generatedslide
 
     public string? FileName { get; set; }
 
-    public long? FileSize { get; set; }
+    public int? FileSize { get; set; }
 
     public int? SlideCount { get; set; }
 
@@ -29,5 +29,5 @@ public partial class Generatedslide
 
     public DateTime? GeneratedAt { get; set; }
 
-    public virtual Sliderequest? SlideRequest { get; set; }
+    public virtual Sliderequest SlideRequest { get; set; } = null!;
 }

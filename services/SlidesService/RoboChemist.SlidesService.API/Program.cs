@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using RoboChemist.SlidesService.Model.Data;
+using RoboChemist.SlidesService.Repository.Implements;
+using RoboChemist.SlidesService.Repository.Interfaces;
+using RoboChemist.SlidesService.Service.Interfaces;
+using RoboChemist.SlidesService.Service.Implements;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,13 @@ Console.WriteLine($"[DEBUG] Looking for .env at: {envPath}");
 Console.WriteLine($"[DEBUG] .env exists: {File.Exists(envPath)}");
 DotNetEnv.Env.Load(envPath);
 builder.Configuration.AddEnvironmentVariables();
+
+// Unit of Work and Repositories
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Dependency Injection for Services
+builder.Services.AddScoped <IGradeService, GradeService>();
+builder.Services.AddScoped <ITopicService, TopicService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -34,7 +45,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-Console.WriteLine($"[DEBUG] Slide_DB: {Environment.GetEnvironmentVariable("SLIDE_DB")}");
 
 app.Run();
