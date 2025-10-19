@@ -136,13 +136,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Lesson)
                 .HasMaxLength(255)
                 .HasColumnName("lesson");
+            entity.Property(e => e.LessonOrder)
+                .HasColumnType("character varying")
+                .HasColumnName("lesson_order");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
-            entity.Property(e => e.Subject)
-                .HasMaxLength(255)
-                .HasColumnName("subject");
-            entity.Property(e => e.TeachingNotes).HasColumnName("teaching_notes");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -174,9 +173,5 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.GradeId)
                 .HasConstraintName("topic_grade_id_fkey");
         });
-
-        OnModelCreatingPartial(modelBuilder);
     }
-
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
