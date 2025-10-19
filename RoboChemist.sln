@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11111.16 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlidesService", "SlidesService", "{07573A22-435F-4CDE-9769-9FDDE61DF157}"
 EndProject
@@ -28,6 +28,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Service", "services\WalletService\RoboChemist.WalletService.Service\RoboChemist.WalletService.Service.csproj", "{6A299DA9-15C2-4D03-94CB-B95D94D19C23}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.API", "services\WalletService\RoboChemist.WalletService.API\RoboChemist.WalletService.API.csproj", "{C2333AA8-43A3-43B1-8B59-01183EC197C7}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.Common", "shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj", "{0A134375-5721-4840-9A3B-BE89E5D9BD65}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.DTOs", "shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj", "{CC2D2131-2038-4B07-852B-355BF477F874}"
@@ -39,6 +40,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Repository", "services\ExamService\RoboChemist.ExamService.Repository\RoboChemist.ExamService.Repository.csproj", "{A3B4C5D6-7E8F-9012-3A4B-5C6D7E8F9012}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Service", "services\ExamService\RoboChemist.ExamService.Service\RoboChemist.ExamService.Service.csproj", "{B4C5D6E7-8F90-1234-5B6C-7D8E9F012345}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D454E8FA-7B5F-4217-860D-EE825044B07C}"
+	ProjectSection(SolutionItems) = preProject
+		.env = .env
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -118,12 +124,12 @@ Global
 		{FCF35830-E275-461E-8F9F-A9356B8A563A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{6A299DA9-15C2-4D03-94CB-B95D94D19C23} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{C2333AA8-43A3-43B1-8B59-01183EC197C7} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
+		{CC2D2131-2038-4B07-852B-355BF477F874} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
 		{E1A2B3C4-5D6E-7F89-0A1B-2C3D4E5F6789} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}
 		{F2B3C4D5-6E7F-8901-A2B3-C4D5E6F78901} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}
 		{A3B4C5D6-7E8F-9012-3A4B-5C6D7E8F9012} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}
 		{B4C5D6E7-8F90-1234-5B6C-7D8E9F012345} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}
-		{0A134375-5721-4840-9A3B-BE89E5D9BD65} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
-		{CC2D2131-2038-4B07-852B-355BF477F874} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18F1979B-A815-4A51-B476-8D456C8D7B31}
