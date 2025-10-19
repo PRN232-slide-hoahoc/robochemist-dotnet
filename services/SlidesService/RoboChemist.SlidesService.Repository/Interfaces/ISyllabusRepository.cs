@@ -7,5 +7,6 @@ namespace RoboChemist.SlidesService.Repository.Interfaces
     public interface ISyllabusRepository : IGenericRepository<Syllabus>
     {
         Task<List<SyllabusDto>> GetFullInformationAsync(Guid? gradeId, Guid? topicId);
+        Task<SyllabusDto> GetDtoByIdAsync(Guid id);
     }
 }
