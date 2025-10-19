@@ -13,6 +13,8 @@ public partial class Topic
 
     public Guid GradeId { get; set; }
 
+    public int? SortOrder { get; set; }
+
     public virtual Grade Grade { get; set; } = null!;
 
     public virtual ICollection<Syllabus> Syllabi { get; set; } = new List<Syllabus>();

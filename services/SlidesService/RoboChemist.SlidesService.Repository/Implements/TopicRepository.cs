@@ -22,9 +22,12 @@ namespace RoboChemist.SlidesService.Repository.Implements
                     Id = t.Id,
                     GradeId = t.GradeId,
                     GradeName = t.Grade.GradeName,
+                    SortOrder = t.SortOrder ?? 0,
                     Name = t.TopicName,
                     Description = t.Description ?? string.Empty
                 })
+                .OrderBy(t => t.GradeName)
+                .ThenBy(t => t.SortOrder)
                 .ToListAsync();
             return topics;
         }
