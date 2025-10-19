@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11111.16 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlidesService", "SlidesService", "{07573A22-435F-4CDE-9769-9FDDE61DF157}"
 EndProject
@@ -21,6 +21,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Service", "services\SlidesService\RoboChemist.SlidesService.Service\RoboChemist.SlidesService.Service.csproj", "{CF7229A7-45B4-757C-D580-AEDCAB527127}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WalletService", "WalletService", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Model", "services\WalletService\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj", "{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Repository", "services\WalletService\RoboChemist.WalletService.Repository\RoboChemist.WalletService.Repository.csproj", "{FCF35830-E275-461E-8F9F-A9356B8A563A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Service", "services\WalletService\RoboChemist.WalletService.Service\RoboChemist.WalletService.Service.csproj", "{6A299DA9-15C2-4D03-94CB-B95D94D19C23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.API", "services\WalletService\RoboChemist.WalletService.API\RoboChemist.WalletService.API.csproj", "{C2333AA8-43A3-43B1-8B59-01183EC197C7}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.Common", "shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj", "{0A134375-5721-4840-9A3B-BE89E5D9BD65}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.DTOs", "shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj", "{CC2D2131-2038-4B07-852B-355BF477F874}"
@@ -33,6 +43,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Rep
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Service", "services\ExamService\RoboChemist.ExamService.Service\RoboChemist.ExamService.Service.csproj", "{B4C5D6E7-8F90-1234-5B6C-7D8E9F012345}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D454E8FA-7B5F-4217-860D-EE825044B07C}"
+	ProjectSection(SolutionItems) = preProject
+		.env = .env
+	EndProjectSection
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.TemplateService.API", "services\TemplateService\RoboChemist.TemplateService.API\RoboChemist.TemplateService.API.csproj", "{C5D6E7F8-9012-3456-7890-1A2B3C4D5E6F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.TemplateService.Model", "services\TemplateService\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj", "{D6E7F890-1234-5678-9012-3A4B5C6D7E8F}"
@@ -63,6 +77,22 @@ Global
 		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF7229A7-45B4-757C-D580-AEDCAB527127}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FCF35830-E275-461E-8F9F-A9356B8A563A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FCF35830-E275-461E-8F9F-A9356B8A563A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FCF35830-E275-461E-8F9F-A9356B8A563A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FCF35830-E275-461E-8F9F-A9356B8A563A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A299DA9-15C2-4D03-94CB-B95D94D19C23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A299DA9-15C2-4D03-94CB-B95D94D19C23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A299DA9-15C2-4D03-94CB-B95D94D19C23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A299DA9-15C2-4D03-94CB-B95D94D19C23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2333AA8-43A3-43B1-8B59-01183EC197C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2333AA8-43A3-43B1-8B59-01183EC197C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2333AA8-43A3-43B1-8B59-01183EC197C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2333AA8-43A3-43B1-8B59-01183EC197C7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A134375-5721-4840-9A3B-BE89E5D9BD65}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -115,6 +145,13 @@ Global
 		{B4328758-A3F9-634F-FBD6-568497BD9963} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
 		{BBCE2FFF-6A4A-B181-D678-4BA727A46709} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
 		{CF7229A7-45B4-757C-D580-AEDCAB527127} = {07573A22-435F-4CDE-9769-9FDDE61DF157}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {BE2CBA93-72C9-4952-83D5-B89F5A002B94}
+		{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{FCF35830-E275-461E-8F9F-A9356B8A563A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{6A299DA9-15C2-4D03-94CB-B95D94D19C23} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C2333AA8-43A3-43B1-8B59-01183EC197C7} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0A134375-5721-4840-9A3B-BE89E5D9BD65} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
+		{CC2D2131-2038-4B07-852B-355BF477F874} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
 		{E1A2B3C4-5D6E-7F89-0A1B-2C3D4E5F6789} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}
 		{F2B3C4D5-6E7F-8901-A2B3-C4D5E6F78901} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}
 		{A3B4C5D6-7E8F-9012-3A4B-5C6D7E8F9012} = {8A6D4F2E-9C5B-4D3E-A7F1-2B8E9D4C6F3A}

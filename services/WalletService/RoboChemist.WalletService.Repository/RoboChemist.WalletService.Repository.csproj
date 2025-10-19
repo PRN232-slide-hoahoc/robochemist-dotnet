@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj" />
+  </ItemGroup>
+
 </Project>

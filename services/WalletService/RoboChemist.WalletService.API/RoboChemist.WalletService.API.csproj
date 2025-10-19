@@ -7,7 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj" />
+    <ProjectReference Include="..\RoboChemist.WalletService.Service\RoboChemist.WalletService.Service.csproj" />
   </ItemGroup>
 
 </Project>
