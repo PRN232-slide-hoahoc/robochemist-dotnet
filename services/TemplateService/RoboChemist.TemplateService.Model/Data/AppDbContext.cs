@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using RoboChemist.TemplateService.Model.Models;
 
 namespace RoboChemist.TemplateService.Model.Data;
 
@@ -14,13 +13,13 @@ public partial class AppDbContext : DbContext
     {
     }
 
-    // TODO: Add DbSet properties for your models here
-    // Example: public virtual DbSet<Template> Templates { get; set; }
+    // Thêm DbSet cho các model của bạn ở đây
+    // Ví dụ: public virtual DbSet<Template> Templates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // TODO: Configure your entity models here
-
+        // Cấu hình các entity ở đây
+        
         OnModelCreatingPartial(modelBuilder);
     }
 
