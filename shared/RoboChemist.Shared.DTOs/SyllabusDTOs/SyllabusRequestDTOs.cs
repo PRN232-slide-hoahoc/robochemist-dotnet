@@ -6,7 +6,7 @@
         {
             public Guid TopicId { get; set; }
 
-            public string? LessonOrder { get; set; }
+            public int? LessonOrder { get; set; }
 
             public string Lesson { get; set; } = null!;
 

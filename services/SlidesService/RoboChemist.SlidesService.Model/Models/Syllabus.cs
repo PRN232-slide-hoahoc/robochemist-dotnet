@@ -21,7 +21,7 @@ public partial class Syllabus
 
     public DateTime? UpdatedAt { get; set; }
 
-    public string? LessonOrder { get; set; }
+    public int? LessonOrder { get; set; }
 
     public bool? IsActive { get; set; }
 
