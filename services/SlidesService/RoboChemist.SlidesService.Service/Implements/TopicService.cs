@@ -8,22 +8,22 @@ namespace RoboChemist.SlidesService.Service.Implements
 {
     public class TopicService : ITopicService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _uow;
 
-        public TopicService(IUnitOfWork unitOfWork)
+        public TopicService(IUnitOfWork uow)
         {
-            _unitOfWork = unitOfWork;
+            _uow = uow;
         }
 
-        public async Task<ApiResponse<GetTopicDto>> CreateTopicAsync(CreateTopicDto request)
+        public async Task<ApiResponse<TopicDto>> CreateTopicAsync(CreateTopicDto request)
         {
             try
             {
-                var grade = await _unitOfWork.Grades.GetByIdAsync(request.GradeId);
+                var grade = await _uow.Grades.GetByIdAsync(request.GradeId);
 
                 if (grade == null)
                 {
-                    return ApiResponse<GetTopicDto>.ErrorResult("Khối lớp không tồn tại");
+                    return ApiResponse<TopicDto>.ErrorResult("Khối lớp không tồn tại");
                 }
 
                 var topic = new Topic
@@ -33,9 +33,9 @@ namespace RoboChemist.SlidesService.Service.Implements
                     TopicName = request.Name,
                     Description = request.Description
                 };
-                await _unitOfWork.Topics.CreateAsync(topic);
+                await _uow.Topics.CreateAsync(topic);
 
-                var topicDto = new GetTopicDto
+                var topicDto = new TopicDto
                 {
                     Id = topic.Id,
                     GradeId = grade.Id,
@@ -45,40 +45,40 @@ namespace RoboChemist.SlidesService.Service.Implements
                     Description = topic.Description ?? string.Empty
                 };
 
-                return ApiResponse<GetTopicDto>.SuccessResul(topicDto);
+                return ApiResponse<TopicDto>.SuccessResult(topicDto);
             }
             catch (Exception)
             {
-                return ApiResponse<GetTopicDto>.ErrorResult("Lỗi hệ thống");
+                return ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống");
             }
         }
 
-        public async Task<ApiResponse<List<GetTopicDto>>> GetTopicsAsync(Guid? gradeId)
+        public async Task<ApiResponse<List<TopicDto>>> GetTopicsAsync(Guid? gradeId)
         {
             try
             {
-                List<GetTopicDto> topics = await _unitOfWork.Topics.GetFullTopicsAsync(gradeId);
+                List<TopicDto> topics = await _uow.Topics.GetFullTopicsAsync(gradeId);
 
-                return ApiResponse<List<GetTopicDto>>.SuccessResul(topics);
+                return ApiResponse<List<TopicDto>>.SuccessResult(topics);
             }
             catch (Exception)
             {
-                return ApiResponse<List<GetTopicDto>>.ErrorResult("Lỗi hệ thống");
+                return ApiResponse<List<TopicDto>>.ErrorResult("Lỗi hệ thống");
             }
         }
 
-        public async Task<ApiResponse<GetTopicDto>> GetTopicByIdAsync(Guid gradeId)
+        public async Task<ApiResponse<TopicDto>> GetTopicByIdAsync(Guid topicId)
         {
             try
             {
-                Topic? topic = await _unitOfWork.Topics.GetByIdAsync(gradeId);
+                Topic? topic = await _uow.Topics.GetByIdAsync(topicId);
 
                 if (topic == null)
                 {
-                    return ApiResponse<GetTopicDto>.ErrorResult("Không tìm thấy chủ đề với ID đã chọn");
+                    return ApiResponse<TopicDto>.ErrorResult("Không tìm thấy chủ đề với ID đã chọn");
                 }
 
-                GetTopicDto topicDto = new()
+                TopicDto topicDto = new()
                 {
                     Id = topic.Id,
                     GradeId = topic.GradeId,
@@ -88,11 +88,11 @@ namespace RoboChemist.SlidesService.Service.Implements
                     Description = topic.Description ?? string.Empty
                 };
 
-                return ApiResponse<GetTopicDto>.SuccessResul(topicDto);
+                return ApiResponse<TopicDto>.SuccessResult(topicDto);
             }
             catch (Exception)
             {
-                return ApiResponse<GetTopicDto>.ErrorResult("Lỗi hệ thống");
+                return ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống");
             }
         }
     }

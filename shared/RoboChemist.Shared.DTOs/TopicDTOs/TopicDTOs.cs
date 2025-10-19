@@ -2,7 +2,7 @@
 {
     public class TopicDTOs
     {
-        public class GetTopicDto
+        public class TopicDto
         {
             public Guid Id { get; set; }
             public Guid GradeId { get; set; }

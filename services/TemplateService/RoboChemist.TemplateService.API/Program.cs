@@ -39,3 +39,4 @@ Console.WriteLine($"[DEBUG] TEMPLATE_DB: {Environment.GetEnvironmentVariable("TE
 
 app.Run();
 
+

@@ -2,7 +2,7 @@
 {
     public class GradeDTOs
     {
-        public class GetGradeDto
+        public class GradeDto
         {
             public Guid Id { get; set; }
             public string Name { get; set; } = string.Empty;

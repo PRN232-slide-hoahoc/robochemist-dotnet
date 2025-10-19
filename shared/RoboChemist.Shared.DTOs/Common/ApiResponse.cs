@@ -10,7 +10,7 @@
         public T? Data { get; set; }
         public List<string> Errors { get; set; } = [];
 
-        public static ApiResponse<T> SuccessResul(T data, string message = "Thành công")
+        public static ApiResponse<T> SuccessResult(T data, string message = "Thành công")
         {
             return new ApiResponse<T>
             {
