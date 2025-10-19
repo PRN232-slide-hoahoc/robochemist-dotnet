@@ -1,0 +1,7 @@
+@RoboChemist.TemplateService.API_HostAddress = http://localhost:5191
+
+GET {{RoboChemist.TemplateService.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+

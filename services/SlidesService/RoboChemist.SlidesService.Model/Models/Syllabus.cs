@@ -5,13 +5,13 @@ namespace RoboChemist.SlidesService.Model.Models;
 
 public partial class Syllabus
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
-    public string? Subject { get; set; }
+    public string Subject { get; set; } = null!;
 
-    public string? GradeLevel { get; set; }
+    public Guid TopicId { get; set; }
 
-    public string? Lesson { get; set; }
+    public string Lesson { get; set; } = null!;
 
     public string? LearningObjectives { get; set; }
 
@@ -28,4 +28,6 @@ public partial class Syllabus
     public DateTime? UpdatedAt { get; set; }
 
     public virtual ICollection<Sliderequest> Sliderequests { get; set; } = new List<Sliderequest>();
+
+    public virtual Topic Topic { get; set; } = null!;
 }

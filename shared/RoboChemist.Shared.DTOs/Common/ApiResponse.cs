@@ -8,9 +8,9 @@
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
         public T? Data { get; set; }
-        public List<string> Errors { get; set; } = new();
+        public List<string> Errors { get; set; } = [];
 
-        public static ApiResponse<T> SuccessResult(T data, string message = "Thành công")
+        public static ApiResponse<T> SuccessResul(T data, string message = "Thành công")
         {
             return new ApiResponse<T>
             {
@@ -26,7 +26,7 @@
             {
                 Success = false,
                 Message = message,
-                Errors = errors ?? new List<string>()
+                Errors = errors ?? []
             };
         }
     }

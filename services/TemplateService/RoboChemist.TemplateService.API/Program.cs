@@ -1,9 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using RoboChemist.SlidesService.Model.Data;
-using RoboChemist.SlidesService.Repository.Implements;
-using RoboChemist.SlidesService.Repository.Interfaces;
-using RoboChemist.SlidesService.Service.Interfaces;
-using RoboChemist.SlidesService.Service.Implements;
+using RoboChemist.TemplateService.Model.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,13 +11,6 @@ Console.WriteLine($"[DEBUG] .env exists: {File.Exists(envPath)}");
 DotNetEnv.Env.Load(envPath);
 builder.Configuration.AddEnvironmentVariables();
 
-// Unit of Work and Repositories
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Dependency Injection for Services
-builder.Services.AddScoped <IGradeService, GradeService>();
-builder.Services.AddScoped <ITopicService, TopicService>();
-
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -29,7 +18,7 @@ builder.Services.AddSwaggerGen();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(Environment.GetEnvironmentVariable("SLIDE_DB")));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("TEMPLATE_DB")));
 
 var app = builder.Build();
 
@@ -46,4 +35,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+Console.WriteLine($"[DEBUG] TEMPLATE_DB: {Environment.GetEnvironmentVariable("TEMPLATE_DB")}");
+
 app.Run();
+
