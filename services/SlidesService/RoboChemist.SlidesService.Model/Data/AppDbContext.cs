@@ -137,9 +137,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Lesson)
                 .HasMaxLength(255)
                 .HasColumnName("lesson");
-            entity.Property(e => e.LessonOrder)
-                .HasColumnType("character varying")
-                .HasColumnName("lesson_order");
+            entity.Property(e => e.LessonOrder).HasColumnName("lesson_order");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")

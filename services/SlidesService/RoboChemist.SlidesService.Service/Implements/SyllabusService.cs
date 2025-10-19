@@ -37,7 +37,7 @@ namespace RoboChemist.SlidesService.Service.Implements
 
                 await _uow.Syllabuses.CreateAsync(syllabus);
 
-                SyllabusDto syllabusDto = ConvertToDto(syllabus);
+                SyllabusDto syllabusDto = await _uow.Syllabuses.GetDtoByIdAsync(syllabus.Id);
 
                 return ApiResponse<SyllabusDto>.SuccessResult(syllabusDto);
 
@@ -81,7 +81,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 if (syllabus == null)
                     return ApiResponse<SyllabusDto>.ErrorResult("Giáo trình không tồn tại");
 
-                SyllabusDto syllabusDto = ConvertToDto(syllabus);
+                SyllabusDto syllabusDto = await _uow.Syllabuses.GetDtoByIdAsync(syllabus.Id);
 
                 return ApiResponse<SyllabusDto>.SuccessResult(syllabusDto);
             }
@@ -114,7 +114,7 @@ namespace RoboChemist.SlidesService.Service.Implements
 
                 await _uow.Syllabuses.UpdateAsync(syllabus);
 
-                SyllabusDto syllabusDto = ConvertToDto(syllabus);
+                SyllabusDto syllabusDto = await _uow.Syllabuses.GetDtoByIdAsync(syllabus.Id);
 
                 return ApiResponse<SyllabusDto>.SuccessResult(syllabusDto);
 
@@ -144,27 +144,6 @@ namespace RoboChemist.SlidesService.Service.Implements
             {
                 return ApiResponse<bool>.ErrorResult("Lỗi hệ thống");
             }
-        }
-
-        private static SyllabusDto ConvertToDto(Syllabus syllabus)
-        {
-            return new SyllabusDto
-            {
-                Id = syllabus.Id,
-                TopicId = syllabus.TopicId,
-                LessonOrder = syllabus.LessonOrder,
-                Lesson = syllabus.Lesson,
-                LearningObjectives = syllabus.LearningObjectives,
-                KeyConcepts = syllabus.KeyConcepts,
-                ContentOutline = syllabus.ContentOutline,
-                CreatedAt = syllabus.CreatedAt,
-                IsActive = syllabus.IsActive,
-                UpdatedAt = syllabus.UpdatedAt,
-                GradeId = syllabus.Topic.GradeId,
-                GradeName = syllabus.Topic.Grade.GradeName,
-                TopicName = syllabus.Topic.TopicName,
-                TopicOrder = syllabus.Topic.SortOrder
-            };
         }
     }
 }
