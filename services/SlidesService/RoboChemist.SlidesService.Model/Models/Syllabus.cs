@@ -17,13 +17,13 @@ public partial class Syllabus
 
     public string? KeyConcepts { get; set; }
 
-    public string? Status { get; set; }
-
     public DateTime? CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
     public string? LessonOrder { get; set; }
+
+    public bool? IsActive { get; set; }
 
     public virtual ICollection<Sliderequest> Sliderequests { get; set; } = new List<Sliderequest>();
 

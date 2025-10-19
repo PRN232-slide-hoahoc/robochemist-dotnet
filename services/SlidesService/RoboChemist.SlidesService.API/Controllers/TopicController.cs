@@ -29,16 +29,6 @@ namespace RoboChemist.SlidesService.API.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-
-                    return BadRequest(ApiResponse<GetTopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
-                }
-
                 var result = await _topicService.GetTopicsAsync(gradeId);
 
                 return result.Success ? Ok(result) : BadRequest(result);
@@ -95,16 +85,6 @@ namespace RoboChemist.SlidesService.API.Controllers
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-
-                    return BadRequest(ApiResponse<GetTopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
-                }
-
                 var result = await _topicService.GetTopicByIdAsync(id);
 
                 return result.Success ? Ok(result) : BadRequest(result);

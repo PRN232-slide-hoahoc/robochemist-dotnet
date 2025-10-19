@@ -14,7 +14,7 @@ namespace RoboChemist.SlidesService.Repository.Implements
 
         public async Task<List<GetTopicDto>> GetFullTopicsAsync(Guid? gradeId)
         {
-            var topics = await _dbSet
+            List<GetTopicDto> topics = await _dbSet
                 .Include(t => t.Grade)
                 .Where(t => !gradeId.HasValue || t.GradeId == gradeId.Value)
                 .Select(t => new GetTopicDto
@@ -29,6 +29,7 @@ namespace RoboChemist.SlidesService.Repository.Implements
                 .OrderBy(t => t.GradeName)
                 .ThenBy(t => t.SortOrder)
                 .ToListAsync();
+
             return topics;
         }
     }

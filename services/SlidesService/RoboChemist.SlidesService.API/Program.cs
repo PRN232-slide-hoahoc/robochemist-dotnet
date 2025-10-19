@@ -21,6 +21,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Dependency Injection for Services
 builder.Services.AddScoped <IGradeService, GradeService>();
 builder.Services.AddScoped <ITopicService, TopicService>();
+builder.Services.AddScoped <ISyllabusService, SyllabusService>();
+builder.Services.AddScoped <ISlideService, SlideService>();
 
 // Add services to the container.
 builder.Services.AddControllers();

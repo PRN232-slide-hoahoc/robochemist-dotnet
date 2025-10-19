@@ -8,18 +8,18 @@ namespace RoboChemist.SlidesService.Service.Implements
 {
     public class GradeService : IGradeService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _uow;
 
-        public GradeService(IUnitOfWork unitOfWork)
+        public GradeService(IUnitOfWork uow)
         {
-            _unitOfWork = unitOfWork;
+            _uow = uow;
         }
 
         public async Task<ApiResponse<List<GetGradeDto>>> GetGradesAsync()
         {
             try
             {
-                List<Grade> grades = await _unitOfWork.Grades.GetAllAsync();
+                List<Grade> grades = await _uow.Grades.GetAllAsync();
                 var gradeDtos = new List<GetGradeDto>();
                 _ = grades.OrderBy(g => g.GradeName);
 
@@ -33,7 +33,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     });
                 }
 
-                return ApiResponse<List<GetGradeDto>>.SuccessResul(gradeDtos);
+                return ApiResponse<List<GetGradeDto>>.SuccessResult(gradeDtos);
             }
             catch (Exception)
             {
@@ -45,7 +45,7 @@ namespace RoboChemist.SlidesService.Service.Implements
         {
             try
             {
-                Grade? grade = await _unitOfWork.Grades.GetByIdAsync(id);
+                Grade? grade = await _uow.Grades.GetByIdAsync(id);
 
                 if (grade == null)
                 {
@@ -59,9 +59,9 @@ namespace RoboChemist.SlidesService.Service.Implements
                     Description = grade.Description ?? string.Empty
                 };
 
-                return ApiResponse<GetGradeDto>.SuccessResul(gradeDto);
+                return ApiResponse<GetGradeDto>.SuccessResult(gradeDto);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return ApiResponse<GetGradeDto>.ErrorResult("Lỗi hệ thống");
             }

@@ -131,6 +131,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
             entity.Property(e => e.KeyConcepts).HasColumnName("key_concepts");
             entity.Property(e => e.LearningObjectives).HasColumnName("learning_objectives");
             entity.Property(e => e.Lesson)
@@ -139,9 +140,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.LessonOrder)
                 .HasColumnType("character varying")
                 .HasColumnName("lesson_order");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .HasColumnName("status");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")

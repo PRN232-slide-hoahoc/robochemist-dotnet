@@ -8,18 +8,18 @@ namespace RoboChemist.SlidesService.Service.Implements
 {
     public class TopicService : ITopicService
     {
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _uow;
 
-        public TopicService(IUnitOfWork unitOfWork)
+        public TopicService(IUnitOfWork uow)
         {
-            _unitOfWork = unitOfWork;
+            _uow = uow;
         }
 
         public async Task<ApiResponse<GetTopicDto>> CreateTopicAsync(CreateTopicDto request)
         {
             try
             {
-                var grade = await _unitOfWork.Grades.GetByIdAsync(request.GradeId);
+                var grade = await _uow.Grades.GetByIdAsync(request.GradeId);
 
                 if (grade == null)
                 {
@@ -33,7 +33,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     TopicName = request.Name,
                     Description = request.Description
                 };
-                await _unitOfWork.Topics.CreateAsync(topic);
+                await _uow.Topics.CreateAsync(topic);
 
                 var topicDto = new GetTopicDto
                 {
@@ -45,7 +45,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     Description = topic.Description ?? string.Empty
                 };
 
-                return ApiResponse<GetTopicDto>.SuccessResul(topicDto);
+                return ApiResponse<GetTopicDto>.SuccessResult(topicDto);
             }
             catch (Exception)
             {
@@ -57,9 +57,9 @@ namespace RoboChemist.SlidesService.Service.Implements
         {
             try
             {
-                List<GetTopicDto> topics = await _unitOfWork.Topics.GetFullTopicsAsync(gradeId);
+                List<GetTopicDto> topics = await _uow.Topics.GetFullTopicsAsync(gradeId);
 
-                return ApiResponse<List<GetTopicDto>>.SuccessResul(topics);
+                return ApiResponse<List<GetTopicDto>>.SuccessResult(topics);
             }
             catch (Exception)
             {
@@ -67,11 +67,11 @@ namespace RoboChemist.SlidesService.Service.Implements
             }
         }
 
-        public async Task<ApiResponse<GetTopicDto>> GetTopicByIdAsync(Guid gradeId)
+        public async Task<ApiResponse<GetTopicDto>> GetTopicByIdAsync(Guid topicId)
         {
             try
             {
-                Topic? topic = await _unitOfWork.Topics.GetByIdAsync(gradeId);
+                Topic? topic = await _uow.Topics.GetByIdAsync(topicId);
 
                 if (topic == null)
                 {
@@ -88,7 +88,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     Description = topic.Description ?? string.Empty
                 };
 
-                return ApiResponse<GetTopicDto>.SuccessResul(topicDto);
+                return ApiResponse<GetTopicDto>.SuccessResult(topicDto);
             }
             catch (Exception)
             {
