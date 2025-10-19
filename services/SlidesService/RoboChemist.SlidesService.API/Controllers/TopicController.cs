@@ -25,7 +25,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <response code="400">If the request is invalid</response>
         /// <response code="500">If there is an internal server error</response>
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<List<GetTopicDto>>>> GetTopics([FromQuery] Guid? gradeId)
+        public async Task<ActionResult<ApiResponse<List<TopicDto>>>> GetTopics([FromQuery] Guid? gradeId)
         {
             try
             {
@@ -35,7 +35,7 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<GetTopicDto>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -48,7 +48,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <response code="400">If the request data is invalid</response>
         /// <response code="500">If there is an internal server error</response>
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<GetTopicDto>>> CreateTopic([FromBody]CreateTopicDto request)
+        public async Task<ActionResult<ApiResponse<TopicDto>>> CreateTopic([FromBody]CreateTopicDto request)
         {
             try
             {
@@ -59,7 +59,7 @@ namespace RoboChemist.SlidesService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
-                    return BadRequest(ApiResponse<GetTopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                    return BadRequest(ApiResponse<TopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _topicService.CreateTopicAsync(request);
@@ -68,7 +68,7 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<GetTopicDto>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -81,7 +81,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <response code="400">If the topic is not found or request is invalid</response>
         /// <response code="500">If there is an internal server error</response>
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<GetTopicDto>>> GetTopicById([FromRoute] Guid id)
+        public async Task<ActionResult<ApiResponse<TopicDto>>> GetTopicById([FromRoute] Guid id)
         {
             try
             {
@@ -91,7 +91,7 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<GetTopicDto>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
     }
