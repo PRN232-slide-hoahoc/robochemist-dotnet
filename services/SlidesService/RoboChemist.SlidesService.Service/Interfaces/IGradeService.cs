@@ -10,6 +10,13 @@ namespace RoboChemist.SlidesService.Service.Interfaces
         /// </summary>
         /// <returns>An <see cref="ApiResponse{T}"/> containing a list of <see cref="GetGradeDto"/> objects representing the
         /// grades. The response includes metadata such as success status and error messages, if any.</returns>
-        Task<ApiResponse<List<GetGradeDto>>> GetGrades();
+        Task<ApiResponse<List<GetGradeDto>>> GetGradesAsync();
+
+        /// <summary>
+        /// Gets grade by id.
+        /// </summary>
+        /// <param name="id">Guid value of Grade id</param>
+        /// <returns><see cref="GetGradeDto"/> object representing the grade with the specified id, or an error response if not found.</returns>
+        Task<ApiResponse<GetGradeDto>> GetGradeByIdAsync(Guid id);
     }
 }

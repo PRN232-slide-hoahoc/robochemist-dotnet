@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using RoboChemist.SlidesService.Model.Models;
 
 namespace RoboChemist.SlidesService.Model.Data;
@@ -163,6 +165,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.GradeId).HasColumnName("grade_id");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
             entity.Property(e => e.TopicName)
                 .HasMaxLength(255)
                 .HasColumnName("topic_name");
