@@ -12,14 +12,14 @@ namespace RoboChemist.SlidesService.Repository.Implements
         {
         }
 
-        public async Task<List<GetSyllabusDto>> GetFullInformationAsync(Guid? gradeId, Guid? topicId)
+        public async Task<List<SyllabusDto>> GetFullInformationAsync(Guid? gradeId, Guid? topicId)
         {
-            List<GetSyllabusDto> syllabusDtos = await _dbSet
+            List<SyllabusDto> syllabusDtos = await _dbSet
                 .Include(s => s.Topic)
                 .Include(t => t.Topic.Grade)
                 .Where(t => !gradeId.HasValue || t.Topic.GradeId == gradeId.Value)
                 .Where(t => !topicId.HasValue || t.TopicId == topicId.Value)
-                .Select(s => new GetSyllabusDto
+                .Select(s => new SyllabusDto
                 {
                     Id = s.Id,
                     GradeId = s.Topic.GradeId,

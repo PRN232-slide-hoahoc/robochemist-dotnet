@@ -15,17 +15,17 @@ namespace RoboChemist.SlidesService.Service.Implements
             _uow = uow;
         }
 
-        public async Task<ApiResponse<List<GetGradeDto>>> GetGradesAsync()
+        public async Task<ApiResponse<List<GradeDto>>> GetGradesAsync()
         {
             try
             {
                 List<Grade> grades = await _uow.Grades.GetAllAsync();
-                var gradeDtos = new List<GetGradeDto>();
+                var gradeDtos = new List<GradeDto>();
                 _ = grades.OrderBy(g => g.GradeName);
 
                 foreach (var grade in grades)
                 {
-                    gradeDtos.Add(new GetGradeDto
+                    gradeDtos.Add(new GradeDto
                     {
                         Id = grade.Id,
                         Name = grade.GradeName,
@@ -33,15 +33,15 @@ namespace RoboChemist.SlidesService.Service.Implements
                     });
                 }
 
-                return ApiResponse<List<GetGradeDto>>.SuccessResult(gradeDtos);
+                return ApiResponse<List<GradeDto>>.SuccessResult(gradeDtos);
             }
             catch (Exception)
             {
-                return ApiResponse<List<GetGradeDto>>.ErrorResult("Lỗi hệ thống");
+                return ApiResponse<List<GradeDto>>.ErrorResult("Lỗi hệ thống");
             }
         }
 
-        public async Task<ApiResponse<GetGradeDto>> GetGradeByIdAsync(Guid id)
+        public async Task<ApiResponse<GradeDto>> GetGradeByIdAsync(Guid id)
         {
             try
             {
@@ -49,21 +49,21 @@ namespace RoboChemist.SlidesService.Service.Implements
 
                 if (grade == null)
                 {
-                    return ApiResponse<GetGradeDto>.ErrorResult("Không tìm thấy khối học với ID đã chọn");
+                    return ApiResponse<GradeDto>.ErrorResult("Không tìm thấy khối học với ID đã chọn");
                 }
 
-                GetGradeDto gradeDto = new()
+                GradeDto gradeDto = new()
                 {
                     Id = grade!.Id,
                     Name = grade.GradeName,
                     Description = grade.Description ?? string.Empty
                 };
 
-                return ApiResponse<GetGradeDto>.SuccessResult(gradeDto);
+                return ApiResponse<GradeDto>.SuccessResult(gradeDto);
             }
             catch (Exception)
             {
-                return ApiResponse<GetGradeDto>.ErrorResult("Lỗi hệ thống");
+                return ApiResponse<GradeDto>.ErrorResult("Lỗi hệ thống");
             }
         }
     }

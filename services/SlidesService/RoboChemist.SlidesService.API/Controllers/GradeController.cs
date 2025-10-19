@@ -21,7 +21,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// </summary>
         /// <returns>List of all Grades in database</returns>
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<List<GetGradeDto>>>> GetGrades()
+        public async Task<ActionResult<ApiResponse<List<GradeDto>>>> GetGrades()
         {
             try
             {
@@ -31,7 +31,7 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<GetGradeDto>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<GradeDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -41,7 +41,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <param name="id">Id of grade in Guid</param>
         /// <returns>A Grade information of exactly provided id</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<List<GetGradeDto>>>> GetGradeById([FromRoute] Guid id)
+        public async Task<ActionResult<ApiResponse<List<GradeDto>>>> GetGradeById([FromRoute] Guid id)
         {
             try
             {
@@ -51,7 +51,7 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<GetGradeDto>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<GradeDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
     }

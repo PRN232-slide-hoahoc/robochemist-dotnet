@@ -11,7 +11,7 @@ namespace RoboChemist.SlidesService.Service.Interfaces
         /// </summary>
         /// <returns>An <see cref="ApiResponse{T}"/> containing a list of <see cref="GetGradeDto"/> objects representing the
         /// topics. The response includes metadata such as success status and error messages, if any.</returns>
-        Task<ApiResponse<List<GetTopicDto>>> GetTopicsAsync(Guid? gradeId);
+        Task<ApiResponse<List<TopicDto>>> GetTopicsAsync(Guid? gradeId);
 
         /// <summary>
         /// Create a new topic.
@@ -19,7 +19,7 @@ namespace RoboChemist.SlidesService.Service.Interfaces
         /// <param name="request">The data for the new topic.</param>
         /// <returns>An <see cref="ApiResponse{T}"/> containing a list of <see cref="GetGradeDto"/> objects representing the
         /// topics. The response includes metadata such as success status and error messages, if any.</returns>
-        Task<ApiResponse<GetTopicDto>> CreateTopicAsync(CreateTopicDto request);
+        Task<ApiResponse<TopicDto>> CreateTopicAsync(CreateTopicDto request);
 
         /// <summary>
         /// Retrieves a topic by its unique identifier.
@@ -28,7 +28,7 @@ namespace RoboChemist.SlidesService.Service.Interfaces
         /// provided gradeId corresponds to an existing topic in the system.</remarks>
         /// <param name="topicId">The unique identifier of the topic to retrieve.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains an  ApiResponse{T} object with
-        /// the topic details as a GetTopicDto  if the topic is found, or an appropriate error response if not.</returns>
-        Task<ApiResponse<GetTopicDto>> GetTopicByIdAsync(Guid topicId);
+        /// the topic details as a TopicDto  if the topic is found, or an appropriate error response if not.</returns>
+        Task<ApiResponse<TopicDto>> GetTopicByIdAsync(Guid topicId);
     }
 }
