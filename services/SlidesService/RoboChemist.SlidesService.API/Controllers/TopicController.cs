@@ -16,21 +16,19 @@ namespace RoboChemist.SlidesService.API.Controllers
             _topicService = topicService;
         }
 
+        /// <summary>
+        /// Get all topics, optionally filtered by grade
+        /// </summary>
+        /// <param name="gradeId">Optional: Filter topics by grade ID</param>
+        /// <returns>List of topics</returns>
+        /// <response code="200">Returns the list of topics</response>
+        /// <response code="400">If the request is invalid</response>
+        /// <response code="500">If there is an internal server error</response>
         [HttpGet]
         public async Task<ActionResult<ApiResponse<List<GetTopicDto>>>> GetTopics([FromQuery] Guid? gradeId)
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-
-                    return BadRequest(ApiResponse<GetTopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
-                }
-
                 var result = await _topicService.GetTopicsAsync(gradeId);
 
                 return result.Success ? Ok(result) : BadRequest(result);
@@ -41,6 +39,14 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Create a new topic
+        /// </summary>
+        /// <param name="request">Topic creation details</param>
+        /// <returns>The newly created topic</returns>
+        /// <response code="200">Returns the newly created topic</response>
+        /// <response code="400">If the request data is invalid</response>
+        /// <response code="500">If there is an internal server error</response>
         [HttpPost]
         public async Task<ActionResult<ApiResponse<GetTopicDto>>> CreateTopic([FromBody]CreateTopicDto request)
         {
@@ -66,21 +72,19 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
         }
 
-        [HttpGet("/{id}")]
+        /// <summary>
+        /// Get a specific topic by ID
+        /// </summary>
+        /// <param name="id">The unique identifier of the topic</param>
+        /// <returns>Topic details</returns>
+        /// <response code="200">Returns the requested topic</response>
+        /// <response code="400">If the topic is not found or request is invalid</response>
+        /// <response code="500">If there is an internal server error</response>
+        [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<GetTopicDto>>> GetTopicById([FromRoute] Guid id)
         {
             try
             {
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToList();
-
-                    return BadRequest(ApiResponse<GetTopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
-                }
-
                 var result = await _topicService.GetTopicByIdAsync(id);
 
                 return result.Success ? Ok(result) : BadRequest(result);

@@ -9,6 +9,6 @@ namespace RoboChemist.SlidesService.Repository.Interfaces
         /// <summary>
         /// provides full topic details including grade name
         /// </summary>
-        Task<List<GetTopicDto>> GetFullTopicsAsync(Guid? gradeId);
+        Task<List<TopicDto>> GetFullTopicsAsync(Guid? gradeId);
     }
 }
