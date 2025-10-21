@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using RoboChemist.WalletService.Repository.Data;
+using RoboChemist.WalletService.Model.Data;
 using System;
 
 var builder = WebApplication.CreateBuilder(args);
