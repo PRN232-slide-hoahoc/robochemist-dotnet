@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using RoboChemist.WalletService.Model.Entities;
 
-namespace RoboChemist.WalletService.Repository.Data;
+namespace RoboChemist.WalletService.Model.Data;
 
 public partial class WalletDbContext : DbContext
 {
