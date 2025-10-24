@@ -11,23 +11,17 @@ public partial class Sliderequest
 
     public Guid UserId { get; set; }
 
-    public string RequestType { get; set; } = null!;
-
-    public string? UserRequirements { get; set; }
-
     public int? NumberOfSlides { get; set; }
-
-    public string? TemplateStyle { get; set; }
 
     public string? AiPrompt { get; set; }
 
     public string? Status { get; set; }
 
-    public string? ErrorMessage { get; set; }
-
     public DateTime? RequestedAt { get; set; }
 
     public DateTime? CompletedAt { get; set; }
+
+    public string? TemplateId { get; set; }
 
     public virtual ICollection<Generatedslide> Generatedslides { get; set; } = new List<Generatedslide>();
 

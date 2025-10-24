@@ -16,7 +16,7 @@
 
             public string TopicName { get; set; } = null!;
 
-            public string? LessonOrder { get; set; }
+            public int? LessonOrder { get; set; }
 
             public string Lesson { get; set; } = null!;
 

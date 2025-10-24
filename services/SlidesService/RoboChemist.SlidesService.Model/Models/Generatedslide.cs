@@ -15,13 +15,9 @@ public partial class Generatedslide
 
     public string? FilePath { get; set; }
 
-    public string? FileName { get; set; }
-
     public int? FileSize { get; set; }
 
     public int? SlideCount { get; set; }
-
-    public string? Metadata { get; set; }
 
     public string? GenerationStatus { get; set; }
 
