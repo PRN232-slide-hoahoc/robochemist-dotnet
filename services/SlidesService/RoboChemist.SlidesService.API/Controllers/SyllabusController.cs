@@ -11,11 +11,18 @@ namespace RoboChemist.SlidesService.API.Controllers
     public class SyllabusController : ControllerBase
     {
         private readonly ISyllabusService _syllabusService;
+        
         public SyllabusController(ISyllabusService syllabusService)
         {
             _syllabusService = syllabusService;
         }
 
+        /// <summary>
+        /// Get all syllabuses with optional filtering by grade and/or topic
+        /// </summary>
+        /// <param name="gradeId">Optional grade ID to filter syllabuses</param>
+        /// <param name="topicId">Optional topic ID to filter syllabuses</param>
+        /// <returns>List of syllabuses matching the filter criteria</returns>
         [HttpGet]
         public async Task<ActionResult<ApiResponse<List<SyllabusDto>>>> GetSyllabuses([FromQuery] Guid? gradeId, Guid? topicId)
         {
@@ -31,6 +38,11 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Get a specific syllabus by ID
+        /// </summary>
+        /// <param name="id">The unique identifier of the syllabus in Guid format</param>
+        /// <returns>Syllabus information for the provided ID</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<SyllabusDto>>> GetSyllabus([FromRoute] Guid id)
         {
@@ -46,8 +58,13 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Create a new syllabus
+        /// </summary>
+        /// <param name="request">Syllabus data including topic ID, lesson order, lesson name, objectives, outline, and key concepts</param>
+        /// <returns>The newly created syllabus</returns>
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<List<SyllabusDto>>>> CreateSyllabus([FromBody] CreateSyllabusRequestDto request)
+        public async Task<ActionResult<ApiResponse<SyllabusDto>>> CreateSyllabus([FromBody] CreateSyllabusRequestDto request)
         {
             try
             {
@@ -58,7 +75,7 @@ namespace RoboChemist.SlidesService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
-                    return BadRequest(ApiResponse<List<SyllabusDto>>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                    return BadRequest(ApiResponse<SyllabusDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _syllabusService.CreateSyllabusAsync(request);
@@ -67,12 +84,18 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<List<SyllabusDto>>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<SyllabusDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
-        [HttpPut]
-        public async Task<ActionResult<ApiResponse<List<SyllabusDto>>>> UpdateSyllabus([FromRoute] Guid id, [FromBody] CreateSyllabusRequestDto request)
+        /// <summary>
+        /// Update an existing syllabus
+        /// </summary>
+        /// <param name="id">The unique identifier of the syllabus to update</param>
+        /// <param name="request">Updated syllabus data</param>
+        /// <returns>The updated syllabus information</returns>
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ApiResponse<SyllabusDto>>> UpdateSyllabus([FromRoute] Guid id, [FromBody] CreateSyllabusRequestDto request)
         {
             try
             {
@@ -83,7 +106,7 @@ namespace RoboChemist.SlidesService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
-                    return BadRequest(ApiResponse<List<SyllabusDto>>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                    return BadRequest(ApiResponse<SyllabusDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _syllabusService.UpdateSyllabusAsync(id, request);
@@ -92,12 +115,17 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<List<SyllabusDto>>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<SyllabusDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
+        /// <summary>
+        /// Toggle the active status of a syllabus (activate/deactivate)
+        /// </summary>
+        /// <param name="id">The unique identifier of the syllabus</param>
+        /// <returns>The new active status of the syllabus</returns>
         [HttpPatch("{id}/toggle-status")]
-        public async Task<ActionResult<ApiResponse<List<SyllabusDto>>>> ToggleSyllabusStatus([FromRoute] Guid id)
+        public async Task<ActionResult<ApiResponse<bool>>> ToggleSyllabusStatus([FromRoute] Guid id)
         {
             try
             {
@@ -106,7 +134,7 @@ namespace RoboChemist.SlidesService.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(500, ApiResponse<List<SyllabusDto>>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<bool>.ErrorResult("Lỗi hệ thống"));
             }
         }
     }

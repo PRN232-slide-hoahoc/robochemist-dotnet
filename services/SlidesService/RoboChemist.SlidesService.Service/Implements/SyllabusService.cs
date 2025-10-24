@@ -10,6 +10,7 @@ namespace RoboChemist.SlidesService.Service.Implements
     public class SyllabusService : ISyllabusService
     {
         private readonly IUnitOfWork _uow;
+        
         public SyllabusService(IUnitOfWork uow)
         {
             _uow = uow;
