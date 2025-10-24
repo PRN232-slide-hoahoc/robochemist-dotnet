@@ -19,9 +19,7 @@ public partial class Sliderequest
 
     public DateTime? RequestedAt { get; set; }
 
-    public DateTime? CompletedAt { get; set; }
-
-    public string? TemplateId { get; set; }
+    public Guid? TemplateId { get; set; }
 
     public virtual ICollection<Generatedslide> Generatedslides { get; set; } = new List<Generatedslide>();
 
