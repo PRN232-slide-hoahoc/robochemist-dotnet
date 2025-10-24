@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.0.11111.16 d18.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SlidesService", "SlidesService", "{07573A22-435F-4CDE-9769-9FDDE61DF157}"
 EndProject
@@ -13,47 +13,64 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{BE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{1723D6A0-41EE-4426-93F4-885035EDFC92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.API", "services\SlidesService\RoboChemist.SlidesService.API\RoboChemist.SlidesService.API.csproj", "{B98AA162-2BA1-556F-E314-E90ADCFE2501}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.SlidesService.API", "services\SlidesService\RoboChemist.SlidesService.API\RoboChemist.SlidesService.API.csproj", "{B98AA162-2BA1-556F-E314-E90ADCFE2501}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Model", "services\SlidesService\RoboChemist.SlidesService.Model\RoboChemist.SlidesService.Model.csproj", "{B4328758-A3F9-634F-FBD6-568497BD9963}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.SlidesService.Model", "services\SlidesService\RoboChemist.SlidesService.Model\RoboChemist.SlidesService.Model.csproj", "{B4328758-A3F9-634F-FBD6-568497BD9963}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Repository", "services\SlidesService\RoboChemist.SlidesService.Repository\RoboChemist.SlidesService.Repository.csproj", "{BBCE2FFF-6A4A-B181-D678-4BA727A46709}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.SlidesService.Repository", "services\SlidesService\RoboChemist.SlidesService.Repository\RoboChemist.SlidesService.Repository.csproj", "{BBCE2FFF-6A4A-B181-D678-4BA727A46709}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.SlidesService.Service", "services\SlidesService\RoboChemist.SlidesService.Service\RoboChemist.SlidesService.Service.csproj", "{CF7229A7-45B4-757C-D580-AEDCAB527127}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.SlidesService.Service", "services\SlidesService\RoboChemist.SlidesService.Service\RoboChemist.SlidesService.Service.csproj", "{CF7229A7-45B4-757C-D580-AEDCAB527127}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WalletService", "WalletService", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Model", "services\WalletService\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj", "{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.WalletService.Model", "services\WalletService\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj", "{0D1EFFC5-9FA8-458F-98B4-D98BDB960AE0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Repository", "services\WalletService\RoboChemist.WalletService.Repository\RoboChemist.WalletService.Repository.csproj", "{FCF35830-E275-461E-8F9F-A9356B8A563A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.WalletService.Repository", "services\WalletService\RoboChemist.WalletService.Repository\RoboChemist.WalletService.Repository.csproj", "{FCF35830-E275-461E-8F9F-A9356B8A563A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.Service", "services\WalletService\RoboChemist.WalletService.Service\RoboChemist.WalletService.Service.csproj", "{6A299DA9-15C2-4D03-94CB-B95D94D19C23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.WalletService.Service", "services\WalletService\RoboChemist.WalletService.Service\RoboChemist.WalletService.Service.csproj", "{6A299DA9-15C2-4D03-94CB-B95D94D19C23}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.WalletService.API", "services\WalletService\RoboChemist.WalletService.API\RoboChemist.WalletService.API.csproj", "{C2333AA8-43A3-43B1-8B59-01183EC197C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.WalletService.API", "services\WalletService\RoboChemist.WalletService.API\RoboChemist.WalletService.API.csproj", "{C2333AA8-43A3-43B1-8B59-01183EC197C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.Common", "shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj", "{0A134375-5721-4840-9A3B-BE89E5D9BD65}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.Shared.Common", "shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj", "{0A134375-5721-4840-9A3B-BE89E5D9BD65}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.Shared.DTOs", "shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj", "{CC2D2131-2038-4B07-852B-355BF477F874}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.Shared.DTOs", "shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj", "{CC2D2131-2038-4B07-852B-355BF477F874}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.API", "services\ExamService\RoboChemist.ExamService.API\RoboChemist.ExamService.API.csproj", "{E1A2B3C4-5D6E-7F89-0A1B-2C3D4E5F6789}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.ExamService.API", "services\ExamService\RoboChemist.ExamService.API\RoboChemist.ExamService.API.csproj", "{E1A2B3C4-5D6E-7F89-0A1B-2C3D4E5F6789}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Model", "services\ExamService\RoboChemist.ExamService.Model\RoboChemist.ExamService.Model.csproj", "{F2B3C4D5-6E7F-8901-A2B3-C4D5E6F78901}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.ExamService.Model", "services\ExamService\RoboChemist.ExamService.Model\RoboChemist.ExamService.Model.csproj", "{F2B3C4D5-6E7F-8901-A2B3-C4D5E6F78901}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Repository", "services\ExamService\RoboChemist.ExamService.Repository\RoboChemist.ExamService.Repository.csproj", "{A3B4C5D6-7E8F-9012-3A4B-5C6D7E8F9012}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.ExamService.Repository", "services\ExamService\RoboChemist.ExamService.Repository\RoboChemist.ExamService.Repository.csproj", "{A3B4C5D6-7E8F-9012-3A4B-5C6D7E8F9012}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.ExamService.Service", "services\ExamService\RoboChemist.ExamService.Service\RoboChemist.ExamService.Service.csproj", "{B4C5D6E7-8F90-1234-5B6C-7D8E9F012345}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.ExamService.Service", "services\ExamService\RoboChemist.ExamService.Service\RoboChemist.ExamService.Service.csproj", "{B4C5D6E7-8F90-1234-5B6C-7D8E9F012345}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D454E8FA-7B5F-4217-860D-EE825044B07C}"
 	ProjectSection(SolutionItems) = preProject
 		.env = .env
 	EndProjectSection
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.TemplateService.API", "services\TemplateService\RoboChemist.TemplateService.API\RoboChemist.TemplateService.API.csproj", "{C5D6E7F8-9012-3456-7890-1A2B3C4D5E6F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.TemplateService.Model", "services\TemplateService\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj", "{D6E7F890-1234-5678-9012-3A4B5C6D7E8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.TemplateService.API", "services\TemplateService\RoboChemist.TemplateService.API\RoboChemist.TemplateService.API.csproj", "{C5D6E7F8-9012-3456-7890-1A2B3C4D5E6F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.TemplateService.Repository", "services\TemplateService\RoboChemist.TemplateService.Repository\RoboChemist.TemplateService.Repository.csproj", "{E7F89012-3456-7890-1234-5A6B7C8D9E0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.TemplateService.Model", "services\TemplateService\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj", "{D6E7F890-1234-5678-9012-3A4B5C6D7E8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.TemplateService.Service", "services\TemplateService\RoboChemist.TemplateService.Service\RoboChemist.TemplateService.Service.csproj", "{F8901234-5678-9012-3456-7A8B9C0D1E2F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.TemplateService.Repository", "services\TemplateService\RoboChemist.TemplateService.Repository\RoboChemist.TemplateService.Repository.csproj", "{E7F89012-3456-7890-1234-5A6B7C8D9E0F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoboChemist.TemplateService.Service", "services\TemplateService\RoboChemist.TemplateService.Service\RoboChemist.TemplateService.Service.csproj", "{F8901234-5678-9012-3456-7A8B9C0D1E2F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AuthService", "AuthService", "{4525CB64-2135-4FC2-9654-8ECC3CFED5C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.AuthService.Model", "services\AuthService\RoboChemist.AuthService.Model\RoboChemist.AuthService.Model.csproj", "{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.AuthService.Repository", "services\AuthService\RoboChemist.AuthService.Repository\RoboChemist.AuthService.Repository.csproj", "{5E71F09A-0270-4221-BF88-5509DD5E8985}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D} = {FA4D80B2-626D-4239-B5E2-4B93B98E5D8D}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.AuthService.Service", "services\AuthService\RoboChemist.AuthService.Service\RoboChemist.AuthService.Service.csproj", "{2C6C2022-6E7D-45F2-81F8-F444C797AC3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboChemist.AuthService.API", "services\AuthService\RoboChemist.AuthService.API\RoboChemist.AuthService.API.csproj", "{956BF49A-4997-499F-BC2F-944DCC3A2C2C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2C6C2022-6E7D-45F2-81F8-F444C797AC3B} = {2C6C2022-6E7D-45F2-81F8-F444C797AC3B}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -133,6 +150,22 @@ Global
 		{F8901234-5678-9012-3456-7A8B9C0D1E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8901234-5678-9012-3456-7A8B9C0D1E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8901234-5678-9012-3456-7A8B9C0D1E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E71F09A-0270-4221-BF88-5509DD5E8985}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E71F09A-0270-4221-BF88-5509DD5E8985}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E71F09A-0270-4221-BF88-5509DD5E8985}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E71F09A-0270-4221-BF88-5509DD5E8985}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C6C2022-6E7D-45F2-81F8-F444C797AC3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C6C2022-6E7D-45F2-81F8-F444C797AC3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C6C2022-6E7D-45F2-81F8-F444C797AC3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C6C2022-6E7D-45F2-81F8-F444C797AC3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{956BF49A-4997-499F-BC2F-944DCC3A2C2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{956BF49A-4997-499F-BC2F-944DCC3A2C2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{956BF49A-4997-499F-BC2F-944DCC3A2C2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{956BF49A-4997-499F-BC2F-944DCC3A2C2C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -160,8 +193,11 @@ Global
 		{D6E7F890-1234-5678-9012-3A4B5C6D7E8F} = {9B7E5F3D-0A8C-4E6B-B2D9-3F7A8E5C6D4B}
 		{E7F89012-3456-7890-1234-5A6B7C8D9E0F} = {9B7E5F3D-0A8C-4E6B-B2D9-3F7A8E5C6D4B}
 		{F8901234-5678-9012-3456-7A8B9C0D1E2F} = {9B7E5F3D-0A8C-4E6B-B2D9-3F7A8E5C6D4B}
-		{0A134375-5721-4840-9A3B-BE89E5D9BD65} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
-		{CC2D2131-2038-4B07-852B-355BF477F874} = {1723D6A0-41EE-4426-93F4-885035EDFC92}
+		{4525CB64-2135-4FC2-9654-8ECC3CFED5C6} = {BE2CBA93-72C9-4952-83D5-B89F5A002B94}
+		{FA4D80B2-626D-4239-B5E2-4B93B98E5D8D} = {4525CB64-2135-4FC2-9654-8ECC3CFED5C6}
+		{5E71F09A-0270-4221-BF88-5509DD5E8985} = {4525CB64-2135-4FC2-9654-8ECC3CFED5C6}
+		{2C6C2022-6E7D-45F2-81F8-F444C797AC3B} = {4525CB64-2135-4FC2-9654-8ECC3CFED5C6}
+		{956BF49A-4997-499F-BC2F-944DCC3A2C2C} = {4525CB64-2135-4FC2-9654-8ECC3CFED5C6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18F1979B-A815-4A51-B476-8D456C8D7B31}
