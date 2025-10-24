@@ -86,9 +86,6 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
             entity.Property(e => e.AiPrompt).HasColumnName("ai_prompt");
-            entity.Property(e => e.CompletedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("completed_at");
             entity.Property(e => e.NumberOfSlides).HasColumnName("number_of_slides");
             entity.Property(e => e.RequestedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -98,9 +95,7 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.SyllabusId).HasColumnName("syllabus_id");
-            entity.Property(e => e.TemplateId)
-                .HasColumnType("character varying")
-                .HasColumnName("template_id");
+            entity.Property(e => e.TemplateId).HasColumnName("template_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
             entity.HasOne(d => d.Syllabus).WithMany(p => p.Sliderequests)

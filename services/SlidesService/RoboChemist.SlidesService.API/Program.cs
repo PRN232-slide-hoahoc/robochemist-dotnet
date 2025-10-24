@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using RoboChemist.Shared.Common.Services.Implements;
+using RoboChemist.Shared.Common.Services.Interfaces;
 using RoboChemist.SlidesService.Model.Data;
 using RoboChemist.SlidesService.Repository.Implements;
 using RoboChemist.SlidesService.Repository.Interfaces;
-using RoboChemist.SlidesService.Service.Interfaces;
 using RoboChemist.SlidesService.Service.Implements;
+using RoboChemist.SlidesService.Service.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,8 @@ Console.WriteLine($"[DEBUG] .env exists: {File.Exists(envPath)}");
 DotNetEnv.Env.Load(envPath);
 builder.Configuration.AddEnvironmentVariables();
 
+builder.Services.AddHttpContextAccessor();
+
 // Unit of Work and Repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -23,6 +27,9 @@ builder.Services.AddScoped <IGradeService, GradeService>();
 builder.Services.AddScoped <ITopicService, TopicService>();
 builder.Services.AddScoped <ISyllabusService, SyllabusService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
+
+// Dependency Injection for common Services
+builder.Services.AddScoped<ICommonUserService, CommonUserService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
