@@ -13,22 +13,26 @@ namespace RoboChemist.SlidesService.Service.Implements
     {
         private readonly IUnitOfWork _uow;
         private readonly IAuthServiceClient _authService;
+        private readonly IGeminiService _geminiService;
 
-        public SlideService(IUnitOfWork uow, IAuthServiceClient authService)
+        public SlideService(IUnitOfWork uow, IAuthServiceClient authService, IGeminiService geminiService)
         {
             _uow = uow;
             _authService = authService;
+            _geminiService = geminiService;
         }
         public async Task<ApiResponse<SlideDto>> GenerateSlideAsync(GenerateSlideRequest request)
         {
 			try
 			{
+                // Get user information
                 UserDto? user = await _authService.GetCurrentUserAsync();
                 if(user==null) 
                 {
                     return ApiResponse<SlideDto>.ErrorResult("Người dùng không hợp lệ");
                 }
 
+                //Create slide request record
                 Sliderequest slideReq = new()
                 {
                     AiPrompt = request.AiPrompt,
@@ -44,6 +48,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 DataForGenerateSlideRequest reqData = await _uow.Sliderequests.GetDataRequestModelAsync(slideReq.Id);
 
                 string responseData = await GetGeneratedDataAsync(reqData);
+                ResponseGenerateDataDto? responseDto = await _geminiService.GenerateSlidesAsync(reqData);
 
                 Generatedslide generatedSlide = new()
                 {
@@ -54,7 +59,6 @@ namespace RoboChemist.SlidesService.Service.Implements
                 };
                 await _uow.Generatedslides.CreateAsync(generatedSlide);
 
-                ResponseGenerateDataDto responseDto = ConvertJsonToModel(responseData);
 
                 SlideFileInfomationDto fileInfo = await ProcessPptxFile(slideReq, responseDto);
 
