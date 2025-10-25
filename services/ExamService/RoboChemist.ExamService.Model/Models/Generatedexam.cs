@@ -9,11 +9,11 @@ public partial class Generatedexam
 
     public Guid ExamRequestId { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
-
     public string Status { get; set; } = null!;
 
-    public Guid QuestId { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     public virtual Examrequest ExamRequest { get; set; } = null!;
+
+    public virtual ICollection<Examquestion> Examquestions { get; set; } = new List<Examquestion>();
 }
