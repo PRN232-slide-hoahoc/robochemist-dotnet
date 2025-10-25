@@ -56,6 +56,7 @@ builder.Services.AddHttpClient("ApiGateway", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+builder.Services.AddHttpClient<ISlideServiceClient, SlideServiceClient>("ApiGateway");
 // Hoặc nếu muốn inject IHttpClientFactory trong service:
 // var httpClient = _httpClientFactory.CreateClient("ApiGateway");
 // await httpClient.GetAsync("/slides/v1/Topic/123");  // Slides Service
