@@ -36,21 +36,30 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("examquestion");
 
+            entity.HasIndex(e => new { e.GeneratedExamId, e.QuestionId }, "examquestion_generated_exam_id_question_id_key").IsUnique();
+
             entity.Property(e => e.ExamQuestionId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("exam_question_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
-            entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
+            entity.Property(e => e.GeneratedExamId).HasColumnName("generated_exam_id");
+            entity.Property(e => e.QuestionId).HasColumnName("question_id");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.Matrix).WithMany(p => p.Examquestions)
-                .HasForeignKey(d => d.MatrixId)
-                .HasConstraintName("examquestion_matrix_id_fkey");
+            entity.HasOne(d => d.GeneratedExam).WithMany(p => p.Examquestions)
+                .HasForeignKey(d => d.GeneratedExamId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("examquestion_generated_exam_id_fkey");
+
+            entity.HasOne(d => d.Question).WithMany(p => p.Examquestions)
+                .HasForeignKey(d => d.QuestionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("examquestion_question_id_fkey");
         });
 
         modelBuilder.Entity<Examrequest>(entity =>
@@ -64,9 +73,11 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("exam_request_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.GradeId).HasColumnName("grade_id");
             entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
+            entity.Property(e => e.Prompt).HasColumnName("prompt");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
@@ -74,6 +85,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasOne(d => d.Matrix).WithMany(p => p.Examrequests)
                 .HasForeignKey(d => d.MatrixId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("examrequest_matrix_id_fkey");
         });
 
@@ -88,9 +100,9 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("generated_exam_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.ExamRequestId).HasColumnName("exam_request_id");
-            entity.Property(e => e.QuestId).HasColumnName("quest_id");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
@@ -112,20 +124,19 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("matrix_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.IsDeleted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_deleted");
-            entity.Property(e => e.IsSubmitted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_submitted");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Name)
                 .HasMaxLength(255)
                 .HasColumnName("name");
-            entity.Property(e => e.TopicId).HasColumnName("topic_id");
+            entity.Property(e => e.TotalQuestion).HasColumnName("total_question");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
         });
@@ -141,14 +152,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("matrix_details_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.CreatedBy).HasColumnName("created_by");
-            entity.Property(e => e.IsDeleted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_deleted");
-            entity.Property(e => e.IsSubmitted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_submitted");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
             entity.Property(e => e.QuestionCount).HasColumnName("question_count");
             entity.Property(e => e.QuestionType)
@@ -157,6 +166,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
                 .HasColumnName("updated_at");
             entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
 
@@ -176,10 +186,20 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("option_id");
             entity.Property(e => e.Answer).HasColumnName("answer");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.IsCorrect)
                 .HasDefaultValue(false)
                 .HasColumnName("is_correct");
             entity.Property(e => e.QuestionId).HasColumnName("question_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
 
             entity.HasOne(d => d.Question).WithMany(p => p.Options)
                 .HasForeignKey(d => d.QuestionId)
@@ -196,15 +216,25 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.QuestionId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("question_id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
             entity.Property(e => e.Explanation).HasColumnName("explanation");
-            entity.Property(e => e.IsSubmitted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_submitted");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Question1).HasColumnName("question");
             entity.Property(e => e.QuestionType)
                 .HasMaxLength(50)
                 .HasColumnName("question_type");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
         });
 
         OnModelCreatingPartial(modelBuilder);

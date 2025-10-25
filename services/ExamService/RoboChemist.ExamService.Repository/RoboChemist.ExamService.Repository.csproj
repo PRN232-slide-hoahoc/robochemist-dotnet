@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Implements\" />
+  </ItemGroup>
+
 </Project>
