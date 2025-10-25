@@ -9,9 +9,7 @@ public partial class Matrix
 
     public string Name { get; set; } = null!;
 
-    public int TopicId { get; set; }
-
-    public bool? IsDeleted { get; set; }
+    public int? TotalQuestion { get; set; }
 
     public Guid? CreatedBy { get; set; }
 
@@ -21,9 +19,7 @@ public partial class Matrix
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool? IsSubmitted { get; set; }
-
-    public virtual ICollection<Examquestion> Examquestions { get; set; } = new List<Examquestion>();
+    public bool? IsActive { get; set; }
 
     public virtual ICollection<Examrequest> Examrequests { get; set; } = new List<Examrequest>();
 

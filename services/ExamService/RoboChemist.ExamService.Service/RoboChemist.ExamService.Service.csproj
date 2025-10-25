@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
     <ProjectReference Include="..\RoboChemist.ExamService.Model\RoboChemist.ExamService.Model.csproj" />
     <ProjectReference Include="..\RoboChemist.ExamService.Repository\RoboChemist.ExamService.Repository.csproj" />
   </ItemGroup>
