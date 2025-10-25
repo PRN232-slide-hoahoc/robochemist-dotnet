@@ -1,6 +1,6 @@
 ﻿using RoboChemist.Shared.Common.Constants;
-using RoboChemist.Shared.Common.Services.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.DTOs.UserDTOs;
 using RoboChemist.SlidesService.Model.Models;
 using RoboChemist.SlidesService.Repository.Interfaces;
 using RoboChemist.SlidesService.Service.Interfaces;
@@ -12,20 +12,19 @@ namespace RoboChemist.SlidesService.Service.Implements
     public class SlideService : ISlideService
     {
         private readonly IUnitOfWork _uow;
-        private readonly ICommonUserService _commonUserService;
+        private readonly IAuthServiceClient _authService;
 
-        public SlideService(IUnitOfWork uow, ICommonUserService commonUserService)
+        public SlideService(IUnitOfWork uow, IAuthServiceClient authService)
         {
             _uow = uow;
-            _commonUserService = commonUserService;
+            _authService = authService;
         }
         public async Task<ApiResponse<SlideDto>> GenerateSlideAsync(GenerateSlideRequest request)
         {
 			try
 			{
-                Guid? userId = _commonUserService.GetCurrentUserId();
-
-                if (userId == null)
+                UserDto? user = await _authService.GetCurrentUserAsync();
+                if(user==null) 
                 {
                     return ApiResponse<SlideDto>.ErrorResult("Người dùng không hợp lệ");
                 }
@@ -36,7 +35,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     NumberOfSlides = request.NumberOfSlides,
                     SyllabusId = request.SyllabusId,
                     TemplateId = request.TemplateId,
-                    UserId = (Guid)userId,
+                    UserId = user.Id,
                     RequestedAt = DateTime.Now,
                     Status = RoboChemistConstants.SLIDEREQ_STATUS_PENDING
                 };

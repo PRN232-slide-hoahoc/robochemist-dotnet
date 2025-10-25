@@ -1,6 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using RoboChemist.Shared.Common.Services.Implements;
-using RoboChemist.Shared.Common.Services.Interfaces;
 using RoboChemist.SlidesService.Model.Data;
 using RoboChemist.SlidesService.Repository.Implements;
 using RoboChemist.SlidesService.Repository.Interfaces;
@@ -27,9 +25,7 @@ builder.Services.AddScoped <IGradeService, GradeService>();
 builder.Services.AddScoped <ITopicService, TopicService>();
 builder.Services.AddScoped <ISyllabusService, SyllabusService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
-
-// Dependency Injection for common Services
-builder.Services.AddScoped<ICommonUserService, CommonUserService>();
+builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
 
 // Add services to the container.
 builder.Services.AddControllers();
