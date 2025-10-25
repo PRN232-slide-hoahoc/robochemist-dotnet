@@ -4,6 +4,7 @@ using RoboChemist.SlidesService.Repository.Implements;
 using RoboChemist.SlidesService.Repository.Interfaces;
 using RoboChemist.SlidesService.Service.Implements;
 using RoboChemist.SlidesService.Service.Interfaces;
+using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +25,16 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped <IGradeService, GradeService>();
 builder.Services.AddScoped <ITopicService, TopicService>();
 builder.Services.AddScoped <ISyllabusService, SyllabusService>();
+builder.Services.AddScoped <IGeminiService, GeminiService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
-builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
+builder.Services.AddHttpClient<IAuthServiceClient, AuthServiceClient>();
+
+// Semantic Kernel with Gemini
+builder.Services.AddKernel();
+builder.Services.AddGoogleAIGeminiChatCompletion(
+    modelId: "gemini-2.5-flash",
+    apiKey: Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty
+);
 
 // Add services to the container.
 builder.Services.AddControllers();
