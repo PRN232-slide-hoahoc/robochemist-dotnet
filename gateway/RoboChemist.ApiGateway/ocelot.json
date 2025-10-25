@@ -1,8 +1,8 @@
 {
   "Routes": [
     {
-      "DownstreamPathTemplate": "/api/auth/{everything}",
-  "DownstreamScheme": "http",
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
@@ -16,7 +16,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",
-  "DownstreamScheme": "http",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
@@ -33,7 +33,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",
-  "DownstreamScheme": "http",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
@@ -50,7 +50,7 @@
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",
-  "DownstreamScheme": "http",
+      "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
@@ -64,6 +64,23 @@
       },
       "Priority": 2,
       "SwaggerKey": "wallet"
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7206
+        }
+      ],
+      "UpstreamPathTemplate": "/template/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "Priority": 2,
+      "SwaggerKey": "template"
     }
   ],
   "GlobalConfiguration": {
@@ -108,6 +125,16 @@
           "Name": "Wallet API",
           "Version": "v1",
           "Url": "https://localhost:7100/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "template",
+      "Config": [
+        {
+          "Name": "Template API",
+          "Version": "v1",
+          "Url": "https://localhost:7206/swagger/v1/swagger.json"
         }
       ]
     }
