@@ -7,10 +7,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.7.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj" />
     <ProjectReference Include="..\RoboChemist.TemplateService.Repository\RoboChemist.TemplateService.Repository.csproj" />
   </ItemGroup>
 
 </Project>
+
+
+
+
+
+
+
+
 
 
