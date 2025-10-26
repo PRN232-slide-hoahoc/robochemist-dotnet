@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RoboChemist.WalletService.Model.Data;
-using System;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.VNPayDTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +16,15 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+//load variables VNPay save in .env
+builder.Services.AddSingleton(new VNPayConfig
+{
+    TmnCode = Environment.GetEnvironmentVariable("VNP_TMN_CODE"),
+    HashSecret = Environment.GetEnvironmentVariable("VNP_HASH_SECRET"),
+    VnpayUrl = Environment.GetEnvironmentVariable("VNP_URL"),
+    CallbackUrl = Environment.GetEnvironmentVariable("CALLBACK_URL")
+});
 
 // Database
 builder.Services.AddDbContext<WalletDbContext>(options =>
@@ -35,7 +44,5 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-Console.WriteLine($"[DEBUG] WALLET_DB: {Environment.GetEnvironmentVariable("WALLET_DB")}");
 
 app.Run();
