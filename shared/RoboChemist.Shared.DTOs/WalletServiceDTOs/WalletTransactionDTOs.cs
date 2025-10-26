@@ -26,5 +26,10 @@
             public Guid? ReferenceId { get; set; }
             public DateTime? CreateAt { get; set; } = DateTime.UtcNow;
         }
+        public class CreatePaymentRequestDto
+        {
+            public decimal Amount { get; set; }
+            public Guid? ReferenceId { get; set; }
+        }
     }
 }
