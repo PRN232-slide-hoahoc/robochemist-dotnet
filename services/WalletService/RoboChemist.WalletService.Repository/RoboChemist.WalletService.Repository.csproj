@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
     <ProjectReference Include="..\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj" />
   </ItemGroup>
 
