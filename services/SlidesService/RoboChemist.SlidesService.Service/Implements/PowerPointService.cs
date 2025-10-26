@@ -101,10 +101,70 @@ namespace RoboChemist.SlidesService.Service.Implements
         private static void FillContentSlide(SlidePart slidePart, ContentSlideTemplateDto dto)
         {
             ReplaceText(slidePart, "{{Heading}}", BeautifyChemicalFormulasInText(dto.Heading));
-            ReplaceText(slidePart, "{{Bullets}}", BeautifyChemicalFormulasInText(string.Join("\n• ", dto.BulletPoints)));
+            
+            // Build hierarchical bullet points text
+            var bulletsText = BuildHierarchicalBulletText(dto.BulletPoints);
+            ReplaceText(slidePart, "{{Bullets}}", BeautifyChemicalFormulasInText(bulletsText));
 
             if (!string.IsNullOrEmpty(dto.ImageDescription))
                 ReplaceText(slidePart, "{{ImageDescription}}", BeautifyChemicalFormulasInText(dto.ImageDescription));
+        }
+
+        /// <summary>
+        /// Build hierarchical bullet points text with proper indentation based on level
+        /// </summary>
+        /// <param name="bulletPoints">List of bullet points with hierarchical structure</param>
+        /// <param name="parentLevel">Parent level for recursive calls (default 0)</param>
+        /// <returns>Formatted text with hierarchical indentation</returns>
+        private static string BuildHierarchicalBulletText(List<BulletPoint> bulletPoints, int parentLevel = 0)
+        {
+            if (bulletPoints == null || bulletPoints.Count == 0)
+                return string.Empty;
+
+            var sb = new StringBuilder();
+
+            for (int i = 0; i < bulletPoints.Count; i++)
+            {
+                var bullet = bulletPoints[i];
+                
+                // Calculate indentation based on level
+                var indent = new string(' ', (bullet.Level - 1) * 4); // 4 spaces per level
+                
+                // Choose bullet symbol based on level
+                var symbol = bullet.Level switch
+                {
+                    1 => "•", // Main point
+                    2 => "◦", // Sub point
+                    3 => "▪", // Sub-sub point
+                    _ => "-"  // Deeper levels
+                };
+
+                sb.Append($"{indent}{symbol} {bullet.Content}");
+
+                // Recursively process children
+                if (bullet.Children != null && bullet.Children.Count > 0)
+                {
+                    sb.AppendLine(); // Xuống dòng trước khi vào children
+                    var childrenText = BuildHierarchicalBulletText(bullet.Children, bullet.Level);
+                    sb.Append(childrenText);
+                    
+                    // Nếu không phải mục cuối cùng, thêm xuống dòng để phân cách với mục tiếp theo
+                    if (i < bulletPoints.Count - 1)
+                    {
+                        sb.AppendLine();
+                    }
+                }
+                else
+                {
+                    // Nếu không có children, xuống dòng bình thường
+                    if (i < bulletPoints.Count - 1)
+                    {
+                        sb.AppendLine();
+                    }
+                }
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
@@ -177,24 +237,54 @@ namespace RoboChemist.SlidesService.Service.Implements
         {
             if (string.IsNullOrEmpty(input)) return input;
 
-            // Pattern:
-            // (?<!\S)         : start at boundary (start or whitespace) to avoid matching inside words
-            // (\d+)?          : optional leading coefficient (ex: "3" in "3H2")
-            // ([A-Z][A-Za-z0-9()]*)
-            //                 : Part formular that start with Cap (ex: H, He, Na, CO2, CH3COOH, Fe(OH)3)
-            // (\([a-zA-Z0-9+\-]+\))?
-            //                 : optional phase or ion in (), ví dụ (g), (aq), (l), (s), (2-)
-            string pattern = @"(?<!\S)(\d+)?([A-Z][A-Za-z0-9()]*)(\([a-zA-Z0-9+\-]+\))?";
-
-            return Regex.Replace(input, pattern, match =>
+            // Pattern 1: Match formulas with coefficient in parentheses like (n+1)H2O, (2n)CH4
+            // (\([a-zA-Z0-9+\-]+\))  : coefficient in parentheses like (n+1), (2n)
+            // ([A-Z][A-Za-z0-9()]*)  : chemical formula
+            string pattern1 = @"(\([a-zA-Z0-9+\-]+\))([A-Z][A-Za-z0-9()]*)";
+            
+            input = Regex.Replace(input, pattern1, match =>
             {
-                var coeff = match.Groups[1].Value;      // can be empty
-                var formula = match.Groups[2].Value;    // fomula part
-                var phase = match.Groups[3].Value;      // (g), (aq) ...
+                var coeffPart = match.Groups[1].Value;  // Keep (n+1) as is
+                var formulaPart = match.Groups[2].Value;
+                var formattedFormula = ToChemicalSubscript(formulaPart);
+                return $"{coeffPart}{formattedFormula}";
+            });
+
+            // Pattern 2: Match formulas inside parentheses after compound names like "Methane (CH4)"
+            // \(([A-Z][A-Za-z0-9()]*)\)  : formula inside parentheses
+            string pattern2 = @"\(([A-Z][A-Za-z0-9()]+)\)(?=[\s:,.\)]|$)";
+            
+            input = Regex.Replace(input, pattern2, match =>
+            {
+                var formulaPart = match.Groups[1].Value;
+                var formattedFormula = ToChemicalSubscript(formulaPart);
+                return $"({formattedFormula})";
+            });
+
+            // Pattern 3: Match formulas with optional leading dash and coefficient
+            // (?<![A-Za-z])  : not preceded by letter (to avoid matching inside words)
+            // (-)?           : optional leading dash (for groups like -CH3, -OH)
+            // (\d+)?         : optional leading coefficient (ex: "3" in "3H2")
+            // ([A-Z][A-Za-z0-9()]*)
+            //                : chemical formula starting with capital letter
+            // (\([a-zA-Z0-9+\-]+\))?
+            //                : optional phase or ion in (), like (g), (aq), (l), (s), (2-)
+            string pattern3 = @"(?<![A-Za-z])(-)?(\d+)?([A-Z][A-Za-z0-9()]*)(\([a-zA-Z0-9+\-]+\))?(?![A-Za-z])";
+
+            return Regex.Replace(input, pattern3, match =>
+            {
+                var dash = match.Groups[1].Value;       // optional dash
+                var coeff = match.Groups[2].Value;      // optional coefficient
+                var formula = match.Groups[3].Value;    // formula part
+                var phase = match.Groups[4].Value;      // optional phase
+
+                // Skip if formula is too short (likely not a chemical formula)
+                if (formula.Length == 1 && string.IsNullOrEmpty(coeff) && string.IsNullOrEmpty(dash))
+                    return match.Value;
 
                 var formattedFormula = ToChemicalSubscript(formula);
 
-                return $"{coeff}{formattedFormula}{phase}";
+                return $"{dash}{coeff}{formattedFormula}{phase}";
             });
         }
 

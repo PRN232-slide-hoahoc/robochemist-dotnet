@@ -51,8 +51,15 @@
         public class ContentSlideTemplateDto
         {
             public string Heading { get; set; } = null!;
-            public List<string> BulletPoints { get; set; } = null!;
+            public List<BulletPoint> BulletPoints { get; set; } = null!;
             public string? ImageDescription { get; set; }
+        }
+
+        public class BulletPoint
+        {
+            public string Content { get; set; } = null!;
+            public int Level { get; set; } = 1; // 1 = ý chính, 2 = ý phụ, 3 = ý con...
+            public List<BulletPoint>? Children { get; set; }
         }
 
         #endregion
