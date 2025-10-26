@@ -7,12 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
     <ProjectReference Include="..\RoboChemist.WalletService.Model\RoboChemist.WalletService.Model.csproj" />
     <ProjectReference Include="..\RoboChemist.WalletService.Repository\RoboChemist.WalletService.Repository.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

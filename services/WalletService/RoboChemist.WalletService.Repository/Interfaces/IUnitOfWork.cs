@@ -2,7 +2,7 @@
 {
     public interface IUnitOfWork : IDisposable
     {
-        IUserWalletRepository userWallet { get; }
-        IWalletTransactionRepository walletTransaction { get; }
+        IUserWalletRepository UserWalletRepo { get; }
+        IWalletTransactionRepository WalletTransactionRepo { get; }
     }
 }

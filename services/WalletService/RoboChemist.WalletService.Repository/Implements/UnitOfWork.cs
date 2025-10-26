@@ -7,15 +7,15 @@ namespace RoboChemist.WalletService.Repository.Implements
     {
         private readonly WalletDbContext _context;
 
-        public IUserWalletRepository userWallet { get; private set; }
+        public IUserWalletRepository UserWalletRepo { get; private set; }
 
-        public IWalletTransactionRepository walletTransaction { get; private set; }
+        public IWalletTransactionRepository WalletTransactionRepo { get; private set; }
 
         public UnitOfWork(WalletDbContext context)
         {
             _context = context;
-            userWallet = new UserWalletRepository(_context);
-            walletTransaction = new WalletTransactionRepository(_context);
+            UserWalletRepo = new UserWalletRepository(_context);
+            WalletTransactionRepo = new WalletTransactionRepository(_context);
         }
 
         public void Dispose()
