@@ -36,7 +36,35 @@ namespace RoboChemist.SlidesService.Service.Implements
                               "ContentSlides": [
                                 {
                                   "Heading": "Tiêu đề slide nội dung",
-                                  "BulletPoints": ["Điểm 1", "Điểm 2", "Điểm 3"],
+                                  "BulletPoints": [
+                                    {
+                                      "Content": "Ý chính 1",
+                                      "Level": 1,
+                                      "Children": [
+                                        {
+                                          "Content": "Ý phụ 1.1",
+                                          "Level": 2,
+                                          "Children": [
+                                            {
+                                              "Content": "Ý con 1.1.1",
+                                              "Level": 3,
+                                              "Children": null
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "Content": "Ý phụ 1.2",
+                                          "Level": 2,
+                                          "Children": null
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "Content": "Ý chính 2",
+                                      "Level": 1,
+                                      "Children": null
+                                    }
+                                  ],
                                   "ImageDescription": "Mô tả hình ảnh minh họa (nếu cần)"
                                 }
                               ]
@@ -53,13 +81,24 @@ namespace RoboChemist.SlidesService.Service.Implements
                             - Số slide nội dung mong muốn: {request.NumberOfSlides ?? 5}
                             - Hướng dẫn thêm: {request.AiPrompt ?? "Không có"}
 
-                            Yêu cầu đặc biệt:
-                            - Mỗi slide **chỉ nên có tối đa 8 gạch đầu dòng (bullet points)**.
-                            - Mỗi bullet point **không dài quá 20 từ**.
-                            - Nội dung phải **ngắn gọn, súc tích, vừa đủ hiển thị trên một slide PowerPoint**.
-                            - Không viết đoạn văn dài.
-                            - Nếu nội dung quá dài, hãy tách thành nhiều slide hợp lý.
-                            - Không đưa nội dung vào 2 dấu ** (ví dụ: **đừng làm thế này**).
+                            Yêu cầu đặc biệt về BulletPoints (quan trọng):
+                            - Sử dụng cấu trúc phân cấp với Level: 1 (ý chính), 2 (ý phụ), 3 (ý con)...
+                            - Mỗi slide có tối đa 3-5 ý chính (Level 1)
+                            - Mỗi ý chính có thể có 2-3 ý phụ (Level 2) trong Children
+                            - Mỗi ý phụ có thể có 1-2 ý con (Level 3) trong Children (nếu cần thiết)
+                            - Mỗi Content (ý) **không dài quá 20 từ**
+                            - Nội dung phải **ngắn gọn, súc tích, vừa đủ hiển thị trên slide PowerPoint**
+                            - Không viết đoạn văn dài
+                            - Nếu nội dung quá dài, hãy tách thành nhiều slide hợp lý
+                            - Không đưa nội dung vào 2 dấu ** (ví dụ: **đừng làm thế này**)
+                            - Nếu không có Children, set Children = null hoặc []
+
+                            Ví dụ về cấu trúc phân cấp:
+                            - Level 1: "Khái niệm axit mạnh và yếu" 
+                              - Level 2: "Axit mạnh: HCl, H₂SO₄, HNO₃"
+                                - Level 3: "Phân ly hoàn toàn trong nước"
+                              - Level 2: "Axit yếu: CH₃COOH, H₂CO₃"
+                                - Level 3: "Phân ly không hoàn toàn"
 
                             Bạn PHẢI trả về dữ liệu JSON với cấu trúc sau:
                             {jsonStructure}
@@ -179,6 +218,13 @@ namespace RoboChemist.SlidesService.Service.Implements
                         _logger.LogWarning("ContentSlide thiếu Heading hoặc BulletPoints rỗng");
                         return false;
                     }
+
+                    // Validate hierarchical structure of bullet points
+                    if (!ValidateBulletPoints(slide.BulletPoints))
+                    {
+                        _logger.LogWarning("ContentSlide có cấu trúc BulletPoints không hợp lệ");
+                        return false;
+                    }
                 }
 
                 return true;
@@ -188,6 +234,54 @@ namespace RoboChemist.SlidesService.Service.Implements
                 _logger.LogError(ex, "Lỗi khi validate ResponseDto");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Validate hierarchical bullet points structure recursively
+        /// </summary>
+        /// <param name="bulletPoints">List of bullet points to validate</param>
+        /// <returns>True if structure is valid, false otherwise</returns>
+        private bool ValidateBulletPoints(List<BulletPoint> bulletPoints)
+        {
+            if (bulletPoints == null || bulletPoints.Count == 0)
+                return false;
+
+            foreach (var bullet in bulletPoints)
+            {
+                // Validate Content field
+                if (string.IsNullOrWhiteSpace(bullet.Content))
+                {
+                    _logger.LogWarning("BulletPoint có Content rỗng");
+                    return false;
+                }
+
+                // Validate Level (should be >= 1)
+                if (bullet.Level < 1)
+                {
+                    _logger.LogWarning("BulletPoint có Level không hợp lệ: {Level}", bullet.Level);
+                    return false;
+                }
+
+                // Recursively validate children if they exist
+                if (bullet.Children != null && bullet.Children.Count > 0)
+                {
+                    // Children should have level greater than parent
+                    foreach (var child in bullet.Children)
+                    {
+                        if (child.Level <= bullet.Level)
+                        {
+                            _logger.LogWarning("Child BulletPoint có Level không lớn hơn parent. Parent Level: {ParentLevel}, Child Level: {ChildLevel}", 
+                                bullet.Level, child.Level);
+                            return false;
+                        }
+                    }
+
+                    if (!ValidateBulletPoints(bullet.Children))
+                        return false;
+                }
+            }
+
+            return true;
         }
     }
 }
