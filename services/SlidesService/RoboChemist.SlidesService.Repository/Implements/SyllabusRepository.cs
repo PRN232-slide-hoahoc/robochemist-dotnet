@@ -43,5 +43,29 @@ namespace RoboChemist.SlidesService.Repository.Implements
 
             return syllabusDtos;
         }
+
+        public async Task<SyllabusDto> GetDtoByIdAsync(Guid id)
+        {
+            return (await _dbSet
+                .Where(s => s.Id == id)
+                .Select(s => new SyllabusDto
+                {
+                    Id = s.Id,
+                    TopicId = s.TopicId,
+                    LessonOrder = s.LessonOrder,
+                    Lesson = s.Lesson,
+                    LearningObjectives = s.LearningObjectives,
+                    KeyConcepts = s.KeyConcepts,
+                    ContentOutline = s.ContentOutline,
+                    CreatedAt = s.CreatedAt,
+                    IsActive = s.IsActive,
+                    UpdatedAt = s.UpdatedAt,
+                    GradeId = s.Topic.GradeId,
+                    GradeName = s.Topic.Grade.GradeName,
+                    TopicName = s.Topic.TopicName,
+                    TopicOrder = s.Topic.SortOrder
+                })
+                .FirstOrDefaultAsync())!;
+        }
     }
 }

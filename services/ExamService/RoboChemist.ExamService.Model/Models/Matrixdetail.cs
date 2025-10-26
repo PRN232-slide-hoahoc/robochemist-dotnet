@@ -15,8 +15,6 @@ public partial class Matrixdetail
 
     public int QuestionCount { get; set; }
 
-    public bool? IsDeleted { get; set; }
-
     public Guid? CreatedBy { get; set; }
 
     public DateTime? CreatedAt { get; set; }
@@ -25,7 +23,7 @@ public partial class Matrixdetail
 
     public DateTime? UpdatedAt { get; set; }
 
-    public bool? IsSubmitted { get; set; }
+    public bool? IsActive { get; set; }
 
     public virtual Matrix Matrix { get; set; } = null!;
 }

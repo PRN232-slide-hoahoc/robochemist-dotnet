@@ -40,9 +40,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.FileFormat)
                 .HasMaxLength(50)
                 .HasColumnName("file_format");
-            entity.Property(e => e.FileName)
-                .HasMaxLength(255)
-                .HasColumnName("file_name");
             entity.Property(e => e.FilePath)
                 .HasMaxLength(500)
                 .HasColumnName("file_path");
@@ -55,7 +52,6 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("generation_status");
             entity.Property(e => e.JsonContent).HasColumnName("json_content");
-            entity.Property(e => e.Metadata).HasColumnName("metadata");
             entity.Property(e => e.ProcessingTime).HasColumnName("processing_time");
             entity.Property(e => e.SlideCount).HasColumnName("slide_count");
             entity.Property(e => e.SlideRequestId).HasColumnName("slide_request_id");
@@ -90,14 +86,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
             entity.Property(e => e.AiPrompt).HasColumnName("ai_prompt");
-            entity.Property(e => e.CompletedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("completed_at");
-            entity.Property(e => e.ErrorMessage).HasColumnName("error_message");
             entity.Property(e => e.NumberOfSlides).HasColumnName("number_of_slides");
-            entity.Property(e => e.RequestType)
-                .HasMaxLength(50)
-                .HasColumnName("request_type");
             entity.Property(e => e.RequestedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -106,11 +95,8 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("status");
             entity.Property(e => e.SyllabusId).HasColumnName("syllabus_id");
-            entity.Property(e => e.TemplateStyle)
-                .HasMaxLength(255)
-                .HasColumnName("template_style");
+            entity.Property(e => e.TemplateId).HasColumnName("template_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.UserRequirements).HasColumnName("user_requirements");
 
             entity.HasOne(d => d.Syllabus).WithMany(p => p.Sliderequests)
                 .HasForeignKey(d => d.SyllabusId)
@@ -137,9 +123,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Lesson)
                 .HasMaxLength(255)
                 .HasColumnName("lesson");
-            entity.Property(e => e.LessonOrder)
-                .HasColumnType("character varying")
-                .HasColumnName("lesson_order");
+            entity.Property(e => e.LessonOrder).HasColumnName("lesson_order");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
