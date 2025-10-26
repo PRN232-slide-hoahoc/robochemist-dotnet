@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Model.Exceptions;
 using RoboChemist.TemplateService.Service.Interfaces;
+using RoboChemist.Shared.DTOs.Common;
 
 namespace RoboChemist.TemplateService.API.Controllers;
 
@@ -43,11 +44,11 @@ public class TemplateController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<Model.Models.Template>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetAllTemplates([FromQuery] PaginationParams paginationParams)
+    public async Task<ActionResult<ApiResponse<PagedResult<Model.Models.Template>>>> GetAllTemplates([FromQuery] PaginationParams paginationParams)
     {
         var pagedTemplates = await _templateService.GetPagedTemplatesAsync(paginationParams);
         
-        var response = ApiResponse<PagedResult<Model.Models.Template>>.SuccessResponse(
+        var response = ApiResponse<PagedResult<Model.Models.Template>>.SuccessResult(
             pagedTemplates,
             $"Retrieved {pagedTemplates.Items.Count()} templates from page {pagedTemplates.PageNumber}"
         );
@@ -67,14 +68,14 @@ public class TemplateController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<Model.Models.Template>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> GetTemplateById(Guid id)
+    public async Task<ActionResult<ApiResponse<Model.Models.Template>>> GetTemplateById(Guid id)
     {
         var template = await _templateService.GetTemplateByIdAsync(id);
         
         if (template == null)
             throw new NotFoundException("Template", id);
 
-        var response = ApiResponse<Model.Models.Template>.SuccessResponse(
+        var response = ApiResponse<Model.Models.Template>.SuccessResult(
             template,
             "Template retrieved successfully"
         );
@@ -143,7 +144,7 @@ public class TemplateController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<UploadTemplateResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UploadTemplate([FromForm] UploadTemplateRequest request)
+    public async Task<ActionResult<ApiResponse<UploadTemplateResponse>>> UploadTemplate([FromForm] UploadTemplateRequest request)
     {
         if (request.File == null || request.File.Length == 0)
             throw new BadRequestException("File is required");
@@ -162,10 +163,9 @@ public class TemplateController : ControllerBase
 
         _logger.LogInformation("Template uploaded successfully: {TemplateId}", result.TemplateId);
 
-        var response = ApiResponse<UploadTemplateResponse>.SuccessResponse(
+        var response = ApiResponse<UploadTemplateResponse>.SuccessResult(
             result,
-            "Template uploaded successfully",
-            StatusCodes.Status201Created
+            "Template uploaded successfully"
         );
         
         return CreatedAtAction(
