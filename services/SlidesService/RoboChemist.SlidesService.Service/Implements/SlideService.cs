@@ -1,6 +1,6 @@
 ﻿using RoboChemist.Shared.Common.Constants;
-using RoboChemist.Shared.Common.Services.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.DTOs.UserDTOs;
 using RoboChemist.SlidesService.Model.Models;
 using RoboChemist.SlidesService.Repository.Interfaces;
 using RoboChemist.SlidesService.Service.Interfaces;
@@ -12,31 +12,36 @@ namespace RoboChemist.SlidesService.Service.Implements
     public class SlideService : ISlideService
     {
         private readonly IUnitOfWork _uow;
-        private readonly ICommonUserService _commonUserService;
+        private readonly IAuthServiceClient _authService;
+        private readonly IGeminiService _geminiService;
+        private readonly IPowerPointService _pptService;
 
-        public SlideService(IUnitOfWork uow, ICommonUserService commonUserService)
+        public SlideService(IUnitOfWork uow, IAuthServiceClient authService, IGeminiService geminiService, IPowerPointService pptService)
         {
             _uow = uow;
-            _commonUserService = commonUserService;
+            _authService = authService;
+            _geminiService = geminiService;
+            _pptService = pptService;
         }
         public async Task<ApiResponse<SlideDto>> GenerateSlideAsync(GenerateSlideRequest request)
         {
 			try
 			{
-                Guid? userId = _commonUserService.GetCurrentUserId();
-
-                if (userId == null)
+                // Get user information
+                UserDto? user = await _authService.GetCurrentUserAsync();
+                if(user==null) 
                 {
                     return ApiResponse<SlideDto>.ErrorResult("Người dùng không hợp lệ");
                 }
 
+                //Create slide request record
                 Sliderequest slideReq = new()
                 {
                     AiPrompt = request.AiPrompt,
                     NumberOfSlides = request.NumberOfSlides,
                     SyllabusId = request.SyllabusId,
                     TemplateId = request.TemplateId,
-                    UserId = (Guid)userId,
+                    UserId = user.Id,
                     RequestedAt = DateTime.Now,
                     Status = RoboChemistConstants.SLIDEREQ_STATUS_PENDING
                 };
@@ -44,18 +49,25 @@ namespace RoboChemist.SlidesService.Service.Implements
 
                 DataForGenerateSlideRequest reqData = await _uow.Sliderequests.GetDataRequestModelAsync(slideReq.Id);
 
-                string responseData = await GetGeneratedDataAsync(reqData);
+                //Generate data
+                ResponseGenerateDataDto? responseDto = await _geminiService.GenerateSlidesAsync(reqData);
+
+                if (responseDto == null)
+                {
+                    slideReq.Status = RoboChemistConstants.SLIDEREQ_STATUS_FAILED;
+                    await _uow.Sliderequests.UpdateAsync(slideReq);
+                    return ApiResponse<SlideDto>.ErrorResult("Không thể tạo slide từ yêu cầu");
+                }
 
                 Generatedslide generatedSlide = new()
                 {
-                    JsonContent = responseData,
+                    JsonContent = string.Empty,
                     SlideRequestId = slideReq.Id,
                     GenerationStatus = RoboChemistConstants.GENSLIDE_STATUS_JSON,
                     FileFormat = RoboChemistConstants.File_Format_PPTX,
                 };
                 await _uow.Generatedslides.CreateAsync(generatedSlide);
 
-                ResponseGenerateDataDto responseDto = ConvertJsonToModel(responseData);
 
                 SlideFileInfomationDto fileInfo = await ProcessPptxFile(slideReq, responseDto);
 
@@ -86,39 +98,23 @@ namespace RoboChemist.SlidesService.Service.Implements
                 };
                 return ApiResponse<SlideDto>.SuccessResult(returnDto);
             }
-			catch (Exception)
+			catch (Exception ex)
 			{
-                return ApiResponse<SlideDto>.ErrorResult("Lỗi hệ thống");
+                return ApiResponse<SlideDto>.ErrorResult("Lỗi hệ thống", [ex.Message]);
             }
-        }
-
-        private async Task<string> GetGeneratedDataAsync(DataForGenerateSlideRequest reqData)
-        {
-            return "HARDDDDDDDDDDDD";
-        }
-
-        private static ResponseGenerateDataDto ConvertJsonToModel(string json)
-        {
-            ResponseGenerateDataDto response = new();
-
-            return response;
         }
 
         private async Task<SlideFileInfomationDto> ProcessPptxFile(Sliderequest slideReq, ResponseGenerateDataDto responseDto)
         {
-            string reuturnFilePath = string.Empty;
+            string returnFilePath = string.Empty;
 
-            // Tai pptx
-            ImportDataToTemplate(responseDto); // Import data
+            // Tải pptx
+            _pptService.ImportDataToTemplate(responseDto, @"C:\Users\Admin\Downloads\template.pptx", @"C:\Users\Admin\Downloads\doneeee.pptx");
             // Upload pptx
 
             SlideFileInfomationDto returnInfo = new();
 
             return returnInfo;
-        }
-
-        private static void ImportDataToTemplate(ResponseGenerateDataDto responseDto) 
-        { 
         }
     }
 }

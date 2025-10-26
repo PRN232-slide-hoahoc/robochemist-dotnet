@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using RoboChemist.Shared.Common.Services.Implements;
-using RoboChemist.Shared.Common.Services.Interfaces;
 using RoboChemist.SlidesService.Model.Data;
 using RoboChemist.SlidesService.Repository.Implements;
 using RoboChemist.SlidesService.Repository.Interfaces;
 using RoboChemist.SlidesService.Service.Implements;
 using RoboChemist.SlidesService.Service.Interfaces;
+using Microsoft.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,10 +25,17 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped <IGradeService, GradeService>();
 builder.Services.AddScoped <ITopicService, TopicService>();
 builder.Services.AddScoped <ISyllabusService, SyllabusService>();
+builder.Services.AddScoped <IGeminiService, GeminiService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
+builder.Services.AddScoped <IPowerPointService, PowerPointService>();
+builder.Services.AddHttpClient<IAuthServiceClient, AuthServiceClient>();
 
-// Dependency Injection for common Services
-builder.Services.AddScoped<ICommonUserService, CommonUserService>();
+// Semantic Kernel with Gemini
+builder.Services.AddKernel();
+builder.Services.AddGoogleAIGeminiChatCompletion(
+    modelId: "gemini-2.5-flash",
+    apiKey: Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty
+);
 
 // Add services to the container.
 builder.Services.AddControllers();
