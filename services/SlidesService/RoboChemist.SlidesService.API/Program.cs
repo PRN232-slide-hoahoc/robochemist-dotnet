@@ -27,6 +27,7 @@ builder.Services.AddScoped <ITopicService, TopicService>();
 builder.Services.AddScoped <ISyllabusService, SyllabusService>();
 builder.Services.AddScoped <IGeminiService, GeminiService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
+builder.Services.AddScoped <IPowerPointService, PowerPointService>();
 builder.Services.AddHttpClient<IAuthServiceClient, AuthServiceClient>();
 
 // Semantic Kernel with Gemini

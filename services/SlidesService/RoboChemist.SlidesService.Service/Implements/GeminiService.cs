@@ -2,7 +2,6 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Google;
 using RoboChemist.SlidesService.Service.Interfaces;
-using System.ComponentModel;
 using System.Text.Json;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideRequestDTOs;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideResponseDTOs;
@@ -53,10 +52,19 @@ namespace RoboChemist.SlidesService.Service.Implements
                             - Khái niệm chính: {request.KeyConcepts}
                             - Số slide nội dung mong muốn: {request.NumberOfSlides ?? 5}
                             - Hướng dẫn thêm: {request.AiPrompt ?? "Không có"}
-        
-                            Bạn PHẢI trả về dữ liệu cấu trúc dưới dạng JSON với định dạng sau:
+
+                            Yêu cầu đặc biệt:
+                            - Mỗi slide **chỉ nên có tối đa 8 gạch đầu dòng (bullet points)**.
+                            - Mỗi bullet point **không dài quá 20 từ**.
+                            - Nội dung phải **ngắn gọn, súc tích, vừa đủ hiển thị trên một slide PowerPoint**.
+                            - Không viết đoạn văn dài.
+                            - Nếu nội dung quá dài, hãy tách thành nhiều slide hợp lý.
+                            - Không đưa nội dung vào 2 dấu ** (ví dụ: **đừng làm thế này**).
+
+                            Bạn PHẢI trả về dữ liệu JSON với cấu trúc sau:
                             {jsonStructure}
                             """;
+
 
             var settings = new GeminiPromptExecutionSettings
             {
@@ -82,7 +90,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 _logger.LogInformation("AI Response: {Response}", jsonResponse);
 
                 // Kiểm tra xem response có phải JSON hợp lệ không
-                if (!jsonResponse.StartsWith("{") && !jsonResponse.StartsWith("["))
+                if (!jsonResponse.StartsWith('{') && !jsonResponse.StartsWith('}'))
                 {
                     _logger.LogWarning("AI trả về không phải JSON. Response: {Response}", jsonResponse);
                     return null;
@@ -120,12 +128,12 @@ namespace RoboChemist.SlidesService.Service.Implements
             catch (JsonException jsonEx)
             {
                 _logger.LogError(jsonEx, "Lỗi khi parse JSON từ Gemini response. Response nhận được có thể không đúng format.");
-                throw new ApplicationException("Dữ liệu trả về từ AI không đúng định dạng JSON.", jsonEx);
+                throw new InvalidOperationException("Dữ liệu trả về từ AI không đúng định dạng JSON.", jsonEx);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi gọi Semantic Kernel hoặc Gemini.");
-                throw new ApplicationException("Lỗi từ máy chủ AI khi xử lý yêu cầu.", ex);
+                throw new InvalidOperationException("Lỗi từ máy chủ AI khi xử lý yêu cầu.", ex);
             }
         }
 
