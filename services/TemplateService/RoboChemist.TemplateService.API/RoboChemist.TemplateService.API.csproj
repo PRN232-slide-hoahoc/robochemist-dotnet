@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj" />
     <ProjectReference Include="..\RoboChemist.TemplateService.Service\RoboChemist.TemplateService.Service.csproj" />
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
   </ItemGroup>
 
 </Project>
