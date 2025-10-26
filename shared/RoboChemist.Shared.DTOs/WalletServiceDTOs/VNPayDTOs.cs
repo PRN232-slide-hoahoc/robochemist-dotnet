@@ -10,8 +10,18 @@ namespace RoboChemist.Shared.DTOs.WalletServiceDTOs
     {
         public class DepositRequestDTO
         {
-            public string token { get; set; }
             public decimal amount { get; set; }
+        }
+
+        public class DepositCallbackRequestDto
+        {
+            public decimal vnp_Amount { get; set; }
+            public string vnp_OrderInfo { get; set; }
+
+        }
+        public class DepositResponseDto
+        {
+            public string response { get; set; }
         }
 
         public class VNPayConfig
