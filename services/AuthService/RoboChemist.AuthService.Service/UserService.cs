@@ -72,8 +72,8 @@ namespace RoboChemist.AuthService.Services
                 Phone = request.Phone,
                 Status = "Active",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             await _userRepository.CreateAsync(user);
