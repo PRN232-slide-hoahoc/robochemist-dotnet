@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RoboChemist.Shared.Common.GenericRepositories;
 using RoboChemist.TemplateService.Model.Data;
 using RoboChemist.TemplateService.Model.Models;
 using RoboChemist.TemplateService.Repository.Interfaces;
@@ -10,13 +11,16 @@ namespace RoboChemist.TemplateService.Repository.Implements;
 /// </summary>
 public class OrderRepository : GenericRepository<Order>, IOrderRepository
 {
-    public OrderRepository(AppDbContext context) : base(context)
+    private readonly AppDbContext _appContext;
+
+    public OrderRepository(DbContext context) : base(context)
     {
+        _appContext = (AppDbContext)context;
     }
 
     public async Task<IEnumerable<Order>> GetOrdersByUserIdAsync(Guid userId)
     {
-        return await _dbSet
+        return await _appContext.Orders
             .Where(o => o.UserId == userId)
             .Include(o => o.OrderDetails)
             .ThenInclude(od => od.Template)
@@ -26,7 +30,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public async Task<Order?> GetOrderByOrderNumberAsync(string orderNumber)
     {
-        return await _dbSet
+        return await _appContext.Orders
             .Include(o => o.OrderDetails)
             .ThenInclude(od => od.Template)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);

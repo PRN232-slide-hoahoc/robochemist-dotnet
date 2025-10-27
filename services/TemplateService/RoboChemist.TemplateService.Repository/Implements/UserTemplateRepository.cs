@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RoboChemist.Shared.Common.GenericRepositories;
 using RoboChemist.TemplateService.Model.Data;
 using RoboChemist.TemplateService.Model.Models;
 using RoboChemist.TemplateService.Repository.Interfaces;
@@ -10,13 +11,16 @@ namespace RoboChemist.TemplateService.Repository.Implements;
 /// </summary>
 public class UserTemplateRepository : GenericRepository<UserTemplate>, IUserTemplateRepository
 {
-    public UserTemplateRepository(AppDbContext context) : base(context)
+    private readonly AppDbContext _appContext;
+
+    public UserTemplateRepository(DbContext context) : base(context)
     {
+        _appContext = (AppDbContext)context;
     }
 
     public async Task<IEnumerable<UserTemplate>> GetUserTemplatesByUserIdAsync(Guid userId)
     {
-        return await _dbSet
+        return await _appContext.UserTemplates
             .Where(ut => ut.UserId == userId)
             .Include(ut => ut.Template)
             .OrderByDescending(ut => ut.AcquiredAt)
@@ -25,7 +29,7 @@ public class UserTemplateRepository : GenericRepository<UserTemplate>, IUserTemp
 
     public async Task<bool> UserHasTemplateAsync(Guid userId, Guid templateId)
     {
-        return await _dbSet
+        return await _appContext.UserTemplates
             .AnyAsync(ut => ut.UserId == userId && ut.TemplateId == templateId);
     }
 }

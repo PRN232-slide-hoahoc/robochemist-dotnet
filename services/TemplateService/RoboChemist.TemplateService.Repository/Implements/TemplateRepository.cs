@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RoboChemist.Shared.Common.GenericRepositories;
 using RoboChemist.TemplateService.Model.Data;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Model.Models;
@@ -11,13 +12,16 @@ namespace RoboChemist.TemplateService.Repository.Implements;
 /// </summary>
 public class TemplateRepository : GenericRepository<Template>, ITemplateRepository
 {
-    public TemplateRepository(AppDbContext context) : base(context)
+    private readonly AppDbContext _appContext;
+
+    public TemplateRepository(DbContext context) : base(context)
     {
+        _appContext = (AppDbContext)context;
     }
 
     public async Task<IEnumerable<Template>> GetActiveTemplatesAsync()
     {
-        return await _dbSet
+        return await _appContext.Templates
             .Where(t => t.IsActive)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
@@ -26,7 +30,7 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
     public async Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams)
     {
         // Start with active templates
-        var query = _dbSet.Where(t => t.IsActive);
+        var query = _appContext.Templates.Where(t => t.IsActive);
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(paginationParams.SearchTerm))
@@ -80,7 +84,7 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
 
     public async Task<IEnumerable<Template>> GetTemplatesByTypeAsync(string templateType)
     {
-        return await _dbSet
+        return await _appContext.Templates
             .Where(t => t.IsActive && t.TemplateType == templateType)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
@@ -88,7 +92,7 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
 
     public async Task<IEnumerable<Template>> GetPremiumTemplatesAsync()
     {
-        return await _dbSet
+        return await _appContext.Templates
             .Where(t => t.IsActive && t.IsPremium)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
@@ -96,7 +100,7 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
 
     public async Task IncrementDownloadCountAsync(Guid templateId)
     {
-        var template = await GetByIdAsync(templateId);
+        var template = await _appContext.Templates.FindAsync(templateId);
         if (template != null)
         {
             template.DownloadCount++;

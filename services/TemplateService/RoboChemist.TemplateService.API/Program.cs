@@ -77,16 +77,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(dbConnectionString,
         b => b.MigrationsAssembly("RoboChemist.TemplateService.Model")));
 
-// Register Unit of Work and Repositories
+// Register DbContext as DbContext for Generic Repository pattern
+builder.Services.AddScoped<Microsoft.EntityFrameworkCore.DbContext>(provider => provider.GetRequiredService<AppDbContext>());
+
+// Register Unit of Work (repositories are created inside UnitOfWork)
 builder.Services.AddScoped<RoboChemist.TemplateService.Repository.Interfaces.IUnitOfWork, RoboChemist.TemplateService.Repository.Implements.UnitOfWork>();
-builder.Services.AddScoped<RoboChemist.TemplateService.Repository.Interfaces.ITemplateRepository, RoboChemist.TemplateService.Repository.Implements.TemplateRepository>();
-builder.Services.AddScoped<RoboChemist.TemplateService.Repository.Interfaces.IOrderRepository, RoboChemist.TemplateService.Repository.Implements.OrderRepository>();
-builder.Services.AddScoped<RoboChemist.TemplateService.Repository.Interfaces.IOrderDetailRepository, RoboChemist.TemplateService.Repository.Implements.OrderDetailRepository>();
-builder.Services.AddScoped<RoboChemist.TemplateService.Repository.Interfaces.IUserTemplateRepository, RoboChemist.TemplateService.Repository.Implements.UserTemplateRepository>();
 
 // Register Services
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.ITemplateService, RoboChemist.TemplateService.Service.Implements.TemplateService>();
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IStorageService, RoboChemist.TemplateService.Service.Implements.StorageService>();
+builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IOrderService, RoboChemist.TemplateService.Service.Implements.OrderService>();
 
 var accountId = builder.Configuration["CLOUDFLARE_R2_ACCOUNT_ID"];
 var accessKeyId = builder.Configuration["CLOUDFLARE_R2_ACCESS_KEY_ID"];
@@ -147,7 +147,6 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthorization();
 app.MapControllers();
 
-// XÓA BẤT KỲ CODE "CHECK BUCKET" NÀO KHỎI ĐÂY
 
 Console.WriteLine("Swagger UI available at: http://localhost:5000/swagger");
 Console.WriteLine("Application is starting...");

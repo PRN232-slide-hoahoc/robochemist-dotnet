@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj" />
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj" />
   </ItemGroup>
 
 </Project>
