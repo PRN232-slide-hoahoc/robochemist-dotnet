@@ -1,3 +1,4 @@
+using RoboChemist.Shared.Common.GenericRepositories;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Model.Models;
 
