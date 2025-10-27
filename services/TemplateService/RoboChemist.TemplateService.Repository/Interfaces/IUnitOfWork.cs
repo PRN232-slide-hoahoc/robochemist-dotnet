@@ -1,7 +1,7 @@
 namespace RoboChemist.TemplateService.Repository.Interfaces;
 
 /// <summary>
-/// Unit of Work pattern interface for managing transactions
+/// Unit of Work pattern interface for grouping repositories
 /// </summary>
 public interface IUnitOfWork : IDisposable
 {
@@ -24,25 +24,5 @@ public interface IUnitOfWork : IDisposable
     /// UserTemplate repository
     /// </summary>
     IUserTemplateRepository UserTemplates { get; }
-
-    /// <summary>
-    /// Save all changes to database
-    /// </summary>
-    Task<int> SaveChangesAsync();
-
-    /// <summary>
-    /// Begin transaction
-    /// </summary>
-    Task BeginTransactionAsync();
-
-    /// <summary>
-    /// Commit transaction
-    /// </summary>
-    Task CommitTransactionAsync();
-
-    /// <summary>
-    /// Rollback transaction
-    /// </summary>
-    Task RollbackTransactionAsync();
 }
 

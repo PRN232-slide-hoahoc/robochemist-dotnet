@@ -1,4 +1,5 @@
 using RoboChemist.TemplateService.Model.Models;
+using RoboChemist.Shared.Common.GenericRepositories;
 
 namespace RoboChemist.TemplateService.Repository.Interfaces;
 

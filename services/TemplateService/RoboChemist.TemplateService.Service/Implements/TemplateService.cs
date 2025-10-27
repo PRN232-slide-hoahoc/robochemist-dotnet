@@ -55,7 +55,6 @@ public class TemplateService : ITemplateService
         try
         {
             objectKey = await _storageService.UploadFileAsync(fileStream, fileName, "templates");
-            await _unitOfWork.BeginTransactionAsync();
 
             var template = new Template
             {
@@ -74,8 +73,7 @@ public class TemplateService : ITemplateService
                 Version = 1
             };
 
-            await _unitOfWork.Templates.AddAsync(template);
-            await _unitOfWork.CommitTransactionAsync();
+            await _unitOfWork.Templates.CreateAsync(template);
 
             return new UploadTemplateResponse
             {
@@ -88,8 +86,6 @@ public class TemplateService : ITemplateService
         }
         catch
         {
-            await _unitOfWork.RollbackTransactionAsync();
-            
             if (!string.IsNullOrEmpty(objectKey))
             {
                 try
@@ -110,19 +106,15 @@ public class TemplateService : ITemplateService
     {
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
-
             var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
             if (template == null)
             {
-                await _unitOfWork.RollbackTransactionAsync();
                 return false;
             }
 
             var objectKey = template.ObjectKey;
 
-            _unitOfWork.Templates.Delete(template);
-            await _unitOfWork.CommitTransactionAsync();
+            await _unitOfWork.Templates.RemoveAsync(template);
 
             try
             {
@@ -137,7 +129,6 @@ public class TemplateService : ITemplateService
         }
         catch
         {
-            await _unitOfWork.RollbackTransactionAsync();
             throw;
         }
     }
@@ -154,8 +145,7 @@ public class TemplateService : ITemplateService
 
         template.DownloadCount++;
         template.UpdatedAt = DateTime.UtcNow;
-        _unitOfWork.Templates.Update(template);
-        await _unitOfWork.SaveChangesAsync();
+        await _unitOfWork.Templates.UpdateAsync(template);
 
         return await _storageService.DownloadFileAsync(template.ObjectKey);
     }
