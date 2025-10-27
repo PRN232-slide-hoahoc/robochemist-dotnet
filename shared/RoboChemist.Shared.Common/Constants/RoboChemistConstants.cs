@@ -77,5 +77,52 @@
         public const string File_Format_PPTX = "pptx";
 
         #endregion
+        /// <summary>
+        /// Tăng số dư ví
+        /// </summary>
+        public const string UPDATE_BALANCE_TYPE_ADD = "A";
+
+        /// <summary>
+        /// Giảm số dư ví
+        /// </summary>
+        public const string UPDATE_BALANCE_TYPE_SUBTRACT = "S";
+
+        /// <summary>
+        /// Transaction Status: Pending
+        /// </summary>
+        public const string  TRANSACTION_STATUS_PENDING = "Đợi xử lí";
+
+        /// <summary>
+        /// Transaction Status: Completed
+        /// </summary>
+        public const string  TRANSACTION_STATUS_COMPLETED = "Hoàn thành";
+
+        /// <summary>
+        /// Transaction Status: Failed
+        /// </summary>
+        public const string  TRANSACTION_STATUS_FAILED = "Thất bại";
+
+        /// <summary>
+        /// Transacton through VNPay
+        /// </summary>
+        public const string TRANSACTION_METHOD_VNPAY = "VNPay";
+
+        /// <summary>
+        /// Transaction throuhg Wallet
+        /// </summary>
+        public const string TRANSACTION_METHOD_WALLET = "Ví";
+
+        /// <summary>
+        /// Transaction Type: Deposit
+        /// </summary>
+        public const string TRANSACTION_TYPE_DEPOSIT = "Nạp tiền";
+        /// <summary>
+        /// Transaction Type: Payment
+        /// </summary>
+        public const string TRANSACTION_TYPE_PAYMENT = "Thanh toán";
+        /// <summary>
+        /// Transaction Type: Refund
+        /// </summary>
+        public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
     }
 }
