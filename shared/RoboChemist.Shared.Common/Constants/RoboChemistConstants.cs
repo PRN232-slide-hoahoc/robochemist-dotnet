@@ -76,6 +76,7 @@
         /// </summary>
         public const string File_Format_PPTX = "pptx";
 
+        #endregion
         /// <summary>
         /// Tăng số dư ví
         /// </summary>
