@@ -70,6 +70,7 @@ namespace RoboChemist.AuthService.Services
                 Email = request.Email,
                 PasswordHash = request.Password, // Lưu plain text (KHÔNG AN TOÀN!)
                 Phone = request.Phone,
+                Role = "User",
                 Status = "Active",
                 IsActive = true,
                 CreatedAt = DateTime.Now,
@@ -84,6 +85,7 @@ namespace RoboChemist.AuthService.Services
             {
                 UserId = user.Id,
                 Fullname = user.Fullname,
+               
                 Email = user.Email,
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(ExpirationMinutes)
@@ -102,6 +104,7 @@ namespace RoboChemist.AuthService.Services
                 Id = user.Id,
                 Fullname = user.Fullname,
                 Email = user.Email,
+                Role = user.Role,
                 Phone = user.Phone,
                 Status = user.Status,
                 IsActive = user.IsActive

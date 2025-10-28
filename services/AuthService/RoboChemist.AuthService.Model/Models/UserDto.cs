@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoboChemist.AuthService.Model.Models
 {
@@ -19,6 +20,8 @@ namespace RoboChemist.AuthService.Model.Models
         [Phone]
         [StringLength(15)]
         public string? Phone { get; set; }
+        [Column("role")] // 👈 THÊM DÒNG NÀY
+        public string Role { get; set; }
 
         [MaxLength(50)]
         public string? Status { get; set; }
