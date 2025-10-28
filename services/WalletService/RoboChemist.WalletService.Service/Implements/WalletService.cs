@@ -1,37 +1,33 @@
-﻿using RoboChemist.Shared.Common.Services.Interfaces;
-using RoboChemist.Shared.DTOs.Common;
+﻿using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.WalletService.Model.Entities;
 using RoboChemist.WalletService.Repository.Implements;
 using RoboChemist.WalletService.Service.Interfaces;
-using static RoboChemist.Shared.DTOs.WalletServiceDTOs.UserWalletDTOs;
 using static RoboChemist.Shared.Common.Constants.RoboChemistConstants;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.UserWalletDTOs;
 
 namespace RoboChemist.WalletService.Service.Implements
 {
     public class WalletService : IWalletService
     {
         private readonly UnitOfWork _unitOfWork;
-        private readonly ICommonUserService _commonUserService;
-        public WalletService(UnitOfWork unitOfWork, ICommonUserService commonUserService)
+        public WalletService(UnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _commonUserService = commonUserService;
         }
-        public async Task<ApiResponse<UserWalletDto>> GenerateWalletAsync()
+        public async Task<ApiResponse<UserWalletDto>> GenerateWalletAsync(Guid userId)
         {
-            Guid? userId = _commonUserService.GetCurrentUserId();
 
             if (userId == null)
             {
                 return ApiResponse<UserWalletDto>.ErrorResult("Người dùng không hợp lệ");
             }
 
-            var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(userId.Value);
+            var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(userId);
             if (wallet == null)
             {
                 UserWallet newWallet = new UserWallet
                 {
-                    UserId = userId.Value,
+                    UserId = userId,
                     Balance = 0,
                     UpdateAt = DateTime.Now,
                 };
@@ -56,16 +52,14 @@ namespace RoboChemist.WalletService.Service.Implements
             
         }
 
-        public async Task<ApiResponse<UserWalletDto>> GetWalletByUserIdAsync()
+        public async Task<ApiResponse<UserWalletDto>> GetWalletByUserIdAsync(Guid userId)
         {
-            Guid? userId = _commonUserService.GetCurrentUserId();
-
             if (userId == null)
             {
                 return ApiResponse<UserWalletDto>.ErrorResult("Người dùng không hợp lệ");
             }
 
-            var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(userId.Value);
+            var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(userId);
             if (wallet == null)
             {
                 return ApiResponse<UserWalletDto>.ErrorResult("Ví không tồn tại");
@@ -87,13 +81,13 @@ namespace RoboChemist.WalletService.Service.Implements
             {
                 return ApiResponse<UserWalletDto>.ErrorResult("Ví không tồn tại");
             }
-            if(request.TypeUpdate == UPDATE_BALANCE_TYPE_ADD)
+            if (request.TypeUpdate == UPDATE_BALANCE_TYPE_ADD)
             {
                 wallet.Balance += request.Amount;
             }
-            else if(request.TypeUpdate == UPDATE_BALANCE_TYPE_SUBTRACT)
+            else if (request.TypeUpdate == UPDATE_BALANCE_TYPE_SUBTRACT)
             {
-                if(wallet.Balance < request.Amount)
+                if (wallet.Balance < request.Amount)
                 {
                     return ApiResponse<UserWalletDto>.ErrorResult("Số dư ví không đủ");
                 }

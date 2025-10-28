@@ -10,8 +10,8 @@ namespace RoboChemist.WalletService.Service.Interfaces
 {
     public interface IWalletService
     {
-        Task<ApiResponse<UserWalletDto>> GenerateWalletAsync();
-        Task<ApiResponse<UserWalletDto>> GetWalletByUserIdAsync();
+        Task<ApiResponse<UserWalletDto>> GenerateWalletAsync(Guid id);
+        Task<ApiResponse<UserWalletDto>> GetWalletByUserIdAsync(Guid id);
         Task<ApiResponse<UserWalletDto>> UpdateWalletBalanceAsync(UpdateBalanceRequest request);
     }
 }
