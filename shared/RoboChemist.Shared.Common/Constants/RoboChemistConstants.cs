@@ -77,6 +77,8 @@
         public const string File_Format_PPTX = "pptx";
 
         #endregion
+
+        #region Wallet
         /// <summary>
         /// Tăng số dư ví
         /// </summary>
@@ -86,7 +88,9 @@
         /// Giảm số dư ví
         /// </summary>
         public const string UPDATE_BALANCE_TYPE_SUBTRACT = "S";
+        #endregion
 
+        #region Transaction
         /// <summary>
         /// Transaction Status: Pending
         /// </summary>
