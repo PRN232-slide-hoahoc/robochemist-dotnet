@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.Shared.DTOs.Common;
-using RoboChemist.WalletService.Model.Entities;
 using RoboChemist.WalletService.Service.Interfaces;
-using static RoboChemist.Shared.DTOs.GradeDTOs.GradeDTOs;
+using System.Security.Claims;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.UserWalletDTOs;
 
 namespace RoboChemist.WalletService.API.Controllers
@@ -18,12 +17,24 @@ namespace RoboChemist.WalletService.API.Controllers
             _walletService = walletService;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<ApiResponse<UserWalletDto>>> GetUserWallet()
         {
             try
             {
-                var result = await _walletService.GetWalletByUserIdAsync();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(ApiResponse<UserWalletDto>.ErrorResult("Người dùng chưa đăng nhập"));
+                }
+
+                if (!Guid.TryParse(userIdClaim, out Guid userId))
+                {
+                    return BadRequest(ApiResponse<UserWalletDto>.ErrorResult("User ID không hợp lệ"));
+                }
+
+                var result = await _walletService.GetWalletByUserIdAsync(userId);
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception)
@@ -32,17 +43,29 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ApiResponse<UserWalletDto>>> CreateUserWallet()
         {
             try
             {
-                var result = await _walletService.GenerateWalletAsync();
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(ApiResponse<UserWalletDto>.ErrorResult("Người dùng chưa đăng nhập"));
+                }
+
+                if (!Guid.TryParse(userIdClaim, out Guid userId))
+                {
+                    return BadRequest(ApiResponse<UserWalletDto>.ErrorResult("User ID không hợp lệ"));
+                }
+
+                var result = await _walletService.GenerateWalletAsync(userId);
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, ApiResponse<UserWalletDto>.ErrorResult("Lỗi hệ thống"));
+                return StatusCode(500, ApiResponse<UserWalletDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
             }
         }
 

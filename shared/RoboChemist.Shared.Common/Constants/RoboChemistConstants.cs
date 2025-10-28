@@ -124,5 +124,6 @@
         /// Transaction Type: Refund
         /// </summary>
         public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
+        #endregion
     }
 }
