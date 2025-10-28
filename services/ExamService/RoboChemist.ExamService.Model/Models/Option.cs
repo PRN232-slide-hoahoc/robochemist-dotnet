@@ -17,9 +17,5 @@ public partial class Option
 
     public DateTime? CreatedAt { get; set; }
 
-    public Guid? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
     public virtual Question Question { get; set; } = null!;
 }

@@ -15,10 +15,6 @@ public partial class Matrix
 
     public DateTime? CreatedAt { get; set; }
 
-    public Guid? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
-
     public bool? IsActive { get; set; }
 
     public virtual ICollection<Examrequest> Examrequests { get; set; } = new List<Examrequest>();

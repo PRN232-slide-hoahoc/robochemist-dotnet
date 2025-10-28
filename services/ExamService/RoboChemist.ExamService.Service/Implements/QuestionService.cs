@@ -1,309 +1,423 @@
-﻿using RoboChemist.ExamService.Repository.Interfaces;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using RoboChemist.ExamService.Model.Models;
+using RoboChemist.ExamService.Repository.Interfaces;
 using RoboChemist.ExamService.Service.Interfaces;
 using RoboChemist.ExamService.Service.HttpClients;
-using RoboChemist.ExamService.Model.Models;
+using RoboChemist.Shared.Common.Constants;
+using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.Shared.DTOs.Common;
-using static RoboChemist.Shared.DTOs.QuestionDTOs.QuestionDTOs;
-using static RoboChemist.Shared.DTOs.TopicDTOs.TopicDTOs;
-using Microsoft.EntityFrameworkCore;
+using static RoboChemist.Shared.DTOs.ExamServiceDTOs.QuestionDTOs;
 
 namespace RoboChemist.ExamService.Service.Implements
 {
     /// <summary>
-    /// Service implementation for Question CRUD operations
+    /// Implementation của Question Service - Quản lý câu hỏi
     /// </summary>
     public class QuestionService : IQuestionService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly ISlideServiceClient _slideServiceClient;
+        private readonly ISlidesServiceHttpClient _slidesServiceHttpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public QuestionService(IUnitOfWork unitOfWork, ISlideServiceClient slideServiceClient)
+        public QuestionService(
+            IUnitOfWork unitOfWork, 
+            ISlidesServiceHttpClient slidesServiceHttpClient,
+            IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
-            _slideServiceClient = slideServiceClient;
+            _slidesServiceHttpClient = slidesServiceHttpClient;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
-        /// Create a new question with options
+        /// Tạo mới Question với các Options (VALIDATION: TopicId -> Correct answer -> Question type rules)
         /// </summary>
-        public async Task<ApiResponse<QuestionDto>> CreateQuestionAsync(CreateQuestionDto createQuestionDto)
+        public async Task<ApiResponse<QuestionResponseDto>> CreateQuestionAsync(CreateQuestionDto createQuestionDto)
         {
             try
             {
-                // Validate at least one correct answer
-                if (!createQuestionDto.Options.Any(o => o.IsCorrect))
+                // Lấy userId từ JWT token trong HttpContext
+                var user = _httpContextAccessor.HttpContext?.User;
+                if (user == null || !JwtHelper.TryGetUserId(user, out var userId))
                 {
-                    return ApiResponse<QuestionDto>.ErrorResult("Phải có ít nhất một đáp án đúng");
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Không xác thực được user từ token");
                 }
 
-                // Validate Topic existence by calling Slide Service via typed client
-                var topicResponse = await _slideServiceClient.GetTopicByIdAsync(createQuestionDto.TopicId);
+                // Lấy authToken từ Request header
+                var authToken = _httpContextAccessor.HttpContext?.Request != null 
+                    ? JwtHelper.GetAuthToken(_httpContextAccessor.HttpContext.Request) 
+                    : null;
 
-                if (topicResponse is null)
+                //Kiểm tra TopicId có tồn tại trong SlidesService không
+                // Gọi API GetTopicById của SlidesService
+                var isTopicExists = await _slidesServiceHttpClient.GetTopicByIdAsync(createQuestionDto.TopicId, authToken);
+                if (!isTopicExists)
                 {
-                    return ApiResponse<QuestionDto>.ErrorResult("Không nhận được phản hồi từ Slide Service");
+                    return ApiResponse<QuestionResponseDto>.ErrorResult($"TopicId {createQuestionDto.TopicId} không tồn tại trong hệ thống");
                 }
 
-                if (!topicResponse.Success || topicResponse.Data is null)
+                // Phải có ít nhất 1 đáp án đúng (trừ Essay)
+                if (createQuestionDto.QuestionType != RoboChemistConstants.QUESTION_TYPE_ESSAY && 
+                    !createQuestionDto.Options.Any(o => o.IsCorrect))
                 {
-                    var msg = string.IsNullOrWhiteSpace(topicResponse.Message)
-                        ? $"Topic không tồn tại: {createQuestionDto.TopicId}"
-                        : topicResponse.Message;
-                    return ApiResponse<QuestionDto>.ErrorResult(msg);
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Phải có ít nhất một đáp án đúng");
                 }
 
-                // Create Question entity
+                // Với TrueFalse thì chỉ được có đúng 2 options
+                if (createQuestionDto.QuestionType == RoboChemistConstants.QUESTION_TYPE_TRUE_FALSE && 
+                    createQuestionDto.Options.Count != 2)
+                {
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Câu hỏi True/False phải có đúng 2 đáp án");
+                }
+
+                // Với MultipleChoice thì phải có từ 2-6 options
+                if (createQuestionDto.QuestionType == RoboChemistConstants.QUESTION_TYPE_MULTIPLE_CHOICE)
+                {
+                    if (createQuestionDto.Options.Count < RoboChemistConstants.MIN_OPTIONS_COUNT ||
+                        createQuestionDto.Options.Count > RoboChemistConstants.MAX_OPTIONS_COUNT)
+                    {
+                        return ApiResponse<QuestionResponseDto>.ErrorResult(
+                            $"Câu hỏi Multiple Choice phải có từ {RoboChemistConstants.MIN_OPTIONS_COUNT} đến {RoboChemistConstants.MAX_OPTIONS_COUNT} đáp án");
+                    }
+                }
+
+                // Với Essay thì không cần options (hoặc có thể có options làm gợi ý)
+                if (createQuestionDto.QuestionType == RoboChemistConstants.QUESTION_TYPE_ESSAY && 
+                    createQuestionDto.Options.Count > 0)
+                {
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Câu hỏi Tự luận (Essay) không cần đáp án");
+                }
+
+                // Tạo Question entity
                 var question = new Question
                 {
                     QuestionId = Guid.NewGuid(),
-                    TopicId = (int)createQuestionDto.TopicId.GetHashCode(), // TODO: Fix TopicId type mismatch
+                    TopicId = createQuestionDto.TopicId,
                     QuestionType = createQuestionDto.QuestionType,
-                    Question1 = createQuestionDto.QuestionText,
+                    QuestionText = createQuestionDto.QuestionText,  
                     Explanation = createQuestionDto.Explanation,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = null // TODO: Get from authenticated user
+                    IsActive = true, // bool: true = active
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = userId
                 };
 
-                // Create Options
+                // Tạo Options
                 var options = createQuestionDto.Options.Select(opt => new Option
                 {
                     OptionId = Guid.NewGuid(),
                     QuestionId = question.QuestionId,
                     Answer = opt.Answer,
-                    IsCorrect = opt.IsCorrect,
-                    CreatedAt = DateTime.UtcNow,
-                    CreatedBy = null // TODO: Get from authenticated user
+                    IsCorrect = opt.IsCorrect, // bool: true/false
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = userId
                 }).ToList();
 
                 question.Options = options;
 
-                // Save to database
+                // Lưu vào database
                 await _unitOfWork.Questions.CreateAsync(question);
-                await _unitOfWork.SaveChangesAsync();
 
-                // Return DTO
-                var result = new QuestionDto
+                var response = new QuestionResponseDto
                 {
-                    Id = question.QuestionId,
-                    TopicId = createQuestionDto.TopicId,
-                    TopicName = topicResponse.Data.Name,
+                    QuestionId = question.QuestionId,
+                    TopicId = question.TopicId,
                     QuestionType = question.QuestionType,
-                    QuestionText = question.Question1,
+                    QuestionText = question.QuestionText,
                     Explanation = question.Explanation,
-                    IsActive = question.IsActive ?? true,
+                    Status = question.IsActive == true ? RoboChemistConstants.QUESTION_STATUS_ACTIVE : RoboChemistConstants.QUESTION_STATUS_INACTIVE,
                     CreatedAt = question.CreatedAt,
-                    Options = options.Select(o => new OptionDto
+                    CreatedBy = question.CreatedBy,
+                    Options = options.Select(o => new OptionResponseDto
                     {
-                        Id = o.OptionId,
+                        OptionId = o.OptionId,
                         Answer = o.Answer,
-                        IsCorrect = o.IsCorrect ?? false
+                        IsCorrect = o.IsCorrect ?? false, // bool: true/false
+                        CreatedAt = o.CreatedAt,
+                        CreatedBy = o.CreatedBy
                     }).ToList()
                 };
 
-                return ApiResponse<QuestionDto>.SuccessResult(result, "Tạo câu hỏi thành công");
-            }
-            catch (HttpRequestException ex)
-            {
-                return ApiResponse<QuestionDto>.ErrorResult($"Lỗi kết nối tới Slide Service: {ex.Message}");
+                return ApiResponse<QuestionResponseDto>.SuccessResult(response, "Tạo câu hỏi thành công");
             }
             catch (Exception ex)
             {
-                return ApiResponse<QuestionDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
+                return ApiResponse<QuestionResponseDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Get a question by ID
+        /// Lấy thông tin Question theo ID (chỉ đọc từ model, không gọi external API)
         /// </summary>
-        public async Task<ApiResponse<QuestionDto>> GetQuestionByIdAsync(Guid id)
+        public async Task<ApiResponse<QuestionResponseDto>> GetQuestionByIdAsync(Guid id)
         {
             try
             {
+                // Lấy Question từ database
                 var question = await _unitOfWork.Questions.GetByIdAsync(id);
 
                 if (question == null)
                 {
-                    return ApiResponse<QuestionDto>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
+                    return ApiResponse<QuestionResponseDto>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
                 }
 
-                // Get topic name from Slide Service
-                var topicResponse = await _slideServiceClient.GetTopicByIdAsync(Guid.NewGuid()); // TODO: Fix TopicId conversion
-                var topicName = topicResponse?.Success == true ? topicResponse.Data?.Name ?? "" : "";
+                // Load Options cho Question
+                var allOptions = await _unitOfWork.Options.GetAllAsync();
+                question.Options = allOptions.Where(o => o.QuestionId == id).ToList();
 
-                var result = new QuestionDto
+                // Map sang ResponseDto (chỉ dùng model, không enrich TopicName)
+                var response = new QuestionResponseDto
                 {
-                    Id = question.QuestionId,
-                    TopicId = Guid.NewGuid(), // TODO: Fix TopicId conversion
-                    TopicName = topicName,
+                    QuestionId = question.QuestionId,
+                    TopicId = question.TopicId,
                     QuestionType = question.QuestionType,
-                    QuestionText = question.Question1,
+                    QuestionText = question.QuestionText,
                     Explanation = question.Explanation,
-                    IsActive = question.IsActive ?? true,
+                    Status = question.IsActive == true ? RoboChemistConstants.QUESTION_STATUS_ACTIVE : RoboChemistConstants.QUESTION_STATUS_INACTIVE,
                     CreatedAt = question.CreatedAt,
-                    UpdatedAt = question.UpdatedAt,
-                    Options = question.Options.Select(o => new OptionDto
+                    CreatedBy = question.CreatedBy,
+
+                    Options = question.Options.Select(o => new OptionResponseDto
                     {
-                        Id = o.OptionId,
+                        OptionId = o.OptionId,
                         Answer = o.Answer,
-                        IsCorrect = o.IsCorrect ?? false
+                        IsCorrect = o.IsCorrect ?? false,
+                        CreatedAt = o.CreatedAt,
+                        CreatedBy = o.CreatedBy
                     }).ToList()
                 };
 
-                return ApiResponse<QuestionDto>.SuccessResult(result);
+                return ApiResponse<QuestionResponseDto>.SuccessResult(response);
             }
             catch (Exception ex)
             {
-                return ApiResponse<QuestionDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
+                return ApiResponse<QuestionResponseDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Get all questions, optionally filtered by topic
+        /// Lấy danh sách Questions với filter (chỉ đọc từ model, không gọi external API)
         /// </summary>
-        public async Task<ApiResponse<List<QuestionDto>>> GetQuestionsAsync(Guid? topicId = null)
+        public async Task<ApiResponse<List<QuestionResponseDto>>> GetQuestionsAsync(Guid? topicId = null, string? status = null)
         {
             try
             {
-                var questions = await _unitOfWork.Questions.GetAllAsync();
+                // Lấy tất cả questions
+                var allQuestions = await _unitOfWork.Questions.GetAllAsync();
 
+                // Filter theo TopicId nếu có (TopicId bây giờ là Guid)
                 if (topicId.HasValue)
                 {
-                    // TODO: Fix TopicId filter when TopicId type is corrected
-                    // questions = questions.Where(q => q.TopicId == topicId.Value).ToList();
+                    allQuestions = allQuestions.Where(q => q.TopicId == topicId.Value).ToList();
                 }
 
-                var result = questions.Select(q => new QuestionDto
+                // Filter theo Status nếu có
+                if (!string.IsNullOrEmpty(status))
                 {
-                    Id = q.QuestionId,
-                    TopicId = Guid.NewGuid(), // TODO: Fix TopicId conversion
-                    TopicName = "", // TODO: Batch fetch topic names
-                    QuestionType = q.QuestionType,
-                    QuestionText = q.Question1,
-                    Explanation = q.Explanation,
-                    IsActive = q.IsActive ?? true,
-                    CreatedAt = q.CreatedAt,
-                    UpdatedAt = q.UpdatedAt,
-                    Options = q.Options.Select(o => new OptionDto
+                    // Validate status value
+                    if (status != RoboChemistConstants.QUESTION_STATUS_ACTIVE && 
+                        status != RoboChemistConstants.QUESTION_STATUS_INACTIVE)
                     {
-                        Id = o.OptionId,
-                        Answer = o.Answer,
-                        IsCorrect = o.IsCorrect ?? false
-                    }).ToList()
-                }).ToList();
+                        return ApiResponse<List<QuestionResponseDto>>.ErrorResult(
+                            $"Status không hợp lệ. Cho phép: {RoboChemistConstants.QUESTION_STATUS_ACTIVE} (Active) hoặc {RoboChemistConstants.QUESTION_STATUS_INACTIVE} (Inactive)");
+                    }
 
-                return ApiResponse<List<QuestionDto>>.SuccessResult(result, $"Lấy danh sách {result.Count} câu hỏi thành công");
+                    bool isActiveFilter = status == RoboChemistConstants.QUESTION_STATUS_ACTIVE;
+                    allQuestions = allQuestions.Where(q => q.IsActive == isActiveFilter).ToList();
+                }
+
+                // Sắp xếp theo CreatedAt giảm dần
+                allQuestions = allQuestions.OrderByDescending(q => q.CreatedAt).ToList();
+
+                // Load Options cho tất cả questions
+                var allOptions = await _unitOfWork.Options.GetAllAsync();
+
+                var response = new List<QuestionResponseDto>();
+                foreach (var question in allQuestions)
+                {
+                    // Load Options
+                    question.Options = allOptions.Where(o => o.QuestionId == question.QuestionId).ToList();
+
+                    // Map sang ResponseDto (chỉ dùng model, không enrich TopicName)
+                    response.Add(new QuestionResponseDto
+                    {
+                        QuestionId = question.QuestionId,
+                        TopicId = question.TopicId,
+                        QuestionType = question.QuestionType,
+                        QuestionText = question.QuestionText,  
+                        Explanation = question.Explanation,
+                        Status = question.IsActive == true ? RoboChemistConstants.QUESTION_STATUS_ACTIVE : RoboChemistConstants.QUESTION_STATUS_INACTIVE,
+                        CreatedAt = question.CreatedAt,
+                        CreatedBy = question.CreatedBy,
+                        Options = question.Options.Select(o => new OptionResponseDto
+                        {
+                            OptionId = o.OptionId,
+                            Answer = o.Answer,
+                            IsCorrect = o.IsCorrect ?? false,
+                            CreatedAt = o.CreatedAt,
+                            CreatedBy = o.CreatedBy
+                        }).ToList()
+                    });
+                }
+
+                return ApiResponse<List<QuestionResponseDto>>.SuccessResult(response, $"Tìm thấy {response.Count} câu hỏi");
             }
             catch (Exception ex)
             {
-                return ApiResponse<List<QuestionDto>>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
+                return ApiResponse<List<QuestionResponseDto>>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Update an existing question
+        /// Cập nhật Question
         /// </summary>
-        public async Task<ApiResponse<QuestionDto>> UpdateQuestionAsync(Guid id, UpdateQuestionDto updateQuestionDto)
+        public async Task<ApiResponse<QuestionResponseDto>> UpdateQuestionAsync(Guid id, UpdateQuestionDto updateQuestionDto)
         {
             try
             {
-                // Validate at least one correct answer
-                if (!updateQuestionDto.Options.Any(o => o.IsCorrect))
+                // Lấy userId từ JWT token trong HttpContext
+                var user = _httpContextAccessor.HttpContext?.User;
+                if (user == null || !JwtHelper.TryGetUserId(user, out var userId))
                 {
-                    return ApiResponse<QuestionDto>.ErrorResult("Phải có ít nhất một đáp án đúng");
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Không xác thực được user từ token");
                 }
 
-                var question = await _unitOfWork.Questions.GetByIdAsync(id);
+                // Lấy authToken từ Request header
+                var authToken = _httpContextAccessor.HttpContext?.Request != null 
+                    ? JwtHelper.GetAuthToken(_httpContextAccessor.HttpContext.Request) 
+                    : null;
 
+                // Kiểm tra Question có tồn tại không
+                var question = await _unitOfWork.Questions.GetByIdAsync(id);
                 if (question == null)
                 {
-                    return ApiResponse<QuestionDto>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
+                    return ApiResponse<QuestionResponseDto>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
                 }
 
-                // Validate Topic exists
-                var topicResponse = await _slideServiceClient.GetTopicByIdAsync(updateQuestionDto.TopicId);
-                if (topicResponse?.Success != true || topicResponse.Data == null)
+                // Kiểm tra TopicId có tồn tại trong SlidesService không
+                // Gọi API GetTopicById của SlidesService
+                var isTopicExists = await _slidesServiceHttpClient.GetTopicByIdAsync(updateQuestionDto.TopicId, authToken);
+                if (!isTopicExists)
                 {
-                    return ApiResponse<QuestionDto>.ErrorResult("Topic không tồn tại");
+                    return ApiResponse<QuestionResponseDto>.ErrorResult($"TopicId {updateQuestionDto.TopicId} không tồn tại trong hệ thống");
                 }
 
-                // Update Question
+                // Phải có ít nhất 1 đáp án đúng (trừ Essay)
+                if (updateQuestionDto.QuestionType != RoboChemistConstants.QUESTION_TYPE_ESSAY && 
+                    !updateQuestionDto.Options.Any(o => o.IsCorrect))
+                {
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Phải có ít nhất một đáp án đúng");
+                }
+
+                // Với TrueFalse thì chỉ được có đúng 2 options
+                if (updateQuestionDto.QuestionType == RoboChemistConstants.QUESTION_TYPE_TRUE_FALSE && 
+                    updateQuestionDto.Options.Count != 2)
+                {
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Câu hỏi True/False phải có đúng 2 đáp án");
+                }
+
+                // Với MultipleChoice thì phải có từ 2-6 options
+                if (updateQuestionDto.QuestionType == RoboChemistConstants.QUESTION_TYPE_MULTIPLE_CHOICE)
+                {
+                    if (updateQuestionDto.Options.Count < RoboChemistConstants.MIN_OPTIONS_COUNT ||
+                        updateQuestionDto.Options.Count > RoboChemistConstants.MAX_OPTIONS_COUNT)
+                    {
+                        return ApiResponse<QuestionResponseDto>.ErrorResult(
+                            $"Câu hỏi Multiple Choice phải có từ {RoboChemistConstants.MIN_OPTIONS_COUNT} đến {RoboChemistConstants.MAX_OPTIONS_COUNT} đáp án");
+                    }
+                }
+
+                // Với Essay thì không cần options
+                if (updateQuestionDto.QuestionType == RoboChemistConstants.QUESTION_TYPE_ESSAY && 
+                    updateQuestionDto.Options.Count > 0)
+                {
+                    return ApiResponse<QuestionResponseDto>.ErrorResult("Câu hỏi Tự luận (Essay) không cần đáp án");
+                }
+
+                // Cập nhật Question
+                question.TopicId = updateQuestionDto.TopicId;
                 question.QuestionType = updateQuestionDto.QuestionType;
-                question.Question1 = updateQuestionDto.QuestionText;
+                question.QuestionText = updateQuestionDto.QuestionText;  
                 question.Explanation = updateQuestionDto.Explanation;
-                question.IsActive = updateQuestionDto.IsActive;
-                question.UpdatedAt = DateTime.UtcNow;
-                question.UpdatedBy = null; // TODO: Get from authenticated user
+                question.IsActive = updateQuestionDto.Status == RoboChemistConstants.QUESTION_STATUS_ACTIVE; // Convert string "1"/"0" -> bool
 
-                // Remove old options
-                foreach (var option in question.Options.ToList())
+                // Xóa tất cả Options cũ
+                var allOptions = await _unitOfWork.Options.GetAllAsync();
+                var oldOptions = allOptions.Where(o => o.QuestionId == id).ToList();
+                foreach (var oldOption in oldOptions)
                 {
-                    await _unitOfWork.Options.RemoveAsync(option);
+                    await _unitOfWork.Options.RemoveAsync(oldOption);
                 }
 
-                // Add new options
+                // Tạo Options mới
                 var newOptions = updateQuestionDto.Options.Select(opt => new Option
                 {
                     OptionId = Guid.NewGuid(),
                     QuestionId = question.QuestionId,
                     Answer = opt.Answer,
                     IsCorrect = opt.IsCorrect,
-                    UpdatedAt = DateTime.UtcNow,
-                    UpdatedBy = null
+                    CreatedAt = DateTime.Now,
+                    CreatedBy = userId
                 }).ToList();
 
                 question.Options = newOptions;
 
                 await _unitOfWork.Questions.UpdateAsync(question);
-                await _unitOfWork.SaveChangesAsync();
 
-                var result = new QuestionDto
+                // Map sang ResponseDto (chỉ dùng model, không enrich TopicName)
+                var response = new QuestionResponseDto
                 {
-                    Id = question.QuestionId,
-                    TopicId = updateQuestionDto.TopicId,
-                    TopicName = topicResponse.Data.Name,
+                    QuestionId = question.QuestionId,
+                    TopicId = question.TopicId,
                     QuestionType = question.QuestionType,
-                    QuestionText = question.Question1,
+                    QuestionText = question.QuestionText,  
                     Explanation = question.Explanation,
-                    IsActive = question.IsActive ?? true,
-                    UpdatedAt = question.UpdatedAt,
-                    Options = newOptions.Select(o => new OptionDto
+                    Status = question.IsActive == true ? RoboChemistConstants.QUESTION_STATUS_ACTIVE : RoboChemistConstants.QUESTION_STATUS_INACTIVE,
+                    CreatedAt = question.CreatedAt,
+                    CreatedBy = question.CreatedBy,
+                    Options = newOptions.Select(o => new OptionResponseDto
                     {
-                        Id = o.OptionId,
+                        OptionId = o.OptionId,
                         Answer = o.Answer,
-                        IsCorrect = o.IsCorrect ?? false
+                        IsCorrect = o.IsCorrect ?? false,
+                        CreatedAt = o.CreatedAt,
+                        CreatedBy = o.CreatedBy
                     }).ToList()
                 };
 
-                return ApiResponse<QuestionDto>.SuccessResult(result, "Cập nhật câu hỏi thành công");
+                return ApiResponse<QuestionResponseDto>.SuccessResult(response, "Cập nhật câu hỏi thành công");
             }
             catch (Exception ex)
             {
-                return ApiResponse<QuestionDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
+                return ApiResponse<QuestionResponseDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Delete a question (soft delete)
+        /// Xóa Question (soft delete - set IsActive = false)
         /// </summary>
         public async Task<ApiResponse<bool>> DeleteQuestionAsync(Guid id)
         {
             try
             {
-                var question = await _unitOfWork.Questions.GetByIdAsync(id);
+                // Lấy userId từ JWT token trong HttpContext
+                var user = _httpContextAccessor.HttpContext?.User;
+                if (user == null || !JwtHelper.TryGetUserId(user, out var userId))
+                {
+                    return ApiResponse<bool>.ErrorResult("Không xác thực được user từ token");
+                }
 
+                // VALIDATION: Kiểm tra Question có tồn tại không
+                var question = await _unitOfWork.Questions.GetByIdAsync(id);
                 if (question == null)
                 {
                     return ApiResponse<bool>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
                 }
 
-                // Soft delete
+                // Soft delete - set IsActive = false
                 question.IsActive = false;
-                question.UpdatedAt = DateTime.UtcNow;
-                question.UpdatedBy = null; // TODO: Get from authenticated user
 
                 await _unitOfWork.Questions.UpdateAsync(question);
-                await _unitOfWork.SaveChangesAsync();
 
                 return ApiResponse<bool>.SuccessResult(true, "Xóa câu hỏi thành công");
             }
