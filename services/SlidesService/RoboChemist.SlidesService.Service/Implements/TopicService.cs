@@ -82,7 +82,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 {
                     Id = topic.Id,
                     GradeId = topic.GradeId,
-                    GradeName = topic.Grade.GradeName,
+                    GradeName = topic.Grade?.GradeName ?? "N/A",
                     SortOrder = topic.SortOrder ?? 0,
                     Name = topic.TopicName,
                     Description = topic.Description ?? string.Empty

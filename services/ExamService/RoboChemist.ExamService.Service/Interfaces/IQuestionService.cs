@@ -1,47 +1,51 @@
 using RoboChemist.Shared.DTOs.Common;
-using static RoboChemist.Shared.DTOs.QuestionDTOs.QuestionDTOs;
+using static RoboChemist.Shared.DTOs.ExamServiceDTOs.QuestionDTOs;
 
 namespace RoboChemist.ExamService.Service.Interfaces
 {
     /// <summary>
-    /// Interface for Question service operations
+    /// Interface cho Question Service - Quản lý câu hỏi
     /// </summary>
     public interface IQuestionService
     {
         /// <summary>
-        /// Create a new question with options
+        /// Tạo mới Question với các Options
         /// </summary>
-        /// <param name="createQuestionDto">Question creation details</param>
-        /// <returns>Created question details</returns>
-        Task<ApiResponse<QuestionDto>> CreateQuestionAsync(CreateQuestionDto createQuestionDto);
+        /// <param name="createQuestionDto">Thông tin câu hỏi cần tạo</param>
+        /// <returns>Thông tin câu hỏi đã tạo</returns>
+        /// <remarks>UserId và AuthToken được lấy tự động từ HttpContext</remarks>
+        Task<ApiResponse<QuestionResponseDto>> CreateQuestionAsync(CreateQuestionDto createQuestionDto);
 
         /// <summary>
-        /// Get a question by ID
+        /// Lấy thông tin Question theo ID
         /// </summary>
-        /// <param name="id">Question unique identifier</param>
-        /// <returns>Question details</returns>
-        Task<ApiResponse<QuestionDto>> GetQuestionByIdAsync(Guid id);
+        /// <param name="id">ID của Question</param>
+        /// <returns>Thông tin chi tiết Question</returns>
+        Task<ApiResponse<QuestionResponseDto>> GetQuestionByIdAsync(Guid id);
 
         /// <summary>
-        /// Get all questions, optionally filtered by topic
+        /// Lấy danh sách Questions, có thể lọc theo TopicId và Status
         /// </summary>
-        /// <param name="topicId">Optional: Filter by topic ID</param>
-        /// <returns>List of questions</returns>
-        Task<ApiResponse<List<QuestionDto>>> GetQuestionsAsync(Guid? topicId = null);
+        /// <param name="topicId">Optional: Lọc theo TopicId (Guid)</param>
+        /// <param name="status">Optional: Lọc theo Status ("0" hoặc "1")</param>
+        /// <returns>Danh sách Questions</returns>
+        Task<ApiResponse<List<QuestionResponseDto>>> GetQuestionsAsync(Guid? topicId = null, string? status = null);
 
         /// <summary>
-        /// Update an existing question
+        /// Cập nhật Question
         /// </summary>
-        /// <param name="id">Question ID to update</param>
-        /// <param name="updateQuestionDto">Updated question details</param>
-        /// <returns>Updated question details</returns>
-        Task<ApiResponse<QuestionDto>> UpdateQuestionAsync(Guid id, UpdateQuestionDto updateQuestionDto);
+        /// <param name="id">ID của Question cần cập nhật</param>
+        /// <param name="updateQuestionDto">Thông tin cập nhật</param>
+        /// <returns>Thông tin Question sau khi cập nhật</returns>
+        /// <remarks>UserId và AuthToken được lấy tự động từ HttpContext</remarks>
+        Task<ApiResponse<QuestionResponseDto>> UpdateQuestionAsync(Guid id, UpdateQuestionDto updateQuestionDto);
 
         /// <summary>
-        /// Delete a question (soft delete by setting IsActive = false)
+        /// Xóa Question (soft delete - set Status = "0")
         /// </summary>
-        /// <param name="id">Question ID to delete</param>
-        /// <returns>Success status</returns>
+        /// <param name="id">ID của Question cần xóa</param>
+        /// <returns>Kết quả xóa</returns>
+        /// <remarks>UserId được lấy tự động từ HttpContext</remarks>
         Task<ApiResponse<bool>> DeleteQuestionAsync(Guid id);
     }
 }

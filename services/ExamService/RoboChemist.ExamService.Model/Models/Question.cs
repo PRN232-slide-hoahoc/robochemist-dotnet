@@ -7,21 +7,17 @@ public partial class Question
 {
     public Guid QuestionId { get; set; }
 
-    public int TopicId { get; set; }
+    public Guid TopicId { get; set; }  // NOT NULL - required field
 
     public string QuestionType { get; set; } = null!;
 
-    public string Question1 { get; set; } = null!;
+    public string QuestionText { get; set; } = null!;
 
     public string? Explanation { get; set; }
 
     public Guid? CreatedBy { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
-    public Guid? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
 
     public bool? IsActive { get; set; }
 

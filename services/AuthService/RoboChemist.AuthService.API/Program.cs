@@ -2,12 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
-using DotNetEnv;
 using RoboChemist.AuthService.Model.Data;
-using RoboChemist.AuthService.API;
 using RoboChemist.AuthService.Repository;
 using RoboChemist.AuthService.Services;
+using System.Text;
 
 namespace RoboChemist.AuthService.API
 {
@@ -17,7 +15,7 @@ namespace RoboChemist.AuthService.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // ✅ Load .env từ thư mục gốc solution
+            //  Load .env từ thư mục gốc solution
             var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".."));
             var envPath = Path.Combine(solutionRoot, ".env");
             Console.WriteLine($"[DEBUG] Looking for .env at: {envPath}");
@@ -25,7 +23,7 @@ namespace RoboChemist.AuthService.API
             DotNetEnv.Env.Load(envPath);
             builder.Configuration.AddEnvironmentVariables();
 
-            // ✅ Lấy connection string từ biến môi trường AUTH_DB
+            //  Lấy connection string từ biến môi trường AUTH_DB
             var connectionString = Environment.GetEnvironmentVariable("USER_DB");
             Console.WriteLine($"[DEBUG] AUTH_DB: {connectionString}");
 
@@ -34,19 +32,15 @@ namespace RoboChemist.AuthService.API
                 throw new Exception("❌ Không tìm thấy connection string! Hãy set biến AUTH_DB trong file .env hoặc thêm vào appsettings.json");
             }
 
-            // ✅ Add DbContext
+            //  Add DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            // ---------------------------------------------------------
-            // 🔹 3. Cấu hình Repository & Services
-            // ---------------------------------------------------------
+            // Cấu hình Repository & Services
             builder.Services.AddScoped<UserRepository>();
             builder.Services.AddScoped<UserService>();
 
-            // ---------------------------------------------------------
-            // 🔹 4. Load JWT settings từ appsettings.json
-            // ---------------------------------------------------------
+            // Load JWT settings từ appsettings.json
             builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
             var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 
@@ -55,9 +49,7 @@ namespace RoboChemist.AuthService.API
                 throw new Exception("❌ Không tìm thấy thông tin JWT trong appsettings.json!");
             }
 
-            // ---------------------------------------------------------
-            // 🔹 5. Cấu hình JWT Authentication (không hardcode)
-            // ---------------------------------------------------------
+            // Cấu hình JWT Authentication (không hardcode)
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
 
             builder.Services.AddAuthentication(options =>
@@ -82,9 +74,7 @@ namespace RoboChemist.AuthService.API
 
             builder.Services.AddAuthorization();
 
-            // ---------------------------------------------------------
-            // 🔹 6. Add Controllers, Swagger & CORS
-            // ---------------------------------------------------------
+            // Add Controllers, Swagger & CORS
             builder.Services.AddControllers();
 
             builder.Services.AddEndpointsApiExplorer();
@@ -133,9 +123,7 @@ namespace RoboChemist.AuthService.API
                 });
             });
 
-            // ---------------------------------------------------------
-            // 🔹 7. Build app
-            // ---------------------------------------------------------
+            // Build app
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())

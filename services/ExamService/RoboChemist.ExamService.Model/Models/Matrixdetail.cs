@@ -9,7 +9,7 @@ public partial class Matrixdetail
 
     public Guid MatrixId { get; set; }
 
-    public int TopicId { get; set; }
+    public Guid TopicId { get; set; }  // NOT NULL - required field
 
     public string QuestionType { get; set; } = null!;
 
@@ -18,10 +18,6 @@ public partial class Matrixdetail
     public Guid? CreatedBy { get; set; }
 
     public DateTime? CreatedAt { get; set; }
-
-    public Guid? UpdatedBy { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
 
     public bool? IsActive { get; set; }
 

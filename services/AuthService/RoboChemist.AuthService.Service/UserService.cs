@@ -13,15 +13,23 @@ namespace RoboChemist.AuthService.Services
     {
         private readonly UserRepository _userRepository;
 
-        // Hardcode JWT settings
-        private const string SecretKey = "YourSuperSecretKeyMinimum32CharactersLong!@#$%^&*()";
-        private const string Issuer = "RoboChemist.AuthService";
-        private const string Audience = "RoboChemist.Client";
+        // JWT settings - ĐỌC TỪ ENVIRONMENT VARIABLES
+        private readonly string SecretKey;
+        private readonly string Issuer;
+        private readonly string Audience;
         private const int ExpirationMinutes = 60;
 
         public UserService(UserRepository userRepository)
         {
             _userRepository = userRepository;
+            
+            // Đọc từ biến môi trường (.env)
+            SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET") 
+                ?? throw new Exception("JWT_SECRET not found in environment variables!");
+            Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+                ?? throw new Exception("JWT_ISSUER not found in environment variables!");
+            Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+                ?? throw new Exception("JWT_AUDIENCE not found in environment variables!");
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -122,6 +130,7 @@ namespace RoboChemist.AuthService.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.Name, user.Fullname),
+                new Claim(ClaimTypes.Role, user.Role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
