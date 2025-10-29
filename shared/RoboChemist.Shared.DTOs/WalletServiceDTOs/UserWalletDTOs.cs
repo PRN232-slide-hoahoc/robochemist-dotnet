@@ -12,8 +12,16 @@
         public class UpdateBalanceRequest
         {
             public Guid WalletId { get; set; }
-            public string TypeUpdate { get; set; }
+            public string TypeUpdate { get; set; } = string.Empty;
             public decimal Amount { get; set; }
+        }
+
+        public class WalletBalanceDto
+        {
+            public Guid UserId { get; set; }
+            public Guid WalletId { get; set; }
+            public decimal Balance { get; set; }
+            public DateTime? UpdateAt { get; set; }
         }
     }
 }
