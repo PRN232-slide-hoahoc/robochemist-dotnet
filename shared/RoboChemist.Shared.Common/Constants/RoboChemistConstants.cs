@@ -2,8 +2,7 @@
 {
     public static class RoboChemistConstants
     {
-        #region Slide Request Status
-
+        #region Slide Service Constants
         /// <summary>
         /// Slide Request Status: Pending
         /// </summary>
@@ -19,10 +18,6 @@
         /// </summary>
         public const string SLIDEREQ_STATUS_FAILED = "Thất bại";
 
-        #endregion
-
-        #region Generated Slide Status
-
         /// <summary>
         /// Generated Slide Status: JSON Data Created
         /// </summary>
@@ -37,39 +32,6 @@
         /// Generated Slide Status: Completed
         /// </summary>
         public const string GENSLIDE_STATUS_COMPLETED = "Hoàn thành";
-
-        #endregion
-
-        #region Order Status
-
-        /// <summary>
-        /// Order Status: Pending - Order created but not yet paid
-        /// </summary>
-        public const string ORDER_STATUS_PENDING = "Chờ thanh toán";
-
-        /// <summary>
-        /// Order Status: Processing - Payment received, order being processed
-        /// </summary>
-        public const string ORDER_STATUS_PROCESSING = "Đang xử lý";
-
-        /// <summary>
-        /// Order Status: Completed - Order successfully completed and delivered
-        /// </summary>
-        public const string ORDER_STATUS_COMPLETED = "Hoàn thành";
-
-        /// <summary>
-        /// Order Status: Cancelled - Order cancelled by user or system
-        /// </summary>
-        public const string ORDER_STATUS_CANCELLED = "Đã hủy";
-
-        /// <summary>
-        /// Order Status: Failed - Order payment or processing failed
-        /// </summary>
-        public const string ORDER_STATUS_FAILED = "Thất bại";
-
-        #endregion
-
-        #region File Formats
 
         /// <summary>
         /// File format: PPTX
@@ -191,7 +153,8 @@
         public const string ROLE_TEACHER = "3";
         #endregion
 
-        #region Wallet
+        #region Wallet Service Constants
+
         /// <summary>
         /// Tăng số dư ví
         /// </summary>
@@ -201,23 +164,21 @@
         /// Giảm số dư ví
         /// </summary>
         public const string UPDATE_BALANCE_TYPE_SUBTRACT = "S";
-        #endregion
 
-        #region Transaction
         /// <summary>
         /// Transaction Status: Pending
         /// </summary>
-        public const string  TRANSACTION_STATUS_PENDING = "Đợi xử lí";
+        public const string TRANSACTION_STATUS_PENDING = "Đợi xử lí";
 
         /// <summary>
         /// Transaction Status: Completed
         /// </summary>
-        public const string  TRANSACTION_STATUS_COMPLETED = "Hoàn thành";
+        public const string TRANSACTION_STATUS_COMPLETED = "Hoàn thành";
 
         /// <summary>
         /// Transaction Status: Failed
         /// </summary>
-        public const string  TRANSACTION_STATUS_FAILED = "Thất bại";
+        public const string TRANSACTION_STATUS_FAILED = "Thất bại";
 
         /// <summary>
         /// Transacton through VNPay
@@ -241,6 +202,35 @@
         /// Transaction Type: Refund
         /// </summary>
         public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
+        #endregion
+
+        #region Order Status
+
+        /// <summary>
+        /// Order Status: Pending - Order created but not yet paid
+        /// </summary>
+        public const string ORDER_STATUS_PENDING = "Chờ thanh toán";
+
+        /// <summary>
+        /// Order Status: Processing - Payment received, order being processed
+        /// </summary>
+        public const string ORDER_STATUS_PROCESSING = "Đang xử lý";
+
+        /// <summary>
+        /// Order Status: Completed - Order successfully completed and delivered
+        /// </summary>
+        public const string ORDER_STATUS_COMPLETED = "Hoàn thành";
+
+        /// <summary>
+        /// Order Status: Cancelled - Order cancelled by user or system
+        /// </summary>
+        public const string ORDER_STATUS_CANCELLED = "Đã hủy";
+
+        /// <summary>
+        /// Order Status: Failed - Order payment or processing failed
+        /// </summary>
+        public const string ORDER_STATUS_FAILED = "Thất bại";
+
         #endregion
     }
 }

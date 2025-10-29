@@ -3,6 +3,7 @@ using RoboChemist.Shared.Common.GenericRepositories;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
 using RoboChemist.WalletService.Model.Entities;
 using RoboChemist.WalletService.Repository.Interfaces;
+using static RoboChemist.Shared.Common.Constants.RoboChemistConstants;
 
 namespace RoboChemist.WalletService.Repository.Implements
 {
@@ -11,11 +12,7 @@ namespace RoboChemist.WalletService.Repository.Implements
         public WalletTransactionRepository(DbContext context) : base(context)
         {
         }
-        /// <summary>
-        /// Get transaction history for a specific user
-        /// </summary>
-        /// <param name="userId"></param>
-        /// <returns></returns>
+
         public async Task<List<WalletTransactionDto>> GetTransactionHistoryAsync(Guid userId)
         {
             List<WalletTransactionDto> transactionHistory = await _dbSet
@@ -38,6 +35,21 @@ namespace RoboChemist.WalletService.Repository.Implements
                 .ToListAsync();
 
             return transactionHistory;
+        }
+
+        public async Task<List<WalletTransaction>> GetByReferenceIdAsync(Guid referenceId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(t => t.ReferenceId == referenceId)
+                .ToListAsync();
+        }
+
+        public async Task<WalletTransaction?> GetPaymentByReferenceIdAsync(Guid referenceId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.ReferenceId == referenceId && t.TransactionType == TRANSACTION_TYPE_PAYMENT);
         }
     }
 }

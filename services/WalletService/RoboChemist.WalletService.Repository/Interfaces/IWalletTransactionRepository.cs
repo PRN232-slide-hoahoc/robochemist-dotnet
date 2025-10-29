@@ -7,5 +7,7 @@ namespace RoboChemist.WalletService.Repository.Interfaces
     public interface IWalletTransactionRepository : IGenericRepository<WalletTransaction>
     {
         Task<List<WalletTransactionDto>> GetTransactionHistoryAsync(Guid userId);
+        Task<List<WalletTransaction>> GetByReferenceIdAsync(Guid referenceId);
+        Task<WalletTransaction?> GetPaymentByReferenceIdAsync(Guid referenceId);
     }
 }
