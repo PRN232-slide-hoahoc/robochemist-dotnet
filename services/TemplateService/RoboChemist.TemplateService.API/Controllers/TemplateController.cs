@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Model.Exceptions;
 using RoboChemist.TemplateService.Service.Interfaces;
@@ -134,18 +136,31 @@ public class TemplateController : ControllerBase
     /// <returns>The upload result with template details</returns>
     /// <response code="201">Template successfully uploaded and created</response>
     /// <response code="400">Invalid request or file validation failed</response>
+    /// <response code="401">Unauthorized - valid JWT token required</response>
     /// <response code="500">Internal server error occurred</response>
     /// <remarks>
     /// Supported file formats: .pptx, .ppt
     /// Maximum file size: 50 MB
+    /// Requires authentication - JWT token must be provided
     /// </remarks>
     [HttpPost("upload")]
+    [Authorize]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<UploadTemplateResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<UploadTemplateResponse>>> UploadTemplate([FromForm] UploadTemplateRequest request)
     {
+        // Extract userId from JWT token
+        if (!JwtHelper.TryGetUserId(User, out Guid userId))
+        {
+            _logger.LogWarning("Upload attempt with invalid user token");
+            throw new BadRequestException("Invalid user token");
+        }
+
+        _logger.LogInformation("User {UserId} attempting to upload template: {FileName}", userId, request.File?.FileName);
+
         if (request.File == null || request.File.Length == 0)
             throw new BadRequestException("File is required");
 
@@ -161,7 +176,7 @@ public class TemplateController : ControllerBase
         using var stream = request.File.OpenReadStream();
         var result = await _templateService.UploadTemplateAsync(stream, request.File.FileName, request);
 
-        _logger.LogInformation("Template uploaded successfully: {TemplateId}", result.TemplateId);
+        _logger.LogInformation("Template uploaded successfully by user {UserId}: {TemplateId}", userId, result.TemplateId);
 
         var response = ApiResponse<UploadTemplateResponse>.SuccessResult(
             result,

@@ -1,10 +1,15 @@
 using System.Reflection;
+using System.Text;
 using Amazon.Runtime;
 using Amazon.S3;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using RoboChemist.TemplateService.API.Filters;
 using RoboChemist.TemplateService.API.Middleware;
 using RoboChemist.TemplateService.Model.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".."));
@@ -21,6 +26,72 @@ else
     Console.WriteLine("WARNING: .env file not found!");
 }
 builder.Configuration.AddEnvironmentVariables();
+
+// JWT Authentication Configuration - ĐỌC TỪ .ENV
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+    ?? throw new Exception("JWT_SECRET not found in .env!");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+    ?? throw new Exception("JWT_ISSUER not found in .env!");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+    ?? throw new Exception("JWT_AUDIENCE not found in .env!");
+
+Console.WriteLine($"[JWT] Secret loaded: {jwtSecret.Substring(0, 10)}...");
+Console.WriteLine($"[JWT] Issuer: {jwtIssuer}");
+Console.WriteLine($"[JWT] Audience: {jwtAudience}");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.Zero 
+    };
+
+    // Logging cho development
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"[JWT] Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"[JWT] Token validated for user: {context.Principal?.Identity?.Name}");
+            return Task.CompletedTask;
+        },
+        OnMessageReceived = context =>
+        {
+            var token = context.Token;
+            if (!string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine($"[JWT] Token received: {token.Substring(0, Math.Min(20, token.Length))}...");
+            }
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"[JWT] Challenge triggered: {context.Error}, {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Add HttpContextAccessor for accessing user context in services
+builder.Services.AddHttpContextAccessor();
 
 // Configure CORS
 var allowedOriginsString = builder.Configuration["ALLOWED_ORIGINS"];
@@ -48,11 +119,38 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Template Service API",
         Version = "v1",
         Description = "API quản lý templates - Upload, Download, và quản lý file PowerPoint"
+    });
+
+    // Thêm JWT Security Definition vào Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n" +
+                      "Nhập 'Bearer' [space] và sau đó nhập token của bạn.\r\n\r\n" +
+                      "Ví dụ: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 
     // Enable XML comments for Swagger documentation
@@ -61,7 +159,7 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 
     // Configure file upload support
-    c.MapType<IFormFile>(() => new Microsoft.OpenApi.Models.OpenApiSchema
+    c.MapType<IFormFile>(() => new OpenApiSchema
     {
         Type = "string",
         Format = "binary"
@@ -143,8 +241,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// 5. Authorization
+// 5. Authentication (MUST be before Authorization)
+app.UseAuthentication();
+
+// 6. Authorization
 app.UseAuthorization();
+
 app.MapControllers();
 
 
