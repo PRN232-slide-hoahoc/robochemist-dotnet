@@ -17,6 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
     <ProjectReference Include="..\RoboChemist.TemplateService.Model\RoboChemist.TemplateService.Model.csproj" />
     <ProjectReference Include="..\RoboChemist.TemplateService.Service\RoboChemist.TemplateService.Service.csproj" />
     <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.Common\RoboChemist.Shared.Common.csproj" />
   </ItemGroup>
 
 </Project>
