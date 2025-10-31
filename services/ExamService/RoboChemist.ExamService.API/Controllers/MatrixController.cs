@@ -10,7 +10,7 @@ namespace RoboChemist.ExamService.API.Controllers
     /// <summary>
     /// Controller quản lý ma trận đề thi
     /// </summary>
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/matrices")]
     [ApiController]
     [Authorize] // Yêu cầu authentication cho tất cả endpoints
     public class MatrixController : ControllerBase

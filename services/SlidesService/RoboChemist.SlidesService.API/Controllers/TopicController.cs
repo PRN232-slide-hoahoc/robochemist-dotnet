@@ -5,7 +5,7 @@ using static RoboChemist.Shared.DTOs.TopicDTOs.TopicDTOs;
 
 namespace RoboChemist.SlidesService.API.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/topics")]
     [ApiController]
     public class TopicController : ControllerBase
     {

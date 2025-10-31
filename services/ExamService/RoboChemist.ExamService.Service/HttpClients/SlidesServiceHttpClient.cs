@@ -26,33 +26,19 @@ namespace RoboChemist.ExamService.Service.HttpClients
             {
                 var httpClient = _httpClientFactory.CreateClient("ApiGateway");
                 
-                // Thêm Authorization header nếu có token
                 if (!string.IsNullOrEmpty(authToken))
                 {
                     httpClient.DefaultRequestHeaders.Authorization = 
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
                 
-                // Gọi API GetTopicById qua ApiGateway
-                // Gateway route: /slides/v1/Topic/{id} -> SlidesService
-                var url = $"/slides/v1/Topic/{topicId}";
-                Console.WriteLine($"[HTTP] Calling SlidesService via Gateway: {httpClient.BaseAddress}{url}");
-                
+                var url = $"/slides/v1/topics/{topicId}";
                 var response = await httpClient.GetAsync(url);
                 
-                Console.WriteLine($"[HTTP] Response: {response.StatusCode}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[HTTP] Error content: {errorContent}");
-                }
-                
-                // Trả về true nếu status code là 2xx (thành công)
                 return response.IsSuccessStatusCode;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"[HTTP ERROR] Failed to call SlidesService: {ex.Message}");
                 return false;
             }
         }
@@ -72,13 +58,11 @@ namespace RoboChemist.ExamService.Service.HttpClients
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
 
-                var url = $"/slides/v1/Topic/{topicId}";
-                Console.WriteLine($"[HTTP] Calling SlidesService via Gateway for Topic DTO: {httpClient.BaseAddress}{url}");
-
+                var url = $"/slides/v1/topics/{topicId}";
                 var response = await httpClient.GetAsync(url);
+                
                 if (!response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"[HTTP] GetTopicAsync returned status: {response.StatusCode}");
                     return null;
                 }
 
@@ -86,9 +70,8 @@ namespace RoboChemist.ExamService.Service.HttpClients
                 var apiResponse = System.Text.Json.JsonSerializer.Deserialize<RoboChemist.Shared.DTOs.Common.ApiResponse<RoboChemist.Shared.DTOs.TopicDTOs.TopicDTOs.TopicDto>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return apiResponse?.Data;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"[HTTP ERROR] GetTopicAsync failed: {ex.Message}");
                 return null;
             }
         }

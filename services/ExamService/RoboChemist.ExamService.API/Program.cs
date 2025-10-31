@@ -138,6 +138,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // HttpClients - Gọi các service khác qua ApiGateway
 builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
+builder.Services.AddScoped<IWalletServiceHttpClient, WalletServiceHttpClient>();
 
 // Services
 builder.Services.AddScoped<IQuestionService, QuestionService>();

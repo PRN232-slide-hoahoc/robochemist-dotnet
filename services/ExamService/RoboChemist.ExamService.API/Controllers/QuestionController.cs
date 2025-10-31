@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.Shared.Common.Helpers;
+using RoboChemist.Shared.Common.Constants;
 using RoboChemist.ExamService.Service.Interfaces;
 using static RoboChemist.Shared.DTOs.ExamServiceDTOs.QuestionDTOs;
 
@@ -10,7 +11,7 @@ namespace RoboChemist.ExamService.API.Controllers
     /// <summary>
     /// Controller quản lý Question - Câu hỏi thi
     /// </summary>
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/questions")]
     [ApiController] 
     public class QuestionController : ControllerBase
     {
@@ -19,6 +20,43 @@ namespace RoboChemist.ExamService.API.Controllers
         public QuestionController(IQuestionService questionService)
         {
             _questionService = questionService;
+        }
+
+        [HttpPost("bulk")]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)]
+        [ProducesResponseType(typeof(ApiResponse<BulkCreateQuestionsResponseDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<BulkCreateQuestionsResponseDto>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<BulkCreateQuestionsResponseDto>), StatusCodes.Status403Forbidden)]
+        public async Task<ActionResult<ApiResponse<BulkCreateQuestionsResponseDto>>> BulkCreateQuestions([FromBody] BulkCreateQuestionsDto bulkCreateDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    return BadRequest(ApiResponse<BulkCreateQuestionsResponseDto>.ErrorResult(string.Join("; ", errors)));
+                }
+
+                var result = await _questionService.BulkCreateQuestionsAsync(bulkCreateDto);
+
+                if (!result.Success)
+                {
+                    return BadRequest(result);
+                }
+
+                return CreatedAtAction(
+                    nameof(BulkCreateQuestions),
+                    result
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<BulkCreateQuestionsResponseDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
+            }
         }
 
         /// <summary>
@@ -33,12 +71,15 @@ namespace RoboChemist.ExamService.API.Controllers
         /// - TrueFalse: Đúng 2 đáp án
         /// - MultipleChoice: 2-6 đáp án
         /// - Essay: Không cần đáp án
+        /// 
+        /// **Yêu cầu**: Chỉ Admin mới được tạo câu hỏi
         /// </remarks>
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)]
         [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ApiResponse<QuestionResponseDto>), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ApiResponse<QuestionResponseDto>>> CreateQuestion([FromBody] CreateQuestionDto createQuestionDto)
         {
@@ -55,7 +96,6 @@ namespace RoboChemist.ExamService.API.Controllers
                     return BadRequest(ApiResponse<QuestionResponseDto>.ErrorResult(string.Join("; ", errors)));
                 }
 
-                // Service tự lấy userId và token từ HttpContext
                 var result = await _questionService.CreateQuestionAsync(createQuestionDto);
 
                 if (!result.Success)

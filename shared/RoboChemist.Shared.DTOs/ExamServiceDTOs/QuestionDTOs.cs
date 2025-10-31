@@ -50,6 +50,61 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
         }
 
         /// <summary>
+        /// DTO để tạo nhiều Questions cùng 1 Topic (Bulk Create - For seeding data)
+        /// </summary>
+        public class BulkCreateQuestionsDto
+        {
+            /// <summary>
+            /// ID của Topic chung cho tất cả câu hỏi
+            /// </summary>
+            [Required(ErrorMessage = "TopicId là bắt buộc")]
+            public Guid TopicId { get; set; }
+
+            /// <summary>
+            /// Danh sách câu hỏi cần tạo (không bao gồm TopicId vì dùng chung ở trên)
+            /// </summary>
+            [Required(ErrorMessage = "Questions là bắt buộc")]
+            [MinLength(1, ErrorMessage = "Phải có ít nhất 1 câu hỏi")]
+            [MaxLength(100, ErrorMessage = "Tối đa 100 câu hỏi mỗi lần")]
+            public List<BulkQuestionItemDto> Questions { get; set; } = new();
+        }
+
+        /// <summary>
+        /// DTO cho 1 câu hỏi trong bulk create (không có TopicId vì dùng chung)
+        /// </summary>
+        public class BulkQuestionItemDto
+        {
+            /// <summary>
+            /// Loại câu hỏi: MultipleChoice, TrueFalse, FillBlank, Essay
+            /// </summary>
+            [Required(ErrorMessage = "QuestionType là bắt buộc")]
+            [RegularExpression("^(MultipleChoice|TrueFalse|FillBlank|Essay)$", 
+                ErrorMessage = "QuestionType phải là: MultipleChoice, TrueFalse, FillBlank, hoặc Essay")]
+            public string QuestionType { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Nội dung câu hỏi
+            /// </summary>
+            [Required(ErrorMessage = "QuestionText là bắt buộc")]
+            [MinLength(10, ErrorMessage = "QuestionText phải có ít nhất 10 ký tự")]
+            [MaxLength(1000, ErrorMessage = "QuestionText không được vượt quá 1000 ký tự")]
+            public string QuestionText { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Giải thích đáp án (optional)
+            /// </summary>
+            [MaxLength(2000, ErrorMessage = "Explanation không được vượt quá 2000 ký tự")]
+            public string? Explanation { get; set; }
+
+            /// <summary>
+            /// Danh sách đáp án
+            /// </summary>
+            [Required(ErrorMessage = "Options là bắt buộc")]
+            [MaxLength(6, ErrorMessage = "Không được có quá 6 đáp án")]
+            public List<CreateOptionDto> Options { get; set; } = new();
+        }
+
+        /// <summary>
         /// DTO để tạo Option trong Question
         /// </summary>
         public class CreateOptionDto
@@ -118,12 +173,13 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
         }
 
         /// <summary>
-        /// DTO Response cho Question (chỉ lấy từ model, không enrich từ external API)
+        /// DTO Response cho Question (có enrich TopicName từ SlidesService - API Composition)
         /// </summary>
         public class QuestionResponseDto
         {
             public Guid QuestionId { get; set; }
             public Guid TopicId { get; set; }
+            public string? TopicName { get; set; } // [API COMPOSITION] Lấy từ SlidesService
             public string QuestionType { get; set; } = string.Empty;
             public string QuestionText { get; set; } = string.Empty;
             public string? Explanation { get; set; }
@@ -143,6 +199,18 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public bool IsCorrect { get; set; } // bool vẫn dùng true/false
             public DateTime? CreatedAt { get; set; }
             public Guid? CreatedBy { get; set; }
+        }
+
+        /// <summary>
+        /// DTO Response cho Bulk Create
+        /// </summary>
+        public class BulkCreateQuestionsResponseDto
+        {
+            public int TotalCreated { get; set; }
+            public Guid TopicId { get; set; }
+            public string QuestionType { get; set; } = string.Empty;
+            public List<Guid> CreatedQuestionIds { get; set; } = new();
+            public string Message { get; set; } = string.Empty;
         }
     }
 }

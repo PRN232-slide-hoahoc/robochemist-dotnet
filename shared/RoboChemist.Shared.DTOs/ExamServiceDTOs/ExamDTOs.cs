@@ -19,8 +19,12 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             [Required(ErrorMessage = "MatrixId là bắt buộc")]
             public Guid MatrixId { get; set; }
 
-            // GradeId đã bị XÓA - không cần thiết
-            // Prompt đã bị XÓA - không cần thiết
+            /// <summary>
+            /// Giá tiền tạo đề thi (VNĐ)
+            /// </summary>
+            [Required(ErrorMessage = "Price là bắt buộc")]
+            [Range(1000, 1000000, ErrorMessage = "Giá tiền phải từ 1,000 đến 1,000,000 VNĐ")]
+            public decimal Price { get; set; }
         }
 
         /// <summary>
