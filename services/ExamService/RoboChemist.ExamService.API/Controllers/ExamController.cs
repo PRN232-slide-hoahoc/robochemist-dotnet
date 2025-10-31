@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.ExamService.Service.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
 using static RoboChemist.Shared.DTOs.ExamServiceDTOs.ExamDTOs;
@@ -10,7 +9,7 @@ namespace RoboChemist.ExamService.API.Controllers
     /// <summary>
     /// Controller quản lý Đề thi (GeneratedExam)
     /// </summary>
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/exams")]
     [ApiController]
     [Authorize] // Yêu cầu authentication cho tất cả endpoints
     public class ExamController : ControllerBase
@@ -40,10 +39,13 @@ namespace RoboChemist.ExamService.API.Controllers
                 return BadRequest(ApiResponse<ExamRequestResponseDto>.ErrorResult(string.Join("; ", errors)));
             }
 
-            // Lấy UserId từ JWT token bằng JwtHelper
-            if (!JwtHelper.TryGetUserId(User, out var userId))
+            // Lấy UserId từ JWT token
+            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             {
-                return Unauthorized(ApiResponse<ExamRequestResponseDto>.ErrorResult("Token không hợp lệ hoặc không có userId"));
+                return Unauthorized(ApiResponse<ExamRequestResponseDto>.ErrorResult(
+                    "Token không hợp lệ hoặc không có userId"));
             }
 
             var result = await _examService.CreateExamRequestAsync(createExamRequestDto, userId);

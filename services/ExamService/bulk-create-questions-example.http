@@ -1,0 +1,142 @@
+### ============================================
+### BULK CREATE QUESTIONS - FOR SEEDING DATA
+### ============================================
+### Endpoint tạm thời để seed data có sẵn
+### Sẽ xóa sau khi hoàn thành việc tạo data
+
+### Variables
+@baseUrl = https://localhost:7003
+@token = YOUR_JWT_TOKEN_HERE
+@topicId = YOUR_TOPIC_ID_HERE
+
+### ============================================
+### 1. Bulk Create nhiều Questions với data khác nhau
+### ============================================
+POST {{baseUrl}}/api/v1/questions/bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "topicId": "{{topicId}}",
+  "questions": [
+    {
+      "questionType": "MultipleChoice",
+      "questionText": "Nguyên tử là gì?",
+      "explanation": "Nguyên tử là hạt vật chất nhỏ nhất của nguyên tố hóa học",
+      "options": [
+        { "answer": "Là hạt nhỏ nhất của nguyên tố", "isCorrect": true },
+        { "answer": "Là hạt nhỏ nhất của hợp chất", "isCorrect": false },
+        { "answer": "Là phân tử", "isCorrect": false },
+        { "answer": "Là ion", "isCorrect": false }
+      ]
+    },
+    {
+      "questionType": "MultipleChoice",
+      "questionText": "Trong nguyên tử có những hạt nào?",
+      "explanation": "Nguyên tử gồm proton, neutron và electron",
+      "options": [
+        { "answer": "Proton, neutron, electron", "isCorrect": true },
+        { "answer": "Chỉ có proton", "isCorrect": false },
+        { "answer": "Chỉ có electron", "isCorrect": false }
+      ]
+    },
+    {
+      "questionType": "TrueFalse",
+      "questionText": "Nguyên tử có điện tích trung hòa?",
+      "explanation": "Số proton = số electron nên nguyên tử trung hòa điện",
+      "options": [
+        { "answer": "Đúng", "isCorrect": true },
+        { "answer": "Sai", "isCorrect": false }
+      ]
+    }
+  ]
+}
+
+### ============================================
+### 2. Bulk Create với nhiều loại Question Types
+### ============================================
+POST {{baseUrl}}/api/v1/questions/bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "topicId": "{{topicId}}",
+  "questions": [
+    {
+      "questionType": "MultipleChoice",
+      "questionText": "Số proton trong nguyên tử quyết định?",
+      "explanation": "Số proton quyết định tính chất hóa học",
+      "options": [
+        { "answer": "Tính chất hóa học", "isCorrect": true },
+        { "answer": "Khối lượng nguyên tử", "isCorrect": false },
+        { "answer": "Điện tích", "isCorrect": false },
+        { "answer": "Kích thước", "isCorrect": false }
+      ]
+    },
+    {
+      "questionType": "TrueFalse",
+      "questionText": "Electron có khối lượng lớn hơn proton?",
+      "explanation": "Electron nhỏ hơn proton rất nhiều",
+      "options": [
+        { "answer": "Đúng", "isCorrect": false },
+        { "answer": "Sai", "isCorrect": true }
+      ]
+    },
+    {
+      "questionType": "Essay",
+      "questionText": "Giải thích cấu tạo và tính chất của nguyên tử",
+      "explanation": "Học sinh cần trình bày đầy đủ về proton, neutron, electron",
+      "options": []
+    }
+  ]
+}
+
+### ============================================
+### 3. Bulk Create chỉ MultipleChoice
+### ============================================
+POST {{baseUrl}}/api/v1/questions/bulk
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "topicId": "{{topicId}}",
+  "questions": [
+    {
+      "questionType": "MultipleChoice",
+      "questionText": "Khối lượng nguyên tử tập trung ở đâu?",
+      "explanation": "Hầu hết khối lượng nằm ở hạt nhân",
+      "options": [
+        { "answer": "Hạt nhân", "isCorrect": true },
+        { "answer": "Vỏ electron", "isCorrect": false },
+        { "answer": "Phân bố đều", "isCorrect": false }
+      ]
+    },
+    {
+      "questionType": "MultipleChoice",
+      "questionText": "Số khối A được tính bằng?",
+      "explanation": "A = Z + N",
+      "options": [
+        { "answer": "Số proton + số neutron", "isCorrect": true },
+        { "answer": "Số proton + số electron", "isCorrect": false },
+        { "answer": "Chỉ số proton", "isCorrect": false }
+      ]
+    }
+  ]
+}
+
+### ============================================
+### 5. Test - Lấy Questions vừa tạo theo TopicId
+### ============================================
+GET {{baseUrl}}/api/v1/questions?topicId={{topicId}}
+Authorization: Bearer {{token}}
+
+### ============================================
+### NOTES:
+### ============================================
+### 1. Thay {{token}} bằng JWT token thực
+### 2. Thay {{topicId}} bằng TopicId thực từ SlidesService
+### 3. Mỗi request tối đa 100 questions (để tránh timeout)
+### 4. Mỗi question có data riêng (text, explanation, options khác nhau)
+### 5. Tất cả questions trong 1 request dùng CHUNG 1 TopicId
+### 6. API này chỉ dùng TẠM để seed data có sẵn
+### 7. Nhớ XÓA endpoint này sau khi hoàn thành việc tạo data

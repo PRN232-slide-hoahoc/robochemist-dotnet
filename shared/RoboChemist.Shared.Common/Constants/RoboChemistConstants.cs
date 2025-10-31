@@ -140,17 +140,17 @@
         /// <summary>
         /// Role: User (value = "1")
         /// </summary>
-        public const string ROLE_USER = "1";
+        public const string ROLE_USER = "User";
 
         /// <summary>
         /// Role: Admin (value = "2")
         /// </summary>
-        public const string ROLE_ADMIN = "2";
+        public const string ROLE_ADMIN = "Admin";
 
         /// <summary>
         /// Role: Teacher (value = "3")
         /// </summary>
-        public const string ROLE_TEACHER = "3";
+        //public const string ROLE_TEACHER = "3";
         #endregion
 
         #region Wallet Service Constants

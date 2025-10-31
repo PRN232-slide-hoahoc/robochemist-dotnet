@@ -47,5 +47,12 @@ namespace RoboChemist.ExamService.Service.Interfaces
         /// <returns>Kết quả xóa</returns>
         /// <remarks>UserId được lấy tự động từ HttpContext</remarks>
         Task<ApiResponse<bool>> DeleteQuestionAsync(Guid id);
+
+        /// <summary>
+        /// [TEMP - FOR SEEDING] Tạo nhiều Questions cùng 1 Topic
+        /// </summary>
+        /// <param name="bulkCreateDto">Thông tin bulk create</param>
+        /// <returns>Thông tin các câu hỏi đã tạo</returns>
+        Task<ApiResponse<BulkCreateQuestionsResponseDto>> BulkCreateQuestionsAsync(BulkCreateQuestionsDto bulkCreateDto);
     }
 }

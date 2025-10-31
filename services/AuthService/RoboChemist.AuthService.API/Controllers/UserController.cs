@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace RoboChemist.AuthService.API.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/users")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;

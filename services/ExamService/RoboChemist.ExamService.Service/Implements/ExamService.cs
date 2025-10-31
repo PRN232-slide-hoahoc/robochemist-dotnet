@@ -1,9 +1,12 @@
 using RoboChemist.ExamService.Model.Models;
 using RoboChemist.ExamService.Repository.Interfaces;
 using RoboChemist.ExamService.Service.Interfaces;
+using RoboChemist.ExamService.Service.HttpClients;
 using RoboChemist.Shared.Common.Constants;
 using RoboChemist.Shared.DTOs.Common;
 using static RoboChemist.Shared.DTOs.ExamServiceDTOs.ExamDTOs;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
+using Microsoft.AspNetCore.Http;
 
 namespace RoboChemist.ExamService.Service.Implements
 {
@@ -14,21 +17,35 @@ namespace RoboChemist.ExamService.Service.Implements
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWalletServiceHttpClient _walletServiceHttpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ExamService(IUnitOfWork unitOfWork, IHttpClientFactory httpClientFactory)
+        public ExamService(IUnitOfWork unitOfWork, IHttpClientFactory httpClientFactory, IWalletServiceHttpClient walletServiceHttpClient, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _httpClientFactory = httpClientFactory;
+            _walletServiceHttpClient = walletServiceHttpClient;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         /// <summary>
-        /// Tạo yêu cầu tạo đề thi mới
+        /// Tạo yêu cầu tạo đề thi mới với SAGA pattern (Payment -> Create -> Process -> Compensate if failed)
         /// </summary>
         public async Task<ApiResponse<ExamRequestResponseDto>> CreateExamRequestAsync(CreateExamRequestDto createExamRequestDto, Guid userId)
         {
+            Guid? examRequestId = null;
+            PaymentResponseDto? paymentResponse = null;
+
             try
             {
-                // 1. Validate: Kiểm tra Matrix có tồn tại không
+                // Extract JWT token from HttpContext
+                var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString()?.Replace("Bearer ", "");
+                if (string.IsNullOrEmpty(authToken))
+                {
+                    return ApiResponse<ExamRequestResponseDto>.ErrorResult("Không tìm thấy token xác thực");
+                }
+
+                // SAGA Step 1: Validate Matrix
                 var matrix = await _unitOfWork.Matrices.GetByIdAsync(createExamRequestDto.MatrixId);
                 if (matrix == null)
                 {
@@ -40,40 +57,105 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<ExamRequestResponseDto>.ErrorResult("Ma trận đã bị vô hiệu hóa");
                 }
 
-                // GradeId validation đã BỎ - không còn cần thiết
+                // SAGA Step 2: Create Payment Transaction (Deduct money from wallet)
+                Console.WriteLine($"[SAGA] Step 2: Creating payment for user {userId}, amount {createExamRequestDto.Price}");
+                
+                var createPaymentDto = new CreatePaymentDto
+                {
+                    UserId = userId,
+                    Amount = createExamRequestDto.Price,
+                    ReferenceId = Guid.NewGuid(), // Tạo temporary ID cho ExamRequest
+                    ReferenceType = "ExamRequest",
+                    Description = $"Thanh toán tạo đề thi từ ma trận {matrix.Name}"
+                };
 
-                // 3. Tạo ExamRequest entity
+                examRequestId = createPaymentDto.ReferenceId; // Lưu lại để dùng cho ExamRequest
+
+                paymentResponse = await _walletServiceHttpClient.CreatePaymentAsync(createPaymentDto, authToken);
+                
+                if (paymentResponse == null)
+                {
+                    Console.WriteLine("[SAGA] Step 2 FAILED: Payment creation failed");
+                    return ApiResponse<ExamRequestResponseDto>.ErrorResult("Thanh toán thất bại. Vui lòng kiểm tra số dư ví");
+                }
+
+                Console.WriteLine($"[SAGA] Step 2 SUCCESS: Payment created, TransactionId={paymentResponse.TransactionId}");
+
+                // Quăng lỗi để test SAGA Compensation
+                //throw new Exception("TESTING COMPENSATION");
+
+                // SAGA Step 3: Create ExamRequest entity
+                Console.WriteLine($"[SAGA] Step 3: Creating ExamRequest with ID={examRequestId}");
+                
                 var examRequest = new Examrequest
                 {
-                    ExamRequestId = Guid.NewGuid(),
+                    ExamRequestId = examRequestId.Value,
                     UserId = userId,
                     MatrixId = createExamRequestDto.MatrixId,
-                    Status = "Pending", // Trạng thái khởi tạo
-                    // GradeId và Prompt đã BỎ
+                    Status = RoboChemistConstants.EXAMREQ_STATUS_PENDING,
                     CreatedAt = DateTime.Now
                 };
 
-                // 4. Lưu vào database
                 await _unitOfWork.ExamRequests.CreateAsync(examRequest);
-                await _unitOfWork.SaveChangesAsync();
 
-                // 5. Map sang ResponseDto
+                Console.WriteLine($"[SAGA] Step 3 SUCCESS: ExamRequest created");
+
+                // SAGA Step 4: Map response
                 var response = new ExamRequestResponseDto
                 {
                     ExamRequestId = examRequest.ExamRequestId,
                     UserId = examRequest.UserId,
                     MatrixId = examRequest.MatrixId,
                     MatrixName = matrix.Name,
-                    // GradeId, GradeName, Prompt đã BỎ
                     Status = examRequest.Status,
                     CreatedAt = examRequest.CreatedAt,
                     GeneratedExams = new List<GeneratedExamResponseDto>()
                 };
 
+                Console.WriteLine("[SAGA] COMPLETED: ExamRequest created successfully with payment");
                 return ApiResponse<ExamRequestResponseDto>.SuccessResult(response, "Tạo yêu cầu tạo đề thi thành công");
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[SAGA ERROR] Exception occurred: {ex.Message}");
+
+                // SAGA Compensation: Refund payment if payment was successful
+                // Logic: Nếu đã trừ tiền (paymentResponse != null) thì phải hoàn tiền
+                if (paymentResponse != null)
+                {
+                    Console.WriteLine($"[SAGA COMPENSATE] Payment was successful but process failed. Initiating refund for ReferenceId={examRequestId}");
+                    
+                    try
+                    {
+                        var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString()?.Replace("Bearer ", "");
+                        
+                        var refundRequest = new RefundRequestDto
+                        {
+                            ReferenceId = examRequestId!.Value,
+                            Reason = $"Tạo đề thi thất bại: {ex.Message}"
+                        };
+
+                        var refundResponse = await _walletServiceHttpClient.RefundPaymentAsync(refundRequest, authToken);
+                        
+                        if (refundResponse != null)
+                        {
+                            Console.WriteLine($"[SAGA COMPENSATE] SUCCESS: Refund completed, RefundTransactionId={refundResponse.RefundTransactionId}");
+                            return ApiResponse<ExamRequestResponseDto>.ErrorResult($"Tạo đề thi thất bại và đã hoàn tiền: {ex.Message}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[SAGA COMPENSATE] WARNING: Refund failed - manual intervention required");
+                            return ApiResponse<ExamRequestResponseDto>.ErrorResult($"Tạo đề thi thất bại và hoàn tiền thất bại. Vui lòng liên hệ hỗ trợ. Error: {ex.Message}");
+                        }
+                    }
+                    catch (Exception refundEx)
+                    {
+                        Console.WriteLine($"[SAGA COMPENSATE ERROR] Refund exception: {refundEx.Message}");
+                        return ApiResponse<ExamRequestResponseDto>.ErrorResult($"Tạo đề thi thất bại và hoàn tiền gặp lỗi. Vui lòng liên hệ hỗ trợ. Errors: {ex.Message} | Refund: {refundEx.Message}");
+                    }
+                }
+
+                // Nếu payment chưa thực hiện (paymentResponse == null) thì chỉ trả lỗi thông thường
                 return ApiResponse<ExamRequestResponseDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
             }
         }

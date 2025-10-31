@@ -8,7 +8,7 @@ using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
 
 namespace RoboChemist.WalletService.API.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/wallets")]
     [ApiController]
     public class WalletController : ControllerBase
     {

@@ -6,7 +6,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
     public interface ISlidesServiceHttpClient
     {
         /// <summary>
-        /// Lấy thông tin Topic theo ID (GET /api/v1/Topic/{id})
+        /// Lấy thông tin Topic theo ID (GET /api/v1/topics/{id})
         /// </summary>
         /// <param name="topicId">ID của Topic cần kiểm tra</param>
         /// <param name="authToken">JWT token để authorize</param>
