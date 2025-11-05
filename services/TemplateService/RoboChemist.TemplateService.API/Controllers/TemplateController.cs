@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.TemplateService.Model.DTOs;
-using RoboChemist.TemplateService.Model.Exceptions;
 using RoboChemist.TemplateService.Service.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.Common.Helpers;
 
 namespace RoboChemist.TemplateService.API.Controllers;
 
@@ -44,18 +43,26 @@ public class TemplateController : ControllerBase
     /// <response code="200">Returns the paginated list of templates</response>
     /// <response code="500">Internal server error occurred</response>
     [HttpGet]
+    [Authorize(Roles ="User, Staff, Admin")]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<Model.Models.Template>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<PagedResult<Model.Models.Template>>>> GetAllTemplates([FromQuery] PaginationParams paginationParams)
     {
-        var pagedTemplates = await _templateService.GetPagedTemplatesAsync(paginationParams);
-        
-        var response = ApiResponse<PagedResult<Model.Models.Template>>.SuccessResult(
-            pagedTemplates,
-            $"Retrieved {pagedTemplates.Items.Count()} templates from page {pagedTemplates.PageNumber}"
-        );
-        
-        return Ok(response);
+        try
+        {
+            var pagedTemplates = await _templateService.GetPagedTemplatesAsync(paginationParams);
+            
+            var response = ApiResponse<PagedResult<Model.Models.Template>>.SuccessResult(
+                pagedTemplates,
+                $"Retrieved {pagedTemplates.Items.Count()} templates from page {pagedTemplates.PageNumber}"
+            );
+            
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ApiResponse<PagedResult<Model.Models.Template>>.ErrorResult("Lỗi hệ thống"));
+        }
     }
 
     /// <summary>
@@ -67,22 +74,30 @@ public class TemplateController : ControllerBase
     /// <response code="404">Template not found</response>
     /// <response code="500">Internal server error occurred</response>
     [HttpGet("{id}")]
+    [Authorize(Roles ="User, Staff, Admin")]
     [ProducesResponseType(typeof(ApiResponse<Model.Models.Template>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<Model.Models.Template>>> GetTemplateById(Guid id)
     {
-        var template = await _templateService.GetTemplateByIdAsync(id);
-        
-        if (template == null)
-            throw new NotFoundException("Template", id);
+        try
+        {
+            var template = await _templateService.GetTemplateByIdAsync(id);
+            
+            if (template == null)
+                return NotFound(ApiResponse<Model.Models.Template>.ErrorResult($"Template with ID {id} not found"));
 
-        var response = ApiResponse<Model.Models.Template>.SuccessResult(
-            template,
-            "Template retrieved successfully"
-        );
-        
-        return Ok(response);
+            var response = ApiResponse<Model.Models.Template>.SuccessResult(
+                template,
+                "Template retrieved successfully"
+            );
+            
+            return Ok(response);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ApiResponse<Model.Models.Template>.ErrorResult("Lỗi hệ thống"));
+        }
     }
 
     /// <summary>
@@ -98,6 +113,7 @@ public class TemplateController : ControllerBase
     /// The download count will be automatically incremented upon successful download.
     /// </remarks>
     [HttpGet("{id}/download")]
+    [Authorize(Roles ="User, Staff, Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -113,15 +129,20 @@ public class TemplateController : ControllerBase
         }
         catch (KeyNotFoundException)
         {
-            throw new NotFoundException("Template", id);
+            return NotFound(new { message = $"Template with ID {id} not found" });
         }
         catch (InvalidOperationException ex)
         {
-            throw new BadRequestException(ex.Message);
+            return BadRequest(new { message = ex.Message });
         }
         catch (FileNotFoundException)
         {
-            throw new NotFoundException($"Template file not found in storage for template ID: {id}");
+            return NotFound(new { message = $"Template file not found in storage for template ID: {id}" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading template {TemplateId}", id);
+            return StatusCode(500, new { message = "Lỗi hệ thống" });
         }
     }
 
@@ -152,42 +173,61 @@ public class TemplateController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<UploadTemplateResponse>>> UploadTemplate([FromForm] UploadTemplateRequest request)
     {
-        // Extract userId from JWT token
-        if (!JwtHelper.TryGetUserId(User, out Guid userId))
+        try
         {
-            _logger.LogWarning("Upload attempt with invalid user token");
-            throw new BadRequestException("Invalid user token");
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(ApiResponse<UploadTemplateResponse>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+            }
+
+            // Validation ở Controller level
+            if (request.File == null || request.File.Length == 0)
+                return BadRequest(ApiResponse<UploadTemplateResponse>.ErrorResult("File is required"));
+
+            var allowedExtensions = new[] { ".pptx", ".ppt" };
+            var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+                return BadRequest(ApiResponse<UploadTemplateResponse>.ErrorResult("Only .pptx and .ppt files are allowed"));
+
+            const long MaxFileSize = 50 * 1024 * 1024;
+            if (request.File.Length > MaxFileSize)
+                return BadRequest(ApiResponse<UploadTemplateResponse>.ErrorResult("File size must not exceed 50MB"));
+
+            // Extract userId từ JWT token (giống ExamService)
+            var user = HttpContext.User;
+            if (user == null || !JwtHelper.TryGetUserId(user, out var userId))
+            {
+                return Unauthorized(ApiResponse<UploadTemplateResponse>.ErrorResult("Không xác thực được user từ token"));
+            }
+
+            _logger.LogInformation("Upload attempt for template: {FileName} by user: {UserId}", request.File.FileName, userId);
+
+            using var stream = request.File.OpenReadStream();
+            var result = await _templateService.UploadTemplateAsync(stream, request.File.FileName, request, userId);
+
+            _logger.LogInformation("Template uploaded successfully: {TemplateId}", result.TemplateId);
+
+            var response = ApiResponse<UploadTemplateResponse>.SuccessResult(
+                result,
+                "Template uploaded successfully"
+            );
+            
+            return CreatedAtAction(
+                nameof(GetTemplateById), 
+                new { id = result.TemplateId }, 
+                response
+            );
         }
-
-        _logger.LogInformation("User {UserId} attempting to upload template: {FileName}", userId, request.File?.FileName);
-
-        if (request.File == null || request.File.Length == 0)
-            throw new BadRequestException("File is required");
-
-        var allowedExtensions = new[] { ".pptx", ".ppt" };
-        var fileExtension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(fileExtension))
-            throw new BadRequestException("Only .pptx and .ppt files are allowed");
-
-        const long MaxFileSize = 50 * 1024 * 1024;
-        if (request.File.Length > MaxFileSize)
-            throw new BadRequestException("File size must not exceed 50MB");
-
-        using var stream = request.File.OpenReadStream();
-        var result = await _templateService.UploadTemplateAsync(stream, request.File.FileName, request);
-
-        _logger.LogInformation("Template uploaded successfully by user {UserId}: {TemplateId}", userId, result.TemplateId);
-
-        var response = ApiResponse<UploadTemplateResponse>.SuccessResult(
-            result,
-            "Template uploaded successfully"
-        );
-        
-        return CreatedAtAction(
-            nameof(GetTemplateById), 
-            new { id = result.TemplateId }, 
-            response
-        );
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading template");
+            return StatusCode(500, ApiResponse<UploadTemplateResponse>.ErrorResult("Lỗi hệ thống"));
+        }
     }
 
     #endregion
