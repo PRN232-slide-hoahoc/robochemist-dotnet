@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using RoboChemist.TemplateService.Model.DTOs;
-using RoboChemist.TemplateService.Model.Exceptions;
 using RoboChemist.TemplateService.Model.Models;
 using RoboChemist.TemplateService.Repository.Interfaces;
 using RoboChemist.TemplateService.Service.Interfaces;
 using RoboChemist.Shared.Common.Constants;
+using RoboChemist.Shared.DTOs.Common;
 
 namespace RoboChemist.TemplateService.Service.Implements;
 
@@ -20,7 +20,7 @@ public class OrderService : IOrderService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
+    public async Task<ApiResponse<OrderResponse>> CreateOrderAsync(CreateOrderRequest request)
     {
         // Validate templates exist and are active
         var templateIds = request.Items.Select(i => i.TemplateId).Distinct().ToList();
@@ -31,11 +31,11 @@ public class OrderService : IOrderService
             var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
             if (template == null)
             {
-                throw new NotFoundException($"Template with ID {templateId} not found");
+                return ApiResponse<OrderResponse>.ErrorResult($"Template with ID {templateId} not found");
             }
             if (!template.IsActive)
             {
-                throw new BadRequestException($"Template '{template.TemplateName}' is not available for purchase");
+                return ApiResponse<OrderResponse>.ErrorResult($"Template '{template.TemplateName}' is not available for purchase");
             }
             templates.Add(template);
         }
@@ -83,36 +83,39 @@ public class OrderService : IOrderService
         }
 
         // Return response
-        return await MapOrderToResponseAsync(order.OrderId);
+        var orderResponse = await MapOrderToResponseAsync(order.OrderId);
+        return ApiResponse<OrderResponse>.SuccessResult(orderResponse, "Order created successfully");
     }
 
-    public async Task<OrderResponse?> GetOrderByIdAsync(Guid orderId)
+    public async Task<ApiResponse<OrderResponse>> GetOrderByIdAsync(Guid orderId)
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
         if (order == null)
         {
-            return null;
+            return ApiResponse<OrderResponse>.ErrorResult($"Order with ID {orderId} not found");
         }
 
-        return await MapOrderToResponseAsync(orderId);
+        var orderResponse = await MapOrderToResponseAsync(orderId);
+        return ApiResponse<OrderResponse>.SuccessResult(orderResponse);
     }
 
-    public async Task<OrderResponse?> GetOrderByOrderNumberAsync(string orderNumber)
+    public async Task<ApiResponse<OrderResponse>> GetOrderByOrderNumberAsync(string orderNumber)
     {
         var order = await _unitOfWork.Orders.GetOrderByOrderNumberAsync(orderNumber);
         if (order == null)
         {
-            return null;
+            return ApiResponse<OrderResponse>.ErrorResult($"Order with number {orderNumber} not found");
         }
 
-        return MapOrderToResponse(order);
+        var orderResponse = MapOrderToResponse(order);
+        return ApiResponse<OrderResponse>.SuccessResult(orderResponse);
     }
 
-    public async Task<IEnumerable<OrderSummaryResponse>> GetUserOrdersAsync(Guid userId)
+    public async Task<ApiResponse<IEnumerable<OrderSummaryResponse>>> GetUserOrdersAsync(Guid userId)
     {
         var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(userId);
         
-        return orders.Select(o => new OrderSummaryResponse
+        var orderSummaries = orders.Select(o => new OrderSummaryResponse
         {
             OrderId = o.OrderId,
             OrderNumber = o.OrderNumber,
@@ -121,9 +124,11 @@ public class OrderService : IOrderService
             ItemCount = o.OrderDetails.Count,
             CreatedAt = o.CreatedAt
         });
+
+        return ApiResponse<IEnumerable<OrderSummaryResponse>>.SuccessResult(orderSummaries);
     }
 
-    public async Task<PagedResult<OrderSummaryResponse>> GetAllOrdersAsync(PaginationParams paginationParams)
+    public async Task<ApiResponse<PagedResult<OrderSummaryResponse>>> GetAllOrdersAsync(PaginationParams paginationParams)
     {
         var query = (await _unitOfWork.Orders.GetAllAsync())
             .OrderByDescending(o => o.CreatedAt);
@@ -143,32 +148,34 @@ public class OrderService : IOrderService
             })
             .ToList();
 
-        return new PagedResult<OrderSummaryResponse>
+        var pagedResult = new PagedResult<OrderSummaryResponse>
         {
             Items = items,
             TotalCount = totalCount,
             PageNumber = paginationParams.PageNumber,
             PageSize = paginationParams.PageSize
         };
+
+        return ApiResponse<PagedResult<OrderSummaryResponse>>.SuccessResult(pagedResult);
     }
 
-    public async Task<OrderResponse> UpdateOrderStatusAsync(Guid orderId, UpdateOrderStatusRequest request)
+    public async Task<ApiResponse<OrderResponse>> UpdateOrderStatusAsync(Guid orderId, UpdateOrderStatusRequest request)
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
         if (order == null)
         {
-            throw new NotFoundException($"Order with ID {orderId} not found");
+            return ApiResponse<OrderResponse>.ErrorResult($"Order with ID {orderId} not found");
         }
 
         // Validate status transition
         if (order.Status == RoboChemistConstants.ORDER_STATUS_CANCELLED)
         {
-            throw new BadRequestException("Cannot update status of a cancelled order");
+            return ApiResponse<OrderResponse>.ErrorResult("Cannot update status of a cancelled order");
         }
 
         if (order.Status == RoboChemistConstants.ORDER_STATUS_COMPLETED && request.Status != RoboChemistConstants.ORDER_STATUS_COMPLETED)
         {
-            throw new BadRequestException("Cannot change status of a completed order");
+            return ApiResponse<OrderResponse>.ErrorResult("Cannot change status of a completed order");
         }
 
         order.Status = request.Status;
@@ -182,25 +189,26 @@ public class OrderService : IOrderService
 
         await _unitOfWork.Orders.UpdateAsync(order);
 
-        return await MapOrderToResponseAsync(orderId);
+        var orderResponse = await MapOrderToResponseAsync(orderId);
+        return ApiResponse<OrderResponse>.SuccessResult(orderResponse, "Order status updated successfully");
     }
 
-    public async Task<OrderResponse> CancelOrderAsync(Guid orderId)
+    public async Task<ApiResponse<OrderResponse>> CancelOrderAsync(Guid orderId)
     {
         var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
         if (order == null)
         {
-            throw new NotFoundException($"Order with ID {orderId} not found");
+            return ApiResponse<OrderResponse>.ErrorResult($"Order with ID {orderId} not found");
         }
 
         if (order.Status == RoboChemistConstants.ORDER_STATUS_COMPLETED)
         {
-            throw new BadRequestException("Cannot cancel a completed order");
+            return ApiResponse<OrderResponse>.ErrorResult("Cannot cancel a completed order");
         }
 
         if (order.Status == RoboChemistConstants.ORDER_STATUS_CANCELLED)
         {
-            throw new BadRequestException("Order is already cancelled");
+            return ApiResponse<OrderResponse>.ErrorResult("Order is already cancelled");
         }
 
         order.Status = RoboChemistConstants.ORDER_STATUS_CANCELLED;
@@ -208,15 +216,16 @@ public class OrderService : IOrderService
 
         await _unitOfWork.Orders.UpdateAsync(order);
 
-        return await MapOrderToResponseAsync(orderId);
+        var orderResponse = await MapOrderToResponseAsync(orderId);
+        return ApiResponse<OrderResponse>.SuccessResult(orderResponse, "Order cancelled successfully");
     }
 
-    public async Task<OrderStatistics> GetOrderStatisticsByUserAsync(Guid userId)
+    public async Task<ApiResponse<OrderStatistics>> GetOrderStatisticsByUserAsync(Guid userId)
     {
         var orders = await _unitOfWork.Orders.GetOrdersByUserIdAsync(userId);
         var orderList = orders.ToList();
 
-        return new OrderStatistics
+        var statistics = new OrderStatistics
         {
             TotalOrders = orderList.Count,
             CompletedOrders = orderList.Count(o => o.Status == RoboChemistConstants.ORDER_STATUS_COMPLETED),
@@ -224,6 +233,8 @@ public class OrderService : IOrderService
             CancelledOrders = orderList.Count(o => o.Status == RoboChemistConstants.ORDER_STATUS_CANCELLED),
             TotalSpent = orderList.Where(o => o.Status == RoboChemistConstants.ORDER_STATUS_COMPLETED).Sum(o => o.TotalAmount)
         };
+
+        return ApiResponse<OrderStatistics>.SuccessResult(statistics);
     }
 
     // Helper methods
@@ -243,7 +254,7 @@ public class OrderService : IOrderService
 
         if (order == null)
         {
-            throw new NotFoundException($"Order with ID {orderId} not found");
+            throw new InvalidOperationException($"Order with ID {orderId} not found");
         }
 
         return MapOrderToResponse(order);

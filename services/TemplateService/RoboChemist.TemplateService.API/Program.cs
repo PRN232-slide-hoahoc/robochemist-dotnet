@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using RoboChemist.TemplateService.API.Filters;
-using RoboChemist.TemplateService.API.Middleware;
 using RoboChemist.TemplateService.Model.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -110,11 +108,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Controllers with Validation Filter
-builder.Services.AddControllers(options =>
-{
-    options.Filters.Add<ValidateModelStateFilter>();
-});
+// Add Controllers
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -219,39 +214,21 @@ builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(credentials, s3Confi
 
 var app = builder.Build();
 
-// ============= MIDDLEWARE PIPELINE =============
-// Order matters! Global Exception Handler should be FIRST
-
-// 1. Global Exception Handler (catches all unhandled exceptions)
-app.UseGlobalExceptionHandler();
-
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Template Service API V1");
-    c.RoutePrefix = "swagger";
-});
-
-// 3. Enable CORS
-app.UseCors("AllowFrontend");
-
-// 4. HTTPS Redirection (only in Production to avoid warnings in Development)
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-// 5. Authentication (MUST be before Authorization)
-app.UseAuthentication();
+app.UseHttpsRedirection();
 
-// 6. Authorization
+app.UseCors("AllowFrontend");
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-
-Console.WriteLine("Swagger UI available at: http://localhost:5000/swagger");
-Console.WriteLine("Application is starting...");
 
 app.Run();
 

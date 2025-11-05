@@ -19,7 +19,9 @@ public class TemplateService : ITemplateService
 
     #region Constructor
 
-    public TemplateService(IUnitOfWork unitOfWork, IStorageService storageService)
+    public TemplateService(
+        IUnitOfWork unitOfWork, 
+        IStorageService storageService)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
@@ -48,8 +50,9 @@ public class TemplateService : ITemplateService
 
     #region Command Methods
 
-    public async Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request)
+    public async Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request, Guid userId)
     {
+
         string? objectKey = null;
         
         try
@@ -70,7 +73,8 @@ public class TemplateService : ITemplateService
                 DownloadCount = 0,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Version = 1
+                Version = 1,
+                CreatedBy = userId  // Lưu thông tin user đã tạo
             };
 
             await _unitOfWork.Templates.CreateAsync(template);

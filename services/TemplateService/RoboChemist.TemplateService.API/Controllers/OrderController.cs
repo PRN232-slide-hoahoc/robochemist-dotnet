@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.TemplateService.Model.DTOs;
-using RoboChemist.TemplateService.Model.Exceptions;
 using RoboChemist.TemplateService.Service.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
 
@@ -47,25 +46,15 @@ public class OrderController : ControllerBase
                 return BadRequest(ApiResponse<OrderResponse>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
             }
 
-            var order = await _orderService.CreateOrderAsync(request);
+            var response = await _orderService.CreateOrderAsync(request);
 
-            var response = ApiResponse<OrderResponse>.SuccessResult(
-                order,
-                $"Order {order.OrderNumber} created successfully"
-            );
+            if (!response.Success)
+                return BadRequest(response);
 
             return CreatedAtAction(
                 nameof(GetOrderById),
-                new { orderId = order.OrderId },
+                new { orderId = response.Data.OrderId },
                 response);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ApiResponse<OrderResponse>.ErrorResult(ex.Message));
-        }
-        catch (BadRequestException ex)
-        {
-            return BadRequest(ApiResponse<OrderResponse>.ErrorResult(ex.Message));
         }
         catch (Exception)
         {
@@ -87,17 +76,10 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var order = await _orderService.GetOrderByIdAsync(orderId);
+            var response = await _orderService.GetOrderByIdAsync(orderId);
             
-            if (order == null)
-            {
-                return NotFound(ApiResponse<OrderResponse>.ErrorResult($"Không tìm thấy order với ID {orderId}"));
-            }
-
-            var response = ApiResponse<OrderResponse>.SuccessResult(
-                order,
-                "Lấy thông tin order thành công"
-            );
+            if (!response.Success)
+                return NotFound(response);
 
             return Ok(response);
         }
@@ -121,17 +103,10 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var order = await _orderService.GetOrderByOrderNumberAsync(orderNumber);
+            var response = await _orderService.GetOrderByOrderNumberAsync(orderNumber);
             
-            if (order == null)
-            {
-                return NotFound(ApiResponse<OrderResponse>.ErrorResult($"Không tìm thấy order với số {orderNumber}"));
-            }
-
-            var response = ApiResponse<OrderResponse>.SuccessResult(
-                order,
-                "Lấy thông tin order thành công"
-            );
+            if (!response.Success)
+                return NotFound(response);
 
             return Ok(response);
         }
@@ -154,12 +129,10 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var orders = await _orderService.GetUserOrdersAsync(userId);
+            var response = await _orderService.GetUserOrdersAsync(userId);
             
-            var response = ApiResponse<IEnumerable<OrderSummaryResponse>>.SuccessResult(
-                orders,
-                $"Retrieved {orders.Count()} orders for user"
-            );
+            if (!response.Success)
+                return BadRequest(response);
 
             return Ok(response);
         }
@@ -191,12 +164,10 @@ public class OrderController : ControllerBase
                 PageSize = Math.Min(pageSize, 100) // Max 100 items per page
             };
 
-            var pagedOrders = await _orderService.GetAllOrdersAsync(paginationParams);
+            var response = await _orderService.GetAllOrdersAsync(paginationParams);
             
-            var response = ApiResponse<PagedResult<OrderSummaryResponse>>.SuccessResult(
-                pagedOrders,
-                $"Retrieved {pagedOrders.Items.Count()} orders from page {pagedOrders.PageNumber}"
-            );
+            if (!response.Success)
+                return BadRequest(response);
 
             return Ok(response);
         }
@@ -235,22 +206,12 @@ public class OrderController : ControllerBase
                 return BadRequest(ApiResponse<OrderResponse>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
             }
 
-            var order = await _orderService.UpdateOrderStatusAsync(orderId, request);
+            var response = await _orderService.UpdateOrderStatusAsync(orderId, request);
             
-            var response = ApiResponse<OrderResponse>.SuccessResult(
-                order,
-                $"Order status updated to {request.Status} successfully"
-            );
+            if (!response.Success)
+                return BadRequest(response);
 
             return Ok(response);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ApiResponse<OrderResponse>.ErrorResult(ex.Message));
-        }
-        catch (BadRequestException ex)
-        {
-            return BadRequest(ApiResponse<OrderResponse>.ErrorResult(ex.Message));
         }
         catch (Exception)
         {
@@ -274,22 +235,12 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var order = await _orderService.CancelOrderAsync(orderId);
+            var response = await _orderService.CancelOrderAsync(orderId);
             
-            var response = ApiResponse<OrderResponse>.SuccessResult(
-                order,
-                "Order cancelled successfully"
-            );
+            if (!response.Success)
+                return BadRequest(response);
 
             return Ok(response);
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ApiResponse<OrderResponse>.ErrorResult(ex.Message));
-        }
-        catch (BadRequestException ex)
-        {
-            return BadRequest(ApiResponse<OrderResponse>.ErrorResult(ex.Message));
         }
         catch (Exception)
         {
@@ -310,12 +261,10 @@ public class OrderController : ControllerBase
     {
         try
         {
-            var statistics = await _orderService.GetOrderStatisticsByUserAsync(userId);
+            var response = await _orderService.GetOrderStatisticsByUserAsync(userId);
             
-            var response = ApiResponse<OrderStatistics>.SuccessResult(
-                statistics,
-                "Order statistics retrieved successfully"
-            );
+            if (!response.Success)
+                return BadRequest(response);
 
             return Ok(response);
         }
