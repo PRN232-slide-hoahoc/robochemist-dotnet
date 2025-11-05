@@ -8,6 +8,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using RoboChemist.SlidesService.Service.HttpClients;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,14 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddHttpContextAccessor();
 
+// HTTP Client Factory
+builder.Services.AddHttpClient("ApiGateway", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5001");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Unit of Work and Repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -31,7 +40,7 @@ builder.Services.AddScoped <ISyllabusService, SyllabusService>();
 builder.Services.AddScoped <IGeminiService, GeminiService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
 builder.Services.AddScoped <IPowerPointService, PowerPointService>();
-builder.Services.AddHttpClient<IAuthServiceClient, AuthServiceClient>();
+builder.Services.AddScoped <IAuthServiceClient, AuthServiceClient>();
 
 // Semantic Kernel with Gemini
 builder.Services.AddKernel();
