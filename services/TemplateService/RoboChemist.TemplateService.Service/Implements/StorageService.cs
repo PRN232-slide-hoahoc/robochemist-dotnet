@@ -37,7 +37,6 @@ public class StorageService : IStorageService
             await using var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0; // Reset vị trí stream về đầu
-            // --- KẾT THÚC SỬA LỖI ---
             
             // Tạo object key duy nhất
             var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
