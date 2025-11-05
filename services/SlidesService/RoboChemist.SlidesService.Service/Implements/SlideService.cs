@@ -3,6 +3,7 @@ using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.Shared.DTOs.UserDTOs;
 using RoboChemist.SlidesService.Model.Models;
 using RoboChemist.SlidesService.Repository.Interfaces;
+using RoboChemist.SlidesService.Service.HttpClients;
 using RoboChemist.SlidesService.Service.Interfaces;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideRequestDTOs;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideResponseDTOs;
