@@ -10,6 +10,12 @@ using RoboChemist.TemplateService.Model.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel for large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100 MB
+});
+
 var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".."));
 var envPath = Path.Combine(solutionRoot, ".env");
 
@@ -151,7 +157,10 @@ builder.Services.AddSwaggerGen(c =>
     // Enable XML comments for Swagger documentation
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 
     // Configure file upload support
     c.MapType<IFormFile>(() => new OpenApiSchema
