@@ -196,17 +196,22 @@ namespace RoboChemist.WalletService.Service.Implements
             newTransaction.UpdateAt = DateTime.Now;
             await _unitOfWork.WalletTransactionRepo.UpdateAsync(newTransaction);
 
-            var transactionDto = new WalletTransactionDto
+            //var transactionDto = new WalletTransactionDto
+            //{
+            //    TransactionId = newTransaction.TransactionId,
+            //    WalletId = newTransaction.WalletId,
+            //    TransactionType = newTransaction.TransactionType,
+            //    Amount = newTransaction.Amount,
+            //    Method = newTransaction.Method,
+            //    Status = newTransaction.Status,
+            //    CreateAt = newTransaction.CreateAt,
+            //    UpdateAt = newTransaction.UpdateAt
+            //};
+
+            if (!result.Success)
             {
-                TransactionId = newTransaction.TransactionId,
-                WalletId = newTransaction.WalletId,
-                TransactionType = newTransaction.TransactionType,
-                Amount = newTransaction.Amount,
-                Method = newTransaction.Method,
-                Status = newTransaction.Status,
-                CreateAt = newTransaction.CreateAt,
-                UpdateAt = newTransaction.UpdateAt
-            };
+                return ApiResponse<CreateChangeBalanceRequestDto>.ErrorResult("Thanh toán thất bại: " + result.Message);
+            }
 
             return ApiResponse<CreateChangeBalanceRequestDto>.SuccessResult(paymentRequestDTO, "Tạo yêu cầu thanh toán thành công");
         }
