@@ -230,7 +230,7 @@ namespace RoboChemist.WalletService.Service.Implements
             WalletTransaction newTransaction = new WalletTransaction
             {
                 WalletId = wallet.WalletId,
-                TransactionType = TRANSACTION_TYPE_PAYMENT,
+                TransactionType = TRANSACTION_TYPE_REFUND,
                 Amount = paymentRequestDTO.Amount,
                 Method = TRANSACTION_METHOD_SYSTEM,
                 Status = TRANSACTION_STATUS_PENDING,
