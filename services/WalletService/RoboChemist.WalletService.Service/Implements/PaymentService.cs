@@ -232,7 +232,7 @@ namespace RoboChemist.WalletService.Service.Implements
                 WalletId = wallet.WalletId,
                 TransactionType = TRANSACTION_TYPE_PAYMENT,
                 Amount = paymentRequestDTO.Amount,
-                Method = TRANSACTION_METHOD_WALLET,
+                Method = TRANSACTION_METHOD_SYSTEM,
                 Status = TRANSACTION_STATUS_PENDING,
                 ReferenceId = paymentRequestDTO.ReferenceId,
                 CreateAt = DateTime.Now,

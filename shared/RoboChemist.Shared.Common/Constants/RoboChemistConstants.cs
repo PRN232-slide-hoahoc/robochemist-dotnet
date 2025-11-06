@@ -186,9 +186,14 @@
         public const string TRANSACTION_METHOD_VNPAY = "VNPay";
 
         /// <summary>
-        /// Transaction throuhg Wallet
+        /// Transaction through Wallet
         /// </summary>
         public const string TRANSACTION_METHOD_WALLET = "Ví";
+
+        /// <summary>
+        /// Use system to refund
+        /// </summary>
+        public const string TRANSACTION_METHOD_SYSTEM = "Hệ thống";
 
         /// <summary>
         /// Transaction Type: Deposit
