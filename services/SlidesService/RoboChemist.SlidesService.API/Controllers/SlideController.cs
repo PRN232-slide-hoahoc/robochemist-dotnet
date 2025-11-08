@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RoboChemist.Shared.DTOs.Common;
-using RoboChemist.Shared.DTOs.UserDTOs;
-using RoboChemist.SlidesService.Service.HttpClients;
 using RoboChemist.SlidesService.Service.Interfaces;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideRequestDTOs;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideResponseDTOs;
@@ -14,13 +12,16 @@ namespace RoboChemist.SlidesService.API.Controllers
     public class SlideController : ControllerBase
     {
         private readonly ISlideService _slideService;
-        private readonly IAuthServiceClient _auth;
-        public SlideController(ISlideService slideService, IAuthServiceClient auth)
+        public SlideController(ISlideService slideService)
         {
             _slideService = slideService;
-            _auth = auth;
         }
 
+        /// <summary>
+        /// Generate PowerPoint slides automatically using AI (Gemini). Process flow: authenticate user → payment → AI generates JSON content → apply to PowerPoint template → upload file to storage
+        /// </summary>
+        /// <param name="request">Slide generation request containing AiPrompt, NumberOfSlides, SyllabusId, and TemplateId</param>
+        /// <returns>ApiResponse with SlideDto containing GeneratedSlideId, FilePath, FileSize, SlideCount, GenerationStatus, ProcessingTime, and GeneratedAt</returns>
         [HttpPost("generate")]
         public async Task<ActionResult<ApiResponse<SlideDto>>> GenerateSlide([FromBody] GenerateSlideRequest request)
         {
@@ -44,12 +45,6 @@ namespace RoboChemist.SlidesService.API.Controllers
             {
                 return StatusCode(500, ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống"));
             }
-        }
-
-        [HttpGet("me")]
-        public async Task<ActionResult<UserDto>> aaa()
-        {
-            return await _auth.GetCurrentUserAsync();
         }
     }
 }

@@ -41,6 +41,8 @@ builder.Services.AddScoped <IGeminiService, GeminiService>();
 builder.Services.AddScoped <ISlideService, SlideService>();
 builder.Services.AddScoped <IPowerPointService, PowerPointService>();
 builder.Services.AddScoped <IAuthServiceClient, AuthServiceClient>();
+builder.Services.AddScoped <ITemplateServiceClient, TemplateServiceClient>();
+builder.Services.AddScoped <IWalletServiceClient, WalletServiceClient>();
 
 // Semantic Kernel with Gemini
 builder.Services.AddKernel();

@@ -12,10 +12,19 @@ namespace RoboChemist.SlidesService.Service.Implements
 {
     public class PowerPointService : IPowerPointService
     {
-        public void ImportDataToTemplate(ResponseGenerateDataDto data, string templatePath, string outputPath)
+        public void ImportDataToTemplate(ResponseGenerateDataDto data, Stream templateStream, string outputPath)
         {
-            // Copy template to output file
-            File.Copy(templatePath, outputPath, overwrite: true);
+            // Copy template stream to output file
+            using (var fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            {
+                templateStream.CopyTo(fileStream);
+            }
+
+            // Reset stream position if possible (for MemoryStream)
+            if (templateStream.CanSeek)
+            {
+                templateStream.Position = 0;
+            }
 
             using var presentationDoc = PresentationDocument.Open(outputPath, true);
             var presentationPart = presentationDoc.PresentationPart
