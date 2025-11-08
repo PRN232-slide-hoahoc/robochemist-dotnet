@@ -1,16 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http;
 using RoboChemist.Shared.DTOs.Common;
-using RoboChemist.Shared.DTOs.UserDTOs;
+using System.Text;
 using System.Text.Json;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
 
 namespace RoboChemist.SlidesService.Service.HttpClients
 {
-    public class AuthServiceClient : IAuthServiceClient
+    public class WalletServiceClient : IWalletServiceClient
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthServiceClient(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+        public WalletServiceClient(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -28,33 +29,24 @@ namespace RoboChemist.SlidesService.Service.HttpClients
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
             }
         }
-
-        public async Task<UserDto?> GetCurrentUserAsync()
+        public async Task<ApiResponse<CreateChangeBalanceRequestDto>?> CreatePaymentAsync(CreateChangeBalanceRequestDto request)
         {
             try
             {
                 var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+
                 AuthorizeHttpClient(httpClient);
 
-                var url = "/auth/v1/users/me";
-                var response = await httpClient.GetAsync(url);
+                var url = "/wallet/v1/payments/create-payment-request";
 
-                if (response == null || !response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
+                var json = JsonSerializer.Serialize(request);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var json = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<ApiResponse<UserDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var response = await httpClient.PostAsync(url, content);
 
-                //Return null if response is null or indicates failure
-                if (apiResponse == null || !apiResponse.Success)
-                {
-                    return null;
-                }
-
-                //Return the user data
-                return apiResponse.Data;
+                var responseJson = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<ApiResponse<CreateChangeBalanceRequestDto>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                return apiResponse;
             }
             catch (HttpRequestException ex)
             {
