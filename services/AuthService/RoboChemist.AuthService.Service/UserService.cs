@@ -3,7 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-
+using BCrypt.Net;
 using RoboChemist.AuthService.Model.Models;
 using RoboChemist.AuthService.Repository;
 
@@ -41,8 +41,9 @@ namespace RoboChemist.AuthService.Services
                 throw new UnauthorizedAccessException("Email hoặc mật khẩu không đúng");
             }
 
-            // So sánh plain text password
-            if (user.PasswordHash != request.Password)
+            // ✅ So sánh mật khẩu bằng BCrypt
+            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            if (!isPasswordValid)
             {
                 throw new UnauthorizedAccessException("Email hoặc mật khẩu không đúng");
             }
@@ -70,13 +71,13 @@ namespace RoboChemist.AuthService.Services
             {
                 throw new InvalidOperationException("Email đã được sử dụng");
             }
-
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
             var user = new User
             {
                 Id = Guid.NewGuid(),
                 Fullname = request.Fullname,
                 Email = request.Email,
-                PasswordHash = request.Password, // Lưu plain text (KHÔNG AN TOÀN!)
+                PasswordHash = hashedPassword, // Lưu plain text (KHÔNG AN TOÀN!)
                 Phone = request.Phone,
                 Role = "User",
                 Status = "Active",
