@@ -95,7 +95,8 @@ namespace RoboChemist.WalletService.Service.Implements
                 return ApiResponse<WalletTransactionDto>.ErrorResult("Thông tin đơn hàng không hợp lệ");
             }
 
-            var orderInfoParts = depositRequestDTO.vnp_OrderInfo.Split("TransactionId ");
+            string orderInfo = depositRequestDTO.vnp_OrderInfo.Replace("+"," ");
+            var orderInfoParts = orderInfo.Split("TransactionId ");
             if (orderInfoParts.Length < 2 || !Guid.TryParse(orderInfoParts[1].Trim(), out Guid transactionId))
             {
                 return ApiResponse<WalletTransactionDto>.ErrorResult("Không thể parse Transaction ID từ thông tin đơn hàng");

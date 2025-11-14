@@ -7,5 +7,6 @@ namespace RoboChemist.WalletService.Repository.Interfaces
     public interface IUserWalletRepository : IGenericRepository<UserWallet>
     {
         Task<UserWallet> GetWalletByUserIdAsync(Guid userId);
+        Task<UserWallet> GetWalletAadminAsync();
     }
 }

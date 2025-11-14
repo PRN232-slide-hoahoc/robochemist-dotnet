@@ -93,6 +93,17 @@ namespace RoboChemist.Shared.DTOs.WalletServiceDTOs
             public DateTime CreateAt { get; set; }
         }
 
+        public class ChangeAdminBalanceDto
+        {
+            [Required(ErrorMessage = "Amount là bắt buộc")]
+            public decimal Amount { get; set; }
+            [Required(ErrorMessage = "TransactionType là bắt buộc")]
+            [RegularExpression("^(Payment|Refund)$", ErrorMessage = "TransactionType phải là 'Payment' hoặc 'Refund'")]
+            public string TransactionType { get; set; } = string.Empty;
+            [Required(ErrorMessage = "ReferenceId là bắt buộc")]
+            public Guid ReferenceId { get; set; }
+            public string? Reason { get; set; }
+        }
         public class TransactionsByReferenceDto
         {
             public Guid ReferenceId { get; set; }
