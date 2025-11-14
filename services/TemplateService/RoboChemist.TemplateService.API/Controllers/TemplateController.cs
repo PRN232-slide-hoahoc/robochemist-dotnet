@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RoboChemist.Shared.Common.Helpers;
+using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Service.Interfaces;
-using RoboChemist.Shared.DTOs.Common;
-using RoboChemist.Shared.Common.Helpers;
 
 namespace RoboChemist.TemplateService.API.Controllers;
 

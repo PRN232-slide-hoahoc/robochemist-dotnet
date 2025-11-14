@@ -43,5 +43,43 @@ namespace RoboChemist.ExamService.Repository.Implements
                 .OrderByDescending(q => q.CreatedAt)
                 .ToListAsync();
         }
+
+        /// <summary>
+        /// Lấy danh sách Questions với Options theo danh sách QuestionIds
+        /// </summary>
+        public async Task<List<Question>> GetQuestionsWithOptionsByIdsAsync(List<Guid> questionIds)
+        {
+            return await _context.Set<Question>()
+                .Include(q => q.Options)
+                .Where(q => questionIds.Contains(q.QuestionId))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Lấy danh sách Questions với filters (TopicId, search term)
+        /// NOTE: Query logic phải ở Repository, KHÔNG ĐƯỢC query ở Service layer
+        /// </summary>
+        public async Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search)
+        {
+            var query = _context.Set<Question>()
+                .Include(q => q.Options)
+                .AsQueryable();
+
+            // Filter by TopicId
+            if (topicId.HasValue)
+            {
+                query = query.Where(q => q.TopicId == topicId.Value);
+            }
+
+            // Search in QuestionText
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(q => q.QuestionText.Contains(search));
+            }
+
+            return await query
+                .OrderByDescending(q => q.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

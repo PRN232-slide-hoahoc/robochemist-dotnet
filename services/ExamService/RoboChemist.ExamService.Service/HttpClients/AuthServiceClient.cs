@@ -1,20 +1,20 @@
 using Microsoft.AspNetCore.Http;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.DTOs.UserDTOs;
 using System.Text.Json;
-using static RoboChemist.Shared.DTOs.TopicDTOs.TopicDTOs;
 
 namespace RoboChemist.ExamService.Service.HttpClients
 {
     /// <summary>
-    /// Typed HTTP client for communicating with Slide Service
-    /// Handles authentication token forwarding for service-to-service calls
+    /// Typed HTTP client for communicating with Auth Service
+    /// Handles authentication token forwarding and user information retrieval
     /// </summary>
-    public class SlidesServiceHttpClient : ISlidesServiceHttpClient
+    public class AuthServiceClient : IAuthServiceClient
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SlidesServiceHttpClient(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
+        public AuthServiceClient(IHttpClientFactory httpClientFactory, IHttpContextAccessor httpContextAccessor)
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -37,36 +37,42 @@ namespace RoboChemist.ExamService.Service.HttpClients
         }
 
         /// <summary>
-        /// Get topic by ID from Slide Service via API Gateway
+        /// Get current authenticated user information from Auth Service
         /// </summary>
-        /// <param name="topicId">Topic unique identifier</param>
-        /// <returns>API response containing topic details or null if request fails</returns>
-        public async Task<ApiResponse<TopicDto>?> GetTopicByIdAsync(Guid topicId)
+        /// <returns>User details or null if not authenticated or request fails</returns>
+        public async Task<UserDto?> GetCurrentUserAsync()
         {
             try
             {
                 var httpClient = _httpClientFactory.CreateClient("ApiGateway");
                 AuthorizeHttpClient(httpClient);
 
-                var url = $"/slides/v1/topics/{topicId}";
+                var url = "/auth/v1/users/me";
                 var response = await httpClient.GetAsync(url);
 
-                if (!response.IsSuccessStatusCode)
+                if (response == null || !response.IsSuccessStatusCode)
                 {
                     return null;
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<ApiResponse<TopicDto>>(json, new JsonSerializerOptions 
+                var apiResponse = JsonSerializer.Deserialize<ApiResponse<UserDto>>(json, new JsonSerializerOptions 
                 { 
                     PropertyNameCaseInsensitive = true 
                 });
 
-                return apiResponse;
+                // Return null if response is null or indicates failure
+                if (apiResponse == null || !apiResponse.Success)
+                {
+                    return null;
+                }
+
+                // Return the user data
+                return apiResponse.Data;
             }
             catch (HttpRequestException ex)
             {
-                throw new HttpRequestException($"Failed to get topic {topicId} from Slide Service", ex);
+                throw new HttpRequestException($"Failed to get current user from Auth Service", ex);
             }
         }
     }

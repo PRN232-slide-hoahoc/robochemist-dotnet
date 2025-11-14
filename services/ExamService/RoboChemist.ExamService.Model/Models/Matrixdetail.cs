@@ -9,7 +9,7 @@ public partial class Matrixdetail
 
     public Guid MatrixId { get; set; }
 
-    public Guid TopicId { get; set; }  // NOT NULL - required field
+    public Guid? TopicId { get; set; }
 
     public string QuestionType { get; set; } = null!;
 
@@ -20,6 +20,8 @@ public partial class Matrixdetail
     public DateTime? CreatedAt { get; set; }
 
     public bool? IsActive { get; set; }
+
+    public string? Level { get; set; }
 
     public virtual Matrix Matrix { get; set; } = null!;
 }
