@@ -7,7 +7,7 @@ public partial class Question
 {
     public Guid QuestionId { get; set; }
 
-    public Guid TopicId { get; set; }  // NOT NULL - required field
+    public Guid? TopicId { get; set; }
 
     public string QuestionType { get; set; } = null!;
 
@@ -20,6 +20,8 @@ public partial class Question
     public DateTime? CreatedAt { get; set; }
 
     public bool? IsActive { get; set; }
+
+    public string? Level { get; set; }
 
     public virtual ICollection<Examquestion> Examquestions { get; set; } = new List<Examquestion>();
 

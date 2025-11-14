@@ -22,17 +22,18 @@ DotNetEnv.Env.Load(envPath);
 builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
-builder.Services.AddHttpContextAccessor(); // Cho phép services truy cập HttpContext
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// JWT Authentication Configuration - ĐỌC TỪ .ENV
-var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
-    ?? throw new Exception("JWT_SECRET not found in .env!");
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
-    ?? throw new Exception("JWT_ISSUER not found in .env!");
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
-    ?? throw new Exception("JWT_AUDIENCE not found in .env!");
+// Add HttpContextAccessor for token forwarding
+builder.Services.AddHttpContextAccessor();
+
+// ============================================
+// JWT Authentication Configuration
+// ============================================
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "your-secret-key-min-32-characters-long-for-security";
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "RoboChemist.AuthService";
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "RoboChemist.Client";
 
 builder.Services.AddAuthentication(options =>
 {
@@ -49,27 +50,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-        ClockSkew = TimeSpan.Zero 
-    };
-
-    // Logging cho development
-    options.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine($"[JWT] Authentication failed: {context.Exception.Message}");
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            Console.WriteLine($"[JWT] Token validated for user: {context.Principal?.Identity?.Name}");
-            return Task.CompletedTask;
-        }
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
-
-builder.Services.AddAuthorization();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -86,12 +69,10 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Thêm JWT Security Definition vào Swagger
+    // Add JWT Bearer Authentication to Swagger UI
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n" +
-                      "Nhập 'Bearer' [space] và sau đó nhập token của bạn.\r\n\r\n" +
-                      "Ví dụ: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"",
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -109,7 +90,7 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            Array.Empty<string>()
+            new string[] {}
         }
     });
 
@@ -122,28 +103,39 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Microservices: HTTP Client for API Gateway
-// Chỉ cần 1 HttpClient trỏ đến Gateway, tất cả services đều gọi qua đây
+// ============================================
+// Microservices: HTTP Typed Clients
+// ============================================
+// Register Auth Service client for user authentication
+// Uses IHttpClientFactory pattern to support token forwarding
 builder.Services.AddHttpClient("ApiGateway", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5001");
+    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5000");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
+builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
+builder.Services.AddScoped<ITemplateServiceClient, TemplateServiceClient>();
 
+// TODO: Add more typed clients as needed
+// builder.Services.AddHttpClient<IWalletServiceClient, WalletServiceClient>(client => { ... });
+
+// ============================================
 // Database & Repositories
+// ============================================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("EXAM_DB")));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// HttpClients - Gọi các service khác qua ApiGateway
-builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
-builder.Services.AddScoped<IWalletServiceHttpClient, WalletServiceHttpClient>();
-
-// Services
+// ============================================
+// Business Services
+// ============================================
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IMatrixService, MatrixService>();
+builder.Services.AddScoped<IWordExportService, WordExportService>();
 builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<IWalletServiceHttpClient, WalletServiceHttpClient>();
 
 var app = builder.Build();
 
@@ -156,7 +148,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

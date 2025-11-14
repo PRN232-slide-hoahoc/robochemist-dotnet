@@ -28,6 +28,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
 
                 var url = "/wallet/v1/wallets/payment";
                 Console.WriteLine($"[SAGA] WalletService.CreatePayment: {httpClient.BaseAddress}{url}");
+                Console.WriteLine($"[SAGA] Payment Request JSON: {JsonSerializer.Serialize(request)}");
 
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");

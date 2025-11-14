@@ -21,5 +21,16 @@ namespace RoboChemist.ExamService.Repository.Implements
                 .Where(md => md.MatrixId == matrixId)
                 .ToListAsync();
         }
+
+        /// <summary>
+        /// Lấy tất cả MatrixDetails active theo MatrixId
+        /// </summary>
+        public async Task<List<Matrixdetail>> GetActiveByMatrixIdAsync(Guid matrixId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(md => md.MatrixId == matrixId && md.IsActive == true)
+                .ToListAsync();
+        }
     }
 }

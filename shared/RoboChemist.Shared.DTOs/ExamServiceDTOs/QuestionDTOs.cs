@@ -42,6 +42,12 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string? Explanation { get; set; }
 
             /// <summary>
+            /// Mức độ câu hỏi (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            [StringLength(50, ErrorMessage = "Level không được vượt quá 50 ký tự")]
+            public string? Level { get; set; }
+
+            /// <summary>
             /// Danh sách đáp án (tối thiểu 0 cho Essay, 2-6 cho các loại khác)
             /// </summary>
             [Required(ErrorMessage = "Options là bắt buộc")]
@@ -89,6 +95,13 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             [MinLength(10, ErrorMessage = "QuestionText phải có ít nhất 10 ký tự")]
             [MaxLength(1000, ErrorMessage = "QuestionText không được vượt quá 1000 ký tự")]
             public string QuestionText { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Mức độ câu hỏi: NhanBiet, ThongHieu, VanDung, VanDungCao
+            /// </summary>
+            [RegularExpression("^(NhanBiet|ThongHieu|VanDung|VanDungCao)$",
+                ErrorMessage = "Level phải là: NhanBiet, ThongHieu, VanDung, hoặc VanDungCao")]
+            public string? Level { get; set; }
 
             /// <summary>
             /// Giải thích đáp án (optional)
@@ -158,6 +171,12 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string? Explanation { get; set; }
 
             /// <summary>
+            /// Mức độ câu hỏi (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            [StringLength(50, ErrorMessage = "Level không được vượt quá 50 ký tự")]
+            public string? Level { get; set; }
+
+            /// <summary>
             /// Trạng thái: "1" = Active, "0" = Inactive
             /// </summary>
             [Required(ErrorMessage = "Status là bắt buộc")]
@@ -183,6 +202,7 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string QuestionType { get; set; } = string.Empty;
             public string QuestionText { get; set; } = string.Empty;
             public string? Explanation { get; set; }
+            public string? Level { get; set; }
             public string Status { get; set; } = string.Empty; // "1" = Active, "0" = Inactive (mapping từ IsActive bool)
             public DateTime? CreatedAt { get; set; }
             public Guid? CreatedBy { get; set; }

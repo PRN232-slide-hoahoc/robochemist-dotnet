@@ -113,20 +113,27 @@ namespace RoboChemist.WalletService.Service.Implements
 
         public async Task<ApiResponse<PaymentResponseDto>> CreatePaymentAsync(CreatePaymentDto request)
         {
+            Console.WriteLine($"[WALLET SERVICE] CreatePayment - UserId={request.UserId}, Amount={request.Amount}, ReferenceId={request.ReferenceId}, ReferenceType={request.ReferenceType}");
+            
             var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(request.UserId);
             if (wallet == null)
             {
+                Console.WriteLine($"[WALLET SERVICE ERROR] Wallet not found for UserId={request.UserId}");
                 return ApiResponse<PaymentResponseDto>.ErrorResult("Ví không tồn tại");
             }
 
+            Console.WriteLine($"[WALLET SERVICE] Wallet found - WalletId={wallet.WalletId}, Balance={wallet.Balance}, Required={request.Amount}");
+
             if (wallet.Balance < request.Amount)
             {
+                Console.WriteLine($"[WALLET SERVICE ERROR] Insufficient balance - Have: {wallet.Balance}, Need: {request.Amount}");
                 return ApiResponse<PaymentResponseDto>.ErrorResult("Số dư ví không đủ");
             }
 
             var existingTransaction = await _unitOfWork.WalletTransactionRepo.GetPaymentByReferenceIdAsync(request.ReferenceId);
             if (existingTransaction != null)
             {
+                Console.WriteLine($"[WALLET SERVICE ERROR] Duplicate ReferenceId - TransactionId={existingTransaction.TransactionId}");
                 return ApiResponse<PaymentResponseDto>.ErrorResult("Giao dịch đã tồn tại với ReferenceId này");
             }
 

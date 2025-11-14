@@ -28,6 +28,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">ID của ma trận</param>
         /// <returns>Thông tin ma trận</returns>
         [HttpGet("{id}")]
+        [AllowAnonymous] // Ai cũng có thể xem chi tiết ma trận
         public async Task<ActionResult<ApiResponse<MatrixResponseDto>>> GetMatrixById(Guid id)
         {
             var result = await _matrixService.GetMatrixByIdAsync(id);
@@ -46,6 +47,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="isActive">Lọc theo trạng thái (true/false/null = tất cả)</param>
         /// <returns>Danh sách ma trận</returns>
         [HttpGet]
+        [AllowAnonymous] // Ai cũng có thể xem danh sách ma trận
         public async Task<ActionResult<ApiResponse<List<MatrixResponseDto>>>> GetAllMatrices([FromQuery] bool? isActive = null)
         {
             var result = await _matrixService.GetAllMatricesAsync(isActive);
@@ -58,6 +60,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="createDto">Thông tin ma trận cần tạo</param>
         /// <returns>Ma trận vừa tạo</returns>
         [HttpPost]
+        [Authorize(Roles = "Teacher,Admin")] // Chỉ Teacher và Admin mới được tạo ma trận
         public async Task<ActionResult<ApiResponse<MatrixResponseDto>>> CreateMatrix([FromBody] CreateMatrixDto createDto)
         {
             if (!ModelState.IsValid)

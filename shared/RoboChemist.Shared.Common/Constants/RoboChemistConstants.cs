@@ -61,19 +61,29 @@
         public const string EXAMREQ_STATUS_FAILED = "Failed";
 
         /// <summary>
-        /// Generated Exam Status: Draft (Bản nháp)
+        /// Generated Exam Status: Pending (Đang tạo câu hỏi)
         /// </summary>
-        public const string EXAM_STATUS_DRAFT = "Draft";
+        public const string GENERATED_EXAM_STATUS_PENDING = "PENDING";
 
         /// <summary>
-        /// Generated Exam Status: Published (Đã xuất bản)
+        /// Generated Exam Status: Ready (Sẵn sàng xuất đề)
         /// </summary>
-        public const string EXAM_STATUS_PUBLISHED = "Published";
+        public const string GENERATED_EXAM_STATUS_READY = "READY";
 
         /// <summary>
-        /// Generated Exam Status: Archived (Đã lưu trữ)
+        /// Generated Exam Status: Expired (Hết hạn)
         /// </summary>
-        public const string EXAM_STATUS_ARCHIVED = "Archived";
+        public const string GENERATED_EXAM_STATUS_EXPIRED = "EXPIRED";
+
+        /// <summary>
+        /// File format: DOCX (Word document)
+        /// </summary>
+        public const string FILE_FORMAT_DOCX = "docx";
+
+        /// <summary>
+        /// File format: PDF
+        /// </summary>
+        public const string FILE_FORMAT_PDF = "pdf";
 
         /// <summary>
         /// Question Type: Multiple Choice
@@ -134,6 +144,26 @@
         /// Question Status: Inactive/Deleted (value = "0")
         /// </summary>
         public const string QUESTION_STATUS_INACTIVE = "0";
+
+        /// <summary>
+        /// Question Level: Nhận biết (Biết)
+        /// </summary>
+        public const string QUESTION_LEVEL_NHAN_BIET = "NhanBiet";
+
+        /// <summary>
+        /// Question Level: Thông hiểu (Hiểu)
+        /// </summary>
+        public const string QUESTION_LEVEL_THONG_HIEU = "ThongHieu";
+
+        /// <summary>
+        /// Question Level: Vận dụng (Áp dụng)
+        /// </summary>
+        public const string QUESTION_LEVEL_VAN_DUNG = "VanDung";
+
+        /// <summary>
+        /// Question Level: Vận dụng cao (Tổng hợp, đánh giá)
+        /// </summary>
+        public const string QUESTION_LEVEL_VAN_DUNG_CAO = "VanDungCao";
         #endregion
 
         #region User Roles

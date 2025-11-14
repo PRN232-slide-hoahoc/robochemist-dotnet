@@ -54,6 +54,14 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string QuestionType { get; set; } = string.Empty;
 
             /// <summary>
+            /// Mức độ câu hỏi (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            [StringLength(50, ErrorMessage = "Mức độ câu hỏi không được vượt quá 50 ký tự")]
+            [RegularExpression("^(NhanBiet|ThongHieu|VanDung|VanDungCao)$", 
+                ErrorMessage = "Mức độ câu hỏi phải là: NhanBiet, ThongHieu, VanDung, hoặc VanDungCao")]
+            public string? Level { get; set; }
+
+            /// <summary>
             /// Số lượng câu hỏi cho chủ đề này
             /// </summary>
             [Range(1, 50, ErrorMessage = "Số lượng câu hỏi phải từ 1-50")]
@@ -166,6 +174,11 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             /// Loại câu hỏi
             /// </summary>
             public string QuestionType { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Mức độ câu hỏi (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            public string? Level { get; set; }
 
             /// <summary>
             /// Số lượng câu hỏi

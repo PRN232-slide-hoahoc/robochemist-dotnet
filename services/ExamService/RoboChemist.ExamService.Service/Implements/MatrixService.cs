@@ -106,32 +106,30 @@ namespace RoboChemist.ExamService.Service.Implements
                 MatrixDetails = new List<MatrixDetailResponseDto>()
             };
 
-            // Lấy token từ request header
-            var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString()?.Replace("Bearer ", "");
-
             // Enrich với TopicName từ SlidesService thông qua SlidesServiceHttpClient
             foreach (var detail in matrix.Matrixdetails)
             {
                 string topicName = "Unknown Topic";
                 try
                 {
-                    var topicDto = await _slidesClient.GetTopicAsync(detail.TopicId, authToken);
-                    if (topicDto != null)
+                    var topicResponse = await _slidesClient.GetTopicByIdAsync(detail.TopicId ?? Guid.Empty);
+                    if (topicResponse?.Success == true && topicResponse.Data != null)
                     {
-                        topicName = topicDto.Name;
+                        topicName = topicResponse.Data.Name;
                     }
                 }
                 catch
                 {
-                    topicName = $"Topic {detail.TopicId}";
+                    topicName = $"Topic {detail.TopicId ?? Guid.Empty}";
                 }
 
                 response.MatrixDetails.Add(new MatrixDetailResponseDto
                 {
                     MatrixDetailsId = detail.MatrixDetailsId,
-                    TopicId = detail.TopicId,
+                    TopicId = detail.TopicId ?? Guid.Empty,
                     TopicName = topicName,
                     QuestionType = detail.QuestionType,
+                    Level = detail.Level,
                     QuestionCount = detail.QuestionCount,
                     IsActive = detail.IsActive ?? true
                 });
@@ -174,14 +172,11 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<MatrixResponseDto>.ErrorResult($"Tổng số câu của các chi tiết ({sum}) không khớp với TotalQuestion ({createDto.TotalQuestion})");
                 }
 
-                // Lấy token từ request header
-                var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString()?.Replace("Bearer ", "");
-
                 // Kiểm tra từng Topic tồn tại trong SlidesService
                 foreach (var detail in createDto.MatrixDetails)
                 {
-                    var exists = await _slidesClient.GetTopicByIdAsync(detail.TopicId, authToken);
-                    if (!exists)
+                    var topicResponse = await _slidesClient.GetTopicByIdAsync(detail.TopicId);
+                    if (topicResponse?.Success != true || topicResponse.Data == null)
                     {
                         return ApiResponse<MatrixResponseDto>.ErrorResult($"Không tìm thấy Topic với ID: {detail.TopicId}");
                     }
@@ -210,6 +205,7 @@ namespace RoboChemist.ExamService.Service.Implements
                         MatrixId = matrix.MatrixId,
                         TopicId = detail.TopicId,
                         QuestionType = detail.QuestionType,
+                        Level = detail.Level,
                         QuestionCount = detail.QuestionCount,
                         CreatedAt = DateTime.Now,
                         CreatedBy = createdBy,

@@ -9,11 +9,11 @@ namespace RoboChemist.ExamService.Service.Interfaces
     public interface IExamService
     {
         /// <summary>
-        /// Tạo yêu cầu tạo đề thi mới
+        /// Tạo yêu cầu tạo đề thi mới và tự động generate câu hỏi (gọi sau khi thanh toán thành công)
         /// </summary>
         /// <param name="createExamRequestDto">Thông tin yêu cầu tạo đề</param>
         /// <param name="userId">ID người dùng yêu cầu</param>
-        /// <returns>Thông tin yêu cầu tạo đề</returns>
+        /// <returns>Thông tin yêu cầu tạo đề và đề thi đã được generate</returns>
         Task<ApiResponse<ExamRequestResponseDto>> CreateExamRequestAsync(CreateExamRequestDto createExamRequestDto, Guid userId);
 
         /// <summary>
@@ -32,13 +32,6 @@ namespace RoboChemist.ExamService.Service.Interfaces
         Task<ApiResponse<List<ExamRequestResponseDto>>> GetExamRequestsByUserAsync(Guid userId, string? status = null);
 
         /// <summary>
-        /// Xử lý tạo đề thi từ yêu cầu (Generate exam từ matrix và AI)
-        /// </summary>
-        /// <param name="examRequestId">ID yêu cầu tạo đề</param>
-        /// <returns>Thông tin đề thi đã được tạo</returns>
-        Task<ApiResponse<GeneratedExamResponseDto>> GenerateExamAsync(Guid examRequestId);
-
-        /// <summary>
         /// Lấy thông tin đề thi đã được tạo theo ID
         /// </summary>
         /// <param name="generatedExamId">ID đề thi</param>
@@ -46,7 +39,14 @@ namespace RoboChemist.ExamService.Service.Interfaces
         Task<ApiResponse<GeneratedExamResponseDto>> GetGeneratedExamByIdAsync(Guid generatedExamId);
 
         /// <summary>
-        /// Cập nhật trạng thái đề thi (Draft -> Published -> Archived)
+        /// Export đề thi ra file Word (.docx) - Lấy cùng bộ câu hỏi đã generate
+        /// </summary>
+        /// <param name="generatedExamId">ID đề thi đã được generate</param>
+        /// <returns>File Word dạng byte array</returns>
+        Task<ApiResponse<byte[]>> ExportExamToWordAsync(Guid generatedExamId);
+
+        /// <summary>
+        /// Cập nhật trạng thái đề thi (PENDING -> READY -> EXPIRED)
         /// </summary>
         /// <param name="generatedExamId">ID đề thi</param>
         /// <param name="status">Trạng thái mới</param>
