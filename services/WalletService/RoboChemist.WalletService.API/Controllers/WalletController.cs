@@ -1,21 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.WalletService.Service.Implements;
 using RoboChemist.WalletService.Service.Interfaces;
 using System.Security.Claims;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.UserWalletDTOs;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.VNPayDTOs;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
 
 namespace RoboChemist.WalletService.API.Controllers
 {
-    [Route("api/v1/wallets")]
+    [Route("api/v1/wallet")]
     [ApiController]
     public class WalletController : ControllerBase
     {
         private readonly IWalletService _walletService;
-        public WalletController(IWalletService walletService)
+        private readonly IPaymentService _paymentService;
+        public WalletController(IWalletService walletService, IPaymentService paymentService)
         {
             _walletService = walletService;
+            _paymentService = paymentService;
         }
 
         [Authorize]
@@ -133,6 +137,88 @@ namespace RoboChemist.WalletService.API.Controllers
             catch (Exception)
             {
                 return StatusCode(500, ApiResponse<RefundResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("deposit")]
+        public async Task<ActionResult<ApiResponse<string>>> CreateDepositUrl([FromBody] DepositRequestDTO depositRequestDTO)
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(ApiResponse<string>.ErrorResult("Người dùng chưa đăng nhập"));
+                }
+
+                if (!Guid.TryParse(userIdClaim, out Guid userId))
+                {
+                    return BadRequest(ApiResponse<string>.ErrorResult("User ID không hợp lệ"));
+                }
+
+                depositRequestDTO.userId = userId;
+
+                if (depositRequestDTO.amount < 10000)
+                {
+                    return BadRequest(ApiResponse<string>.ErrorResult("Số tiền nạp phải lớn hơn 10000"));
+                }
+                else if (depositRequestDTO.amount > 999999999)
+                {
+                    return BadRequest(ApiResponse<string>.ErrorResult("Số tiền nạp không hợp lệ"));
+                }
+
+                var result = await _paymentService.CreateDepositUrlAsync(depositRequestDTO, HttpContext);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("deposit-callback")]
+        public async Task<ActionResult<ApiResponse<DepositCallbackRequestDto>>> DepositCallback([FromBody] DepositCallbackRequestDto callbackRequestDTO)
+        {
+            try
+            {
+                var result = await _paymentService.DepositCallbackAsync(callbackRequestDTO);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<DepositCallbackRequestDto>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get-all-transaction")]
+        public async Task<ActionResult<ApiResponse<List<WalletTransactionDto>>>> GetAllTransaction()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(ApiResponse<List<WalletTransactionDto>>.ErrorResult("Người dùng chưa đăng nhập"));
+                }
+
+                if (!Guid.TryParse(userIdClaim, out Guid userId))
+                {
+                    return BadRequest(ApiResponse<List<WalletTransactionDto>>.ErrorResult("User ID không hợp lệ"));
+                }
+
+                var result = await _paymentService.GetAllTransactionAsync(userId);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<List<WalletTransactionDto>>.ErrorResult("Lỗi hệ thống"));
+                throw;
             }
         }
 
