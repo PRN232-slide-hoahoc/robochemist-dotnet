@@ -120,7 +120,7 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        [Authorize] //?? chỉ role admin mới được call ??
         [HttpPost("refund")]
         public async Task<ActionResult<ApiResponse<RefundResponseDto>>> RefundPayment([FromBody] RefundRequestDto request)
         {

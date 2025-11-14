@@ -153,6 +153,12 @@ namespace RoboChemist.WalletService.Service.Implements
                 UpdateAt = DateTime.Now
             };
             await _unitOfWork.WalletTransactionRepo.CreateAsync(transaction);
+            await ChangeAdminBalanceAsync(new ChangeAdminBalanceDto
+            {
+                Amount = request.Amount,
+                TransactionType = "Payment",
+                ReferenceId = request.ReferenceId
+            });
 
             var response = new PaymentResponseDto
             {
@@ -215,6 +221,12 @@ namespace RoboChemist.WalletService.Service.Implements
                 UpdateAt = DateTime.Now
             };
             await _unitOfWork.WalletTransactionRepo.CreateAsync(refundTransaction);
+            await ChangeAdminBalanceAsync(new ChangeAdminBalanceDto
+            {
+                Amount = originalTransaction.Amount,
+                TransactionType = "Refund",
+                ReferenceId = request.ReferenceId
+            });
 
             var response = new RefundResponseDto
             {
@@ -287,6 +299,52 @@ namespace RoboChemist.WalletService.Service.Implements
             };
 
             return ApiResponse<TransactionsByReferenceDto>.SuccessResult(response, "Lấy giao dịch thành công");
+        }
+
+        private async Task<ApiResponse<string>> ChangeAdminBalanceAsync(ChangeAdminBalanceDto request)
+        {
+            var wallet = await _unitOfWork.UserWalletRepo.GetWalletAadminAsync();
+            if (wallet == null)
+            {
+                return ApiResponse<string>.ErrorResult("Ví Admin không tồn tại");
+            }
+
+            if (wallet.Balance < request.Amount && request.TransactionType.Equals("Refund"))
+            {
+                return ApiResponse<string>.ErrorResult("Số dư của Admin không đủ");
+            }
+
+            var existingTransaction = await _unitOfWork.WalletTransactionRepo.GetPaymentByReferenceIdAsync(request.ReferenceId);
+            if (existingTransaction == null)
+            {
+                return ApiResponse<string>.ErrorResult("Không tồn tại giao dịch với ReferenceId này");
+            }
+
+            if (request.TransactionType.Equals("Payment"))
+            {
+                wallet.Balance += request.Amount;
+            } else if (request.TransactionType.Equals("Refund"))
+            {
+                wallet.Balance -= request.Amount;
+            }
+
+            wallet.UpdateAt = DateTime.Now;
+            await _unitOfWork.UserWalletRepo.UpdateAsync(wallet);
+
+            var transaction = new WalletTransaction
+            {
+                WalletId = wallet.WalletId,
+                TransactionType = request.TransactionType.Equals("Payment") ? TRANSACTION_TYPE_DEPOSIT : TRANSACTION_TYPE_PAYMENT, //cần xem lại
+                Amount = request.Amount,
+                Method = TRANSACTION_METHOD_SYSTEM,
+                Status = TRANSACTION_STATUS_COMPLETED,
+                ReferenceId = request.ReferenceId,
+                CreateAt = DateTime.Now,
+                UpdateAt = DateTime.Now
+            };
+            await _unitOfWork.WalletTransactionRepo.CreateAsync(transaction);
+
+            return ApiResponse<string>.SuccessResult("Thay đổi số dư thành công");
         }
     }
 }
