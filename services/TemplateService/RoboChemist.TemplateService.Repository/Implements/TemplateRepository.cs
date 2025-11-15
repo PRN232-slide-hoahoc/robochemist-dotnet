@@ -135,6 +135,14 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Template>> GetFreeTemplatesAsync()
+    {
+        return await _appContext.Templates
+            .Where(t => t.IsActive && !t.IsPremium)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task IncrementDownloadCountAsync(Guid templateId)
     {
         var template = await _appContext.Templates.FindAsync(templateId);
