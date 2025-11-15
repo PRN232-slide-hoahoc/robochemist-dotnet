@@ -20,11 +20,6 @@ public class Template
     [MaxLength(255)]
     public string TemplateName { get; set; } = string.Empty;
 
-    [Column("template_type")]
-    [Required]
-    [MaxLength(50)]
-    public string TemplateType { get; set; } = string.Empty;
-
     [Column("description")]
     public string? Description { get; set; }
 

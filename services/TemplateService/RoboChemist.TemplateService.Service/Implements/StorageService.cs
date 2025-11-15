@@ -3,7 +3,7 @@ using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RoboChemist.TemplateService.Service.Interfaces;
-using System.IO; // Đảm bảo đã import System.IO
+using System.IO;
 
 namespace RoboChemist.TemplateService.Service.Implements;
 
@@ -17,7 +17,6 @@ public class StorageService : IStorageService
     {
         _s3Client = s3Client;
         
-        // Đọc key "phẳng" từ IConfiguration (đã được nạp từ .env)
         _bucketName = configuration["CLOUDFLARE_R2_BUCKET_NAME"] 
             ?? throw new ArgumentNullException("CLOUDFLARE_R2_BUCKET_NAME is not configured in .env file");
 
@@ -30,13 +29,10 @@ public class StorageService : IStorageService
         {
             _logger.LogInformation("Starting file upload to bucket: {BucketName}", _bucketName);
 
-            // --- SỬA LỖI STREAMING ---
-            // Xóa logic if/else CanSeek. Luôn luôn sao chép sang MemoryStream.
-            // Điều này đảm bảo SDK biết chính xác độ dài (Length) của file
-            // và sẽ không sử dụng phương thức "streaming trailer" mà R2 không hỗ trợ.
+      
             await using var memoryStream = new MemoryStream();
             await fileStream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0; // Reset vị trí stream về đầu
+            memoryStream.Position = 0;
             
             // Tạo object key duy nhất
             var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
@@ -61,7 +57,6 @@ public class StorageService : IStorageService
 
             _logger.LogInformation("File uploaded successfully: {ObjectKey}", objectKey);
             
-            // Không cần cleanup memoryStream vì đã dùng 'await using'
             
             return objectKey;
         }

@@ -70,17 +70,31 @@ public class TemplateService : ITemplateService
         }
 
         string? objectKey = null;
+        string? thumbnailUrl = null;
         
         try
         {
+            // Upload template file
             objectKey = await _storageService.UploadFileAsync(fileStream, fileName, "templates");
+
+            // Upload thumbnail if provided
+            if (request.ThumbnailFile != null && request.ThumbnailFile.Length > 0)
+            {
+                using var thumbnailStream = request.ThumbnailFile.OpenReadStream();
+                var thumbnailObjectKey = await _storageService.UploadFileAsync(
+                    thumbnailStream, 
+                    request.ThumbnailFile.FileName, 
+                    "thumbnails");
+                
+                // Generate presigned URL (valid 1 year)
+                thumbnailUrl = await _storageService.GeneratePresignedUrlAsync(thumbnailObjectKey, 525600);
+            }
 
             var template = new Template
             {
                 TemplateId = Guid.NewGuid(),
                 ObjectKey = objectKey,
                 TemplateName = request.TemplateName,
-                TemplateType = request.TemplateType,
                 Description = request.Description,
                 SlideCount = request.SlideCount,
                 IsPremium = request.IsPremium,
@@ -90,7 +104,8 @@ public class TemplateService : ITemplateService
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 Version = 1,
-                CreatedBy = user.Id  // Lưu thông tin user đã tạo
+                CreatedBy = user.Id,
+                ThumbnailUrl = thumbnailUrl
             };
 
             await _unitOfWork.Templates.CreateAsync(template);
@@ -106,6 +121,7 @@ public class TemplateService : ITemplateService
         }
         catch
         {
+            // Cleanup on error
             if (!string.IsNullOrEmpty(objectKey))
             {
                 try
@@ -129,20 +145,32 @@ public class TemplateService : ITemplateService
         if (template == null)
             throw new KeyNotFoundException($"Template with ID {templateId} not found");
 
-        // Update template properties
-        template.TemplateName = request.TemplateName;
-        template.TemplateType = request.TemplateType;
-        template.Description = request.Description;
-        template.SlideCount = request.SlideCount;
-        template.IsPremium = request.IsPremium;
-        template.Price = request.Price;
-        template.IsActive = request.IsActive;
-        template.UpdatedAt = DateTime.UtcNow;
-        template.Version++;
+        try
+        {
+            // Update only editable template properties (không update ObjectKey, CreatedAt, CreatedBy)
+            template.TemplateName = request.TemplateName;
+            template.Description = request.Description;
+            template.SlideCount = request.SlideCount;
+            template.IsPremium = request.IsPremium;
+            template.Price = request.Price;
+            template.IsActive = request.IsActive;
+            template.UpdatedAt = DateTime.UtcNow;
+            template.Version++;
 
-        await _unitOfWork.Templates.UpdateAsync(template);
+            // Đảm bảo ObjectKey không bị null (required field)
+            if (string.IsNullOrEmpty(template.ObjectKey))
+            {
+                throw new InvalidOperationException("Template ObjectKey cannot be null or empty");
+            }
 
-        return template;
+            await _unitOfWork.Templates.UpdateAsync(template);
+
+            return template;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to update template: {ex.Message}", ex);
+        }
     }
 
     public async Task<bool> DeleteTemplateAsync(Guid templateId)

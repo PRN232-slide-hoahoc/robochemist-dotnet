@@ -25,11 +25,6 @@ public interface ITemplateRepository : IGenericRepository<Template>
     Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams);
 
     /// <summary>
-    /// Get templates by type
-    /// </summary>
-    Task<IEnumerable<Template>> GetTemplatesByTypeAsync(string templateType);
-
-    /// <summary>
     /// Get premium templates
     /// </summary>
     Task<IEnumerable<Template>> GetPremiumTemplatesAsync();

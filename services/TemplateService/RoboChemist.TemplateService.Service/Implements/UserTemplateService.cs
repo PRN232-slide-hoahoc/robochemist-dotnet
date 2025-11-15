@@ -38,17 +38,21 @@ public class UserTemplateService : IUserTemplateService
         
         var response = userTemplates.Select(ut => new UserTemplateResponse
         {
-            UserTemplateId = ut.UserTemplateId,
-            UserId = ut.UserId,
-            TemplateId = ut.TemplateId,
+            TemplateId = ut.Template.TemplateId,
+            ObjectKey = ut.Template.ObjectKey,
             TemplateName = ut.Template.TemplateName,
-            TemplateType = ut.Template.TemplateType,
-            AccessType = ut.AccessType,
-            AcquiredAt = ut.AcquiredAt,
-            ExpiresAt = ut.ExpiresAt,
-            UsageCount = ut.UsageCount,
-            UsageLimit = ut.UsageLimit,
-            IsActive = ut.IsActive
+            Description = ut.Template.Description,
+            ThumbnailUrl = ut.Template.ThumbnailUrl,
+            PreviewUrl = ut.Template.PreviewUrl,
+            ContentStructure = ut.Template.ContentStructure,
+            SlideCount = ut.Template.SlideCount,
+            IsPremium = ut.Template.IsPremium,
+            Price = ut.Template.Price,
+            DownloadCount = ut.Template.DownloadCount,
+            CreatedAt = ut.Template.CreatedAt,
+            UpdatedAt = ut.Template.UpdatedAt,
+            CreatedBy = ut.Template.CreatedBy,
+            Version = ut.Template.Version
         });
 
         return ApiResponse<IEnumerable<UserTemplateResponse>>.SuccessResult(response, "Retrieved user templates successfully");
@@ -97,85 +101,31 @@ public class UserTemplateService : IUserTemplateService
         {
             UserTemplateId = Guid.NewGuid(),
             UserId = user.Id,
-            TemplateId = request.TemplateId,
-            AccessType = request.AccessType,
-            AcquiredAt = DateTime.UtcNow,
-            ExpiresAt = request.ExpiresAt,
-            UsageLimit = request.UsageLimit,
-            UsageCount = 0,
-            IsActive = true
+            TemplateId = request.TemplateId
         };
 
         await _unitOfWork.UserTemplates.CreateAsync(userTemplate);
 
         var response = new UserTemplateResponse
         {
-            UserTemplateId = userTemplate.UserTemplateId,
-            UserId = userTemplate.UserId,
-            TemplateId = userTemplate.TemplateId,
+            TemplateId = template.TemplateId,
+            ObjectKey = template.ObjectKey,
             TemplateName = template.TemplateName,
-            TemplateType = template.TemplateType,
-            AccessType = userTemplate.AccessType,
-            AcquiredAt = userTemplate.AcquiredAt,
-            ExpiresAt = userTemplate.ExpiresAt,
-            UsageCount = userTemplate.UsageCount,
-            UsageLimit = userTemplate.UsageLimit,
-            IsActive = userTemplate.IsActive
+            Description = template.Description,
+            ThumbnailUrl = template.ThumbnailUrl,
+            PreviewUrl = template.PreviewUrl,
+            ContentStructure = template.ContentStructure,
+            SlideCount = template.SlideCount,
+            IsPremium = template.IsPremium,
+            Price = template.Price,
+            DownloadCount = template.DownloadCount,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            CreatedBy = template.CreatedBy,
+            Version = template.Version
         };
 
         return ApiResponse<UserTemplateResponse>.SuccessResult(response, "Template access granted successfully");
-    }
-
-    public async Task<ApiResponse<UserTemplateResponse>> IncrementTemplateUsageAsync(Guid templateId)
-    {
-        // Get current user
-        UserDto? user = await _authServiceClient.GetCurrentUserAsync();
-        if (user == null)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("User not authenticated");
-        }
-
-        // Find user template
-        var userTemplates = await _unitOfWork.UserTemplates.GetUserTemplatesByUserIdAsync(user.Id);
-        var userTemplate = userTemplates.FirstOrDefault(ut => ut.TemplateId == templateId && ut.IsActive);
-
-        if (userTemplate == null)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("User does not have access to this template");
-        }
-
-        // Check if expired
-        if (userTemplate.ExpiresAt.HasValue && userTemplate.ExpiresAt.Value < DateTime.UtcNow)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("Template access has expired");
-        }
-
-        // Check if usage limit reached
-        if (userTemplate.UsageLimit.HasValue && userTemplate.UsageCount >= userTemplate.UsageLimit.Value)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("Template usage limit reached");
-        }
-
-        // Increment usage count
-        userTemplate.UsageCount++;
-        await _unitOfWork.UserTemplates.UpdateAsync(userTemplate);
-
-        var response = new UserTemplateResponse
-        {
-            UserTemplateId = userTemplate.UserTemplateId,
-            UserId = userTemplate.UserId,
-            TemplateId = userTemplate.TemplateId,
-            TemplateName = userTemplate.Template.TemplateName,
-            TemplateType = userTemplate.Template.TemplateType,
-            AccessType = userTemplate.AccessType,
-            AcquiredAt = userTemplate.AcquiredAt,
-            ExpiresAt = userTemplate.ExpiresAt,
-            UsageCount = userTemplate.UsageCount,
-            UsageLimit = userTemplate.UsageLimit,
-            IsActive = userTemplate.IsActive
-        };
-
-        return ApiResponse<UserTemplateResponse>.SuccessResult(response, "Template usage incremented successfully");
     }
 
     public async Task<ApiResponse<bool>> RevokeTemplateAccessAsync(Guid userTemplateId)
@@ -186,8 +136,7 @@ public class UserTemplateService : IUserTemplateService
             return ApiResponse<bool>.ErrorResult("User template not found");
         }
 
-        userTemplate.IsActive = false;
-        await _unitOfWork.UserTemplates.UpdateAsync(userTemplate);
+        await _unitOfWork.UserTemplates.RemoveAsync(userTemplate);
 
         return ApiResponse<bool>.SuccessResult(true, "Template access revoked successfully");
     }
@@ -198,17 +147,21 @@ public class UserTemplateService : IUserTemplateService
         
         var response = userTemplates.Select(ut => new UserTemplateResponse
         {
-            UserTemplateId = ut.UserTemplateId,
-            UserId = ut.UserId,
-            TemplateId = ut.TemplateId,
+            TemplateId = ut.Template.TemplateId,
+            ObjectKey = ut.Template.ObjectKey,
             TemplateName = ut.Template.TemplateName,
-            TemplateType = ut.Template.TemplateType,
-            AccessType = ut.AccessType,
-            AcquiredAt = ut.AcquiredAt,
-            ExpiresAt = ut.ExpiresAt,
-            UsageCount = ut.UsageCount,
-            UsageLimit = ut.UsageLimit,
-            IsActive = ut.IsActive
+            Description = ut.Template.Description,
+            ThumbnailUrl = ut.Template.ThumbnailUrl,
+            PreviewUrl = ut.Template.PreviewUrl,
+            ContentStructure = ut.Template.ContentStructure,
+            SlideCount = ut.Template.SlideCount,
+            IsPremium = ut.Template.IsPremium,
+            Price = ut.Template.Price,
+            DownloadCount = ut.Template.DownloadCount,
+            CreatedAt = ut.Template.CreatedAt,
+            UpdatedAt = ut.Template.UpdatedAt,
+            CreatedBy = ut.Template.CreatedBy,
+            Version = ut.Template.Version
         });
 
         return ApiResponse<IEnumerable<UserTemplateResponse>>.SuccessResult(response, "Retrieved user templates successfully");

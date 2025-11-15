@@ -32,11 +32,6 @@ public class PaginationParams
     public string? SearchTerm { get; set; }
 
     /// <summary>
-    /// Optional filter by type
-    /// </summary>
-    public string? TemplateType { get; set; }
-
-    /// <summary>
     /// Optional filter for premium only
     /// </summary>
     public bool? IsPremium { get; set; }

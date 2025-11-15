@@ -59,23 +59,10 @@ public class UserTemplateController : ControllerBase
     }
 
     /// <summary>
-    /// Increment usage count for a template (called when user uses the template)
-    /// </summary>
-    /// <param name="templateId">Template ID to increment usage</param>
-    /// <returns>Updated user template details</returns>
-    [HttpPost("{templateId}/usage")]
-    [Authorize(Roles = "Admin,Staff,User")]
-    public async Task<ActionResult<ApiResponse<UserTemplateResponse>>> IncrementTemplateUsage(Guid templateId)
-    {
-        var result = await _userTemplateService.IncrementTemplateUsageAsync(templateId);
-        return result.Success ? Ok(result) : BadRequest(result);
-    }
-
-    /// <summary>
     /// Revoke template access (Admin only)
     /// </summary>
     /// <param name="userTemplateId">User template ID to revoke</param>
-    /// <Presignedreturns>Success status</returns>
+    /// <returns>Success status</returns>
     [HttpDelete("{userTemplateId}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<bool>>> RevokeTemplateAccess(Guid userTemplateId)

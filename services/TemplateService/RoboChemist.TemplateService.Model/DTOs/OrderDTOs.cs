@@ -2,8 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RoboChemist.TemplateService.Model.DTOs;
 
+// Note: CreateOrderItemRequest and OrderDetailResponse are in OrderDetailDTOs.cs
+
+#region Order Requests
+
 /// <summary>
-/// DTO for creating a new order
+/// Request for creating a new order
 /// </summary>
 public class CreateOrderRequest
 {
@@ -18,16 +22,24 @@ public class CreateOrderRequest
 }
 
 /// <summary>
-/// DTO for order item in create request
+/// Request for updating order status
 /// </summary>
-public class CreateOrderItemRequest
+public class UpdateOrderStatusRequest
 {
-    [Required(ErrorMessage = "Template ID is required")]
-    public Guid TemplateId { get; set; }
+    [Required(ErrorMessage = "Status is required")]
+    [RegularExpression("^(pending|completed|cancelled)$", 
+        ErrorMessage = "Status must be one of: pending, completed, cancelled")]
+    public string Status { get; set; } = string.Empty;
+
+    public string? PaymentTransactionId { get; set; }
 }
 
+#endregion
+
+#region Order Responses
+
 /// <summary>
-/// DTO for order response
+/// Full order response with details
 /// </summary>
 public class OrderResponse
 {
@@ -45,32 +57,7 @@ public class OrderResponse
 }
 
 /// <summary>
-/// DTO for order detail response
-/// </summary>
-public class OrderDetailResponse
-{
-    public Guid OrderDetailId { get; set; }
-    public Guid TemplateId { get; set; }
-    public string TemplateName { get; set; } = string.Empty;
-    public decimal Subtotal { get; set; }
-    public DateTime CreatedAt { get; set; }
-}
-
-/// <summary>
-/// DTO for updating order status
-/// </summary>
-public class UpdateOrderStatusRequest
-{
-    [Required(ErrorMessage = "Status is required")]
-    [RegularExpression("^(pending|completed|cancelled)$", 
-        ErrorMessage = "Status must be one of: pending, completed, cancelled")]
-    public string Status { get; set; } = string.Empty;
-
-    public string? PaymentTransactionId { get; set; }
-}
-
-/// <summary>
-/// DTO for order summary (used in lists)
+/// Summary order response for lists
 /// </summary>
 public class OrderSummaryResponse
 {
@@ -81,3 +68,6 @@ public class OrderSummaryResponse
     public int ItemCount { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+#endregion
+
