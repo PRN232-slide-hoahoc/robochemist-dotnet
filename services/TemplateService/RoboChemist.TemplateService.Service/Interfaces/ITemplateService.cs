@@ -5,7 +5,7 @@ namespace RoboChemist.TemplateService.Service.Interfaces;
 
 public interface ITemplateService
 {
-    Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request, Guid userId);
+    Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request);
     Task<Template?> GetTemplateByIdAsync(Guid templateId);
     Task<IEnumerable<Template>> GetAllTemplatesAsync();
     Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams);

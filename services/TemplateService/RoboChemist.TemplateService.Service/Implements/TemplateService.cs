@@ -1,6 +1,8 @@
+using RoboChemist.Shared.DTOs.UserDTOs;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Model.Models;
 using RoboChemist.TemplateService.Repository.Interfaces;
+using RoboChemist.TemplateService.Service.HttpClients;
 using RoboChemist.TemplateService.Service.Interfaces;
 
 namespace RoboChemist.TemplateService.Service.Implements;
@@ -14,6 +16,7 @@ public class TemplateService : ITemplateService
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStorageService _storageService;
+    private readonly IAuthServiceClient _authServiceClient;
 
     #endregion
 
@@ -21,10 +24,12 @@ public class TemplateService : ITemplateService
 
     public TemplateService(
         IUnitOfWork unitOfWork, 
-        IStorageService storageService)
+        IStorageService storageService,
+        IAuthServiceClient authServiceClient)
     {
         _unitOfWork = unitOfWork;
         _storageService = storageService;
+        _authServiceClient = authServiceClient;
     }
 
     #endregion
@@ -50,8 +55,14 @@ public class TemplateService : ITemplateService
 
     #region Command Methods
 
-    public async Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request, Guid userId)
+    public async Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request)
     {
+        // Get user information from AuthService (like SlidesService)
+        UserDto? user = await _authServiceClient.GetCurrentUserAsync();
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Người dùng không hợp lệ");
+        }
 
         string? objectKey = null;
         
@@ -74,7 +85,7 @@ public class TemplateService : ITemplateService
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 Version = 1,
-                CreatedBy = userId  // Lưu thông tin user đã tạo
+                CreatedBy = user.Id  // Lưu thông tin user đã tạo
             };
 
             await _unitOfWork.Templates.CreateAsync(template);

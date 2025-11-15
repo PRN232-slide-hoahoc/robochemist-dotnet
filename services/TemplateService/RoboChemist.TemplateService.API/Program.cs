@@ -185,10 +185,19 @@ builder.Services.AddScoped<Microsoft.EntityFrameworkCore.DbContext>(provider => 
 // Register Unit of Work (repositories are created inside UnitOfWork)
 builder.Services.AddScoped<RoboChemist.TemplateService.Repository.Interfaces.IUnitOfWork, RoboChemist.TemplateService.Repository.Implements.UnitOfWork>();
 
+// HTTP Client Factory for AuthService
+builder.Services.AddHttpClient("ApiGateway", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5001");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Register Services
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.ITemplateService, RoboChemist.TemplateService.Service.Implements.TemplateService>();
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IStorageService, RoboChemist.TemplateService.Service.Implements.StorageService>();
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IOrderService, RoboChemist.TemplateService.Service.Implements.OrderService>();
+builder.Services.AddScoped<RoboChemist.TemplateService.Service.HttpClients.IAuthServiceClient, RoboChemist.TemplateService.Service.HttpClients.AuthServiceClient>();
 
 var accountId = builder.Configuration["CLOUDFLARE_R2_ACCOUNT_ID"];
 var accessKeyId = builder.Configuration["CLOUDFLARE_R2_ACCESS_KEY_ID"];
