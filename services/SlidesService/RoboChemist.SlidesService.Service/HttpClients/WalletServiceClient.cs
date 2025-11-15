@@ -29,7 +29,7 @@ namespace RoboChemist.SlidesService.Service.HttpClients
                     new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
             }
         }
-        public async Task<ApiResponse<CreateChangeBalanceRequestDto>?> CreatePaymentAsync(CreateChangeBalanceRequestDto request)
+        public async Task<ApiResponse<PaymentResponseDto>?> CreatePaymentAsync(CreatePaymentDto request)
         {
             try
             {
@@ -37,7 +37,7 @@ namespace RoboChemist.SlidesService.Service.HttpClients
 
                 AuthorizeHttpClient(httpClient);
 
-                var url = "/wallet/v1/payments/create-payment-request";
+                var url = "/wallet/v1/wallet/payment";
 
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -45,7 +45,7 @@ namespace RoboChemist.SlidesService.Service.HttpClients
                 var response = await httpClient.PostAsync(url, content);
 
                 var responseJson = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<ApiResponse<CreateChangeBalanceRequestDto>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var apiResponse = JsonSerializer.Deserialize<ApiResponse<PaymentResponseDto>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 return apiResponse;
             }
             catch (HttpRequestException ex)

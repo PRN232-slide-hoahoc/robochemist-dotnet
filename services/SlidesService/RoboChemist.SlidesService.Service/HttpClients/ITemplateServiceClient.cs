@@ -18,5 +18,12 @@ namespace RoboChemist.SlidesService.Service.HttpClients
         /// <param name="fileName">Original filename</param>
         /// <returns>FileUploadResponse containing ObjectKey</returns>
         Task<FileUploadResponse> UploadFileAsync(Stream fileStream, string fileName);
+
+        /// <summary>
+        /// Download file from storage by ObjectKey
+        /// </summary>
+        /// <param name="objectKey">Storage object key from FilePath</param>
+        /// <returns>Tuple containing file stream and content type</returns>
+        Task<(Stream FileStream, string ContentType)> DownloadFileAsync(string objectKey);
     }
 }

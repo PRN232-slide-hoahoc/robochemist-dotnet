@@ -103,5 +103,33 @@ namespace RoboChemist.SlidesService.Service.HttpClients
                 throw new HttpRequestException($"Failed to upload file: {fileName}", ex);
             }
         }
+
+        public async Task<(Stream FileStream, string ContentType)> DownloadFileAsync(string objectKey)
+        {
+            try
+            {
+                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                AuthorizeHttpClient(httpClient);
+
+                var url = $"/template/v1/files/download?objectKey={Uri.EscapeDataString(objectKey)}";
+                var response = await httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException($"Failed to download file. Status: {response.StatusCode}");
+                }
+
+                var contentType = response.Content.Headers.ContentType?.ToString()
+                    ?? "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
+                var stream = await response.Content.ReadAsStreamAsync();
+
+                return (stream, contentType);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new HttpRequestException($"Failed to download file with ObjectKey {objectKey}", ex);
+            }
+        }
     }
 }

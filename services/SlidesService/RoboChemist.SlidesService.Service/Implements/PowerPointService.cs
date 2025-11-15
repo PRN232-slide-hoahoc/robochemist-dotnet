@@ -1,10 +1,8 @@
-﻿using DocumentFormat.OpenXml.EMMA;
-using DocumentFormat.OpenXml.Packaging;
+﻿using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Presentation;
+using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.SlidesService.Service.Interfaces;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideResponseDTOs;
 using A = DocumentFormat.OpenXml.Drawing;
 
@@ -99,7 +97,7 @@ namespace RoboChemist.SlidesService.Service.Implements
         private static void FillTableOfContentSlide(SlidePart slidePart, TableOfContentSlideTemplateDto dto)
         {
             var joined = string.Join("\n• ", dto.Topics);
-            ReplaceText(slidePart, "{{Topics}}", BeautifyChemicalFormulasInText("• " + joined));
+            ReplaceText(slidePart, "{{Topics}}", ChemicalFormulaHelper.BeautifyChemicalFormulas("• " + joined));
         }
 
         /// <summary>
@@ -109,14 +107,14 @@ namespace RoboChemist.SlidesService.Service.Implements
         /// <param name="dto">The data transfer object containing heading, bullet points and image description</param>
         private static void FillContentSlide(SlidePart slidePart, ContentSlideTemplateDto dto)
         {
-            ReplaceText(slidePart, "{{Heading}}", BeautifyChemicalFormulasInText(dto.Heading));
+            ReplaceText(slidePart, "{{Heading}}", ChemicalFormulaHelper.BeautifyChemicalFormulas(dto.Heading));
             
             // Build hierarchical bullet points text
             var bulletsText = BuildHierarchicalBulletText(dto.BulletPoints);
-            ReplaceText(slidePart, "{{Bullets}}", BeautifyChemicalFormulasInText(bulletsText));
+            ReplaceText(slidePart, "{{Bullets}}", ChemicalFormulaHelper.BeautifyChemicalFormulas(bulletsText));
 
             if (!string.IsNullOrEmpty(dto.ImageDescription))
-                ReplaceText(slidePart, "{{ImageDescription}}", BeautifyChemicalFormulasInText(dto.ImageDescription));
+                ReplaceText(slidePart, "{{ImageDescription}}", ChemicalFormulaHelper.BeautifyChemicalFormulas(dto.ImageDescription));
         }
 
         /// <summary>
@@ -235,101 +233,6 @@ namespace RoboChemist.SlidesService.Service.Implements
             // Insert before slide Thanks
             var thanksSlideId = slideIdList.Elements<SlideId>().First(s => s.RelationshipId == presentationPart.GetIdOfPart(thanksSlidePart));
             slideIdList.InsertBefore(newSlideId, thanksSlideId);
-        }
-
-        /// <summary>
-        /// Beautifies chemical formulas within a given text by converting numeric subscripts to subscript format.
-        /// </summary>
-        /// <param name="input">The input text containing chemical formulas to be beautified.</param>
-        /// <returns>A string with chemical formulas formatted with subscript numbers. Returns the original input if it is null or empty.</returns>
-        private static string BeautifyChemicalFormulasInText(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-
-            // Pattern 1: Match formulas with coefficient in parentheses like (n+1)H2O, (2n)CH4
-            // (\([a-zA-Z0-9+\-]+\))  : coefficient in parentheses like (n+1), (2n)
-            // ([A-Z][A-Za-z0-9()]*)  : chemical formula
-            string pattern1 = @"(\([a-zA-Z0-9+\-]+\))([A-Z][A-Za-z0-9()]*)";
-            
-            input = Regex.Replace(input, pattern1, match =>
-            {
-                var coeffPart = match.Groups[1].Value;  // Keep (n+1) as is
-                var formulaPart = match.Groups[2].Value;
-                var formattedFormula = ToChemicalSubscript(formulaPart);
-                return $"{coeffPart}{formattedFormula}";
-            });
-
-            // Pattern 2: Match formulas inside parentheses after compound names like "Methane (CH4)"
-            // \(([A-Z][A-Za-z0-9()]*)\)  : formula inside parentheses
-            string pattern2 = @"\(([A-Z][A-Za-z0-9()]+)\)(?=[\s:,.\)]|$)";
-            
-            input = Regex.Replace(input, pattern2, match =>
-            {
-                var formulaPart = match.Groups[1].Value;
-                var formattedFormula = ToChemicalSubscript(formulaPart);
-                return $"({formattedFormula})";
-            });
-
-            // Pattern 3: Match formulas with optional leading dash and coefficient
-            // (?<![A-Za-z])  : not preceded by letter (to avoid matching inside words)
-            // (-)?           : optional leading dash (for groups like -CH3, -OH)
-            // (\d+)?         : optional leading coefficient (ex: "3" in "3H2")
-            // ([A-Z][A-Za-z0-9()]*)
-            //                : chemical formula starting with capital letter
-            // (\([a-zA-Z0-9+\-]+\))?
-            //                : optional phase or ion in (), like (g), (aq), (l), (s), (2-)
-            string pattern3 = @"(?<![A-Za-z])(-)?(\d+)?([A-Z][A-Za-z0-9()]*)(\([a-zA-Z0-9+\-]+\))?(?![A-Za-z])";
-
-            return Regex.Replace(input, pattern3, match =>
-            {
-                var dash = match.Groups[1].Value;       // optional dash
-                var coeff = match.Groups[2].Value;      // optional coefficient
-                var formula = match.Groups[3].Value;    // formula part
-                var phase = match.Groups[4].Value;      // optional phase
-
-                // Skip if formula is too short (likely not a chemical formula)
-                if (formula.Length == 1 && string.IsNullOrEmpty(coeff) && string.IsNullOrEmpty(dash))
-                    return match.Value;
-
-                var formattedFormula = ToChemicalSubscript(formula);
-
-                return $"{dash}{coeff}{formattedFormula}{phase}";
-            });
-        }
-
-        /// <summary>
-        /// Convert numbers in chemical formula to subscript characters
-        /// </summary>
-        /// <param name="formula">Raw fomular string</param>
-        private static string ToChemicalSubscript(string formula)
-        {
-            if (string.IsNullOrEmpty(formula)) return formula;
-
-            var subMap = new Dictionary<char, char>
-            {
-                ['0'] = '₀',
-                ['1'] = '₁',
-                ['2'] = '₂',
-                ['3'] = '₃',
-                ['4'] = '₄',
-                ['5'] = '₅',
-                ['6'] = '₆',
-                ['7'] = '₇',
-                ['8'] = '₈',
-                ['9'] = '₉'
-            };
-
-            var sb = new StringBuilder();
-
-            foreach (var ch in formula)
-            {
-                if (subMap.TryGetValue(ch, out var sub))
-                    sb.Append(sub);
-                else
-                    sb.Append(ch);
-            }
-
-            return sb.ToString();
         }
     }
 }

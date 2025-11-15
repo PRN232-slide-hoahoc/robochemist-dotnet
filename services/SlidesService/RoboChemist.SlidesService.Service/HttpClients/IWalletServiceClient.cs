@@ -5,6 +5,6 @@ namespace RoboChemist.SlidesService.Service.HttpClients
 {
     public interface IWalletServiceClient
     {
-        Task<ApiResponse<CreateChangeBalanceRequestDto>?> CreatePaymentAsync(CreateChangeBalanceRequestDto request);
+        Task<ApiResponse<PaymentResponseDto>?> CreatePaymentAsync(CreatePaymentDto request);
     }
 }
