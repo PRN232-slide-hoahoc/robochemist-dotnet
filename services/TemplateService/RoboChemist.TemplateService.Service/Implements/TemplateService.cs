@@ -51,6 +51,11 @@ public class TemplateService : ITemplateService
         return await _unitOfWork.Templates.GetPagedTemplatesAsync(paginationParams);
     }
 
+    public async Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams)
+    {
+        return await _unitOfWork.Templates.GetPagedTemplatesForStaffAsync(paginationParams);
+    }
+
     #endregion
 
     #region Command Methods
@@ -117,35 +122,42 @@ public class TemplateService : ITemplateService
         }
     }
 
+    public async Task<Template> UpdateTemplateAsync(Guid templateId, UpdateTemplateRequest request)
+    {
+        var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
+        
+        if (template == null)
+            throw new KeyNotFoundException($"Template with ID {templateId} not found");
+
+        // Update template properties
+        template.TemplateName = request.TemplateName;
+        template.TemplateType = request.TemplateType;
+        template.Description = request.Description;
+        template.SlideCount = request.SlideCount;
+        template.IsPremium = request.IsPremium;
+        template.Price = request.Price;
+        template.IsActive = request.IsActive;
+        template.UpdatedAt = DateTime.UtcNow;
+        template.Version++;
+
+        await _unitOfWork.Templates.UpdateAsync(template);
+
+        return template;
+    }
+
     public async Task<bool> DeleteTemplateAsync(Guid templateId)
     {
-        try
-        {
-            var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
-            if (template == null)
-            {
-                return false;
-            }
+        var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
+        
+        if (template == null)
+            return false;
 
-            var objectKey = template.ObjectKey;
+        // Soft delete - chỉ thay đổi IsActive thành false
+        template.IsActive = false;
+        template.UpdatedAt = DateTime.UtcNow;
+        await _unitOfWork.Templates.UpdateAsync(template);
 
-            await _unitOfWork.Templates.RemoveAsync(template);
-
-            try
-            {
-                await _storageService.DeleteFileAsync(objectKey);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Warning: Failed to delete file {objectKey} from storage: {ex.Message}");
-            }
-
-            return true;
-        }
-        catch
-        {
-            throw;
-        }
+        return true;
     }
 
     public async Task<(Stream FileStream, string ContentType, string FileName)> DownloadTemplateAsync(Guid templateId)

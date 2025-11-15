@@ -15,9 +15,14 @@ public interface ITemplateRepository : IGenericRepository<Template>
     Task<IEnumerable<Template>> GetActiveTemplatesAsync();
 
     /// <summary>
-    /// Get paged templates with filters
+    /// Get paged templates with filters (only active templates for public users)
     /// </summary>
     Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams);
+
+    /// <summary>
+    /// Get paged templates with filters including INACTIVE templates (for Staff/Admin management)
+    /// </summary>
+    Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams);
 
     /// <summary>
     /// Get templates by type
