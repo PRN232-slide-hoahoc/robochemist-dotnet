@@ -13,6 +13,25 @@
             public Guid? TemplateId { get; set; }
         }
 
+        public class GetSlidesRequest
+        {
+            public int PageNumber { get; set; } = 1;
+
+            public int PageSize { get; set; } = 10;
+
+            // Filter parameters
+            public Guid? GradeId { get; set; }
+
+            public Guid? TopicId { get; set; }
+
+            public string? GenerationStatus { get; set; }
+
+            // Sort parameters
+            public string SortBy { get; set; } = "GeneratedAt"; // GeneratedAt, GradeName, TopicSortOrder, LessonOrder
+
+            public string SortOrder { get; set; } = "desc"; // asc, desc
+        }
+
         public class DataForGenerateSlideRequest
         {
             public string GradeName { get; set; } = null!;
