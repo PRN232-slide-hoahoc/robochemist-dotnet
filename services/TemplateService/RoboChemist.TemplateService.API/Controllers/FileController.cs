@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Service.Interfaces;
@@ -64,15 +63,8 @@ public class FileController : ControllerBase
             // Mặc định lưu vào folder "files"
             const string folder = "files";
 
-            // Extract userId từ JWT token (để logging)
-            var user = HttpContext.User;
-            if (user == null || !JwtHelper.TryGetUserId(user, out var userId))
-            {
-                return Unauthorized(ApiResponse<FileUploadResponse>.ErrorResult("Không xác thực được user từ token"));
-            }
-
-            _logger.LogInformation("Upload attempt for file: {FileName} by user: {UserId} to folder: {Folder}", 
-                request.File.FileName, userId, folder);
+            _logger.LogInformation("Upload attempt for file: {FileName} to folder: {Folder}", 
+                request.File.FileName, folder);
 
             // Upload file lên Cloudflare R2
             using var stream = request.File.OpenReadStream();

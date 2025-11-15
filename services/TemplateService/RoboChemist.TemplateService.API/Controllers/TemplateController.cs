@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RoboChemist.Shared.Common.Helpers;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Service.Interfaces;
@@ -198,17 +197,10 @@ public class TemplateController : ControllerBase
             if (request.File.Length > MaxFileSize)
                 return BadRequest(ApiResponse<UploadTemplateResponse>.ErrorResult("File size must not exceed 50MB"));
 
-            // Extract userId từ JWT token (giống ExamService)
-            var user = HttpContext.User;
-            if (user == null || !JwtHelper.TryGetUserId(user, out var userId))
-            {
-                return Unauthorized(ApiResponse<UploadTemplateResponse>.ErrorResult("Không xác thực được user từ token"));
-            }
-
-            _logger.LogInformation("Upload attempt for template: {FileName} by user: {UserId}", request.File.FileName, userId);
+            _logger.LogInformation("Upload attempt for template: {FileName}", request.File.FileName);
 
             using var stream = request.File.OpenReadStream();
-            var result = await _templateService.UploadTemplateAsync(stream, request.File.FileName, request, userId);
+            var result = await _templateService.UploadTemplateAsync(stream, request.File.FileName, request);
 
             _logger.LogInformation("Template uploaded successfully: {TemplateId}", result.TemplateId);
 
