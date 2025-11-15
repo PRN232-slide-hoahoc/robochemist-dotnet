@@ -34,9 +34,37 @@ public class UserTemplateService : IUserTemplateService
             return ApiResponse<IEnumerable<UserTemplateResponse>>.ErrorResult("User not authenticated");
         }
 
-        var userTemplates = await _unitOfWork.UserTemplates.GetUserTemplatesByUserIdAsync(user.Id);
+        // Get all active free templates
+        var freeTemplates = await _unitOfWork.Templates.GetFreeTemplatesAsync();
         
-        var response = userTemplates.Select(ut => new UserTemplateResponse
+        // Get premium templates that user owns
+        var userPremiumTemplates = await _unitOfWork.UserTemplates.GetUserTemplatesByUserIdAsync(user.Id);
+        
+        // Combine both lists
+        var allTemplates = new List<UserTemplateResponse>();
+        
+        // Add free templates
+        allTemplates.AddRange(freeTemplates.Select(t => new UserTemplateResponse
+        {
+            TemplateId = t.TemplateId,
+            ObjectKey = t.ObjectKey,
+            TemplateName = t.TemplateName,
+            Description = t.Description,
+            ThumbnailUrl = t.ThumbnailUrl,
+            PreviewUrl = t.PreviewUrl,
+            ContentStructure = t.ContentStructure,
+            SlideCount = t.SlideCount,
+            IsPremium = t.IsPremium,
+            Price = t.Price,
+            DownloadCount = t.DownloadCount,
+            CreatedAt = t.CreatedAt,
+            UpdatedAt = t.UpdatedAt,
+            CreatedBy = t.CreatedBy,
+            Version = t.Version
+        }));
+        
+        // Add user's premium templates
+        allTemplates.AddRange(userPremiumTemplates.Select(ut => new UserTemplateResponse
         {
             TemplateId = ut.Template.TemplateId,
             ObjectKey = ut.Template.ObjectKey,
@@ -53,9 +81,16 @@ public class UserTemplateService : IUserTemplateService
             UpdatedAt = ut.Template.UpdatedAt,
             CreatedBy = ut.Template.CreatedBy,
             Version = ut.Template.Version
-        });
+        }));
+        
+        // Remove duplicates and sort by CreatedAt descending
+        var distinctTemplates = allTemplates
+            .GroupBy(t => t.TemplateId)
+            .Select(g => g.First())
+            .OrderByDescending(t => t.CreatedAt)
+            .ToList();
 
-        return ApiResponse<IEnumerable<UserTemplateResponse>>.SuccessResult(response, "Retrieved user templates successfully");
+        return ApiResponse<IEnumerable<UserTemplateResponse>>.SuccessResult(distinctTemplates, "Retrieved user templates successfully");
     }
 
     public async Task<ApiResponse<bool>> CheckTemplateAccessAsync(Guid templateId)

@@ -30,6 +30,11 @@ public interface ITemplateRepository : IGenericRepository<Template>
     Task<IEnumerable<Template>> GetPremiumTemplatesAsync();
 
     /// <summary>
+    /// Get free (non-premium) active templates
+    /// </summary>
+    Task<IEnumerable<Template>> GetFreeTemplatesAsync();
+
+    /// <summary>
     /// Increment download count
     /// </summary>
     Task IncrementDownloadCountAsync(Guid templateId);
