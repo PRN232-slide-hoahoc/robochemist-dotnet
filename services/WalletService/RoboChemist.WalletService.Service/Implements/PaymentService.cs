@@ -290,6 +290,7 @@ namespace RoboChemist.WalletService.Service.Implements
                     CreateAt = t.CreateAt,
                     UpdateAt = t.UpdateAt
                 })
+                .OrderByDescending(t => t.CreateAt)
                 .ToList();
             return ApiResponse<List<WalletTransactionDto>>.SuccessResult(transactionDto, "Lấy thông tin giao dịch thành công");
         }
