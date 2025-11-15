@@ -277,10 +277,12 @@ public class OrderService : IOrderService
             OrderDetails = order.OrderDetails.Select(od => new OrderDetailResponse
             {
                 OrderDetailId = od.OrderDetailId,
+                OrderId = od.OrderId,
                 TemplateId = od.TemplateId,
                 TemplateName = od.Template?.TemplateName ?? "Unknown",
-                Subtotal = od.Subtotal,
-                CreatedAt = od.CreatedAt
+                Quantity = 1,
+                UnitPrice = od.Subtotal,
+                Subtotal = od.Subtotal
             }).ToList()
         };
     }

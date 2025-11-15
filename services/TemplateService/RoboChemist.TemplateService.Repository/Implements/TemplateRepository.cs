@@ -42,12 +42,6 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
                 (t.Description != null && t.Description.ToLower().Contains(searchTerm)));
         }
 
-        // Apply type filter
-        if (!string.IsNullOrWhiteSpace(paginationParams.TemplateType))
-        {
-            query = query.Where(t => t.TemplateType == paginationParams.TemplateType);
-        }
-
         // Apply premium filter
         if (paginationParams.IsPremium.HasValue)
         {
@@ -98,12 +92,6 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
                 (t.Description != null && t.Description.ToLower().Contains(searchTerm)));
         }
 
-        // Apply type filter
-        if (!string.IsNullOrWhiteSpace(paginationParams.TemplateType))
-        {
-            query = query.Where(t => t.TemplateType == paginationParams.TemplateType);
-        }
-
         // Apply premium filter
         if (paginationParams.IsPremium.HasValue)
         {
@@ -137,14 +125,6 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
             .ToListAsync();
 
         return PagedResult<Template>.Create(items, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
-    }
-
-    public async Task<IEnumerable<Template>> GetTemplatesByTypeAsync(string templateType)
-    {
-        return await _appContext.Templates
-            .Where(t => t.IsActive && t.TemplateType == templateType)
-            .OrderByDescending(t => t.CreatedAt)
-            .ToListAsync();
     }
 
     public async Task<IEnumerable<Template>> GetPremiumTemplatesAsync()

@@ -24,11 +24,6 @@ public interface IUserTemplateService
     Task<ApiResponse<UserTemplateResponse>> GrantTemplateAccessAsync(GrantTemplateAccessRequest request);
 
     /// <summary>
-    /// Increment usage count for a template (called when user uses the template)
-    /// </summary>
-    Task<ApiResponse<UserTemplateResponse>> IncrementTemplateUsageAsync(Guid templateId);
-
-    /// <summary>
     /// Revoke template access (Admin only)
     /// </summary>
     Task<ApiResponse<bool>> RevokeTemplateAccessAsync(Guid userTemplateId);

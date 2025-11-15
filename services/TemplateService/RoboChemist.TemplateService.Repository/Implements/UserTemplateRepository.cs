@@ -23,7 +23,6 @@ public class UserTemplateRepository : GenericRepository<UserTemplate>, IUserTemp
         return await _appContext.UserTemplates
             .Where(ut => ut.UserId == userId)
             .Include(ut => ut.Template)
-            .OrderByDescending(ut => ut.AcquiredAt)
             .ToListAsync();
     }
 

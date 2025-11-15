@@ -355,10 +355,15 @@ public class TemplateController : ControllerBase
         {
             return NotFound(ApiResponse<Model.Models.Template>.ErrorResult($"Template with ID {id} not found"));
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation when updating template {TemplateId}", id);
+            return BadRequest(ApiResponse<Model.Models.Template>.ErrorResult(ex.Message));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating template {TemplateId}", id);
-            return StatusCode(500, ApiResponse<Model.Models.Template>.ErrorResult("Lỗi hệ thống"));
+            return StatusCode(500, ApiResponse<Model.Models.Template>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
         }
     }
 
