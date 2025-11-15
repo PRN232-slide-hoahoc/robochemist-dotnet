@@ -165,5 +165,18 @@ public class TemplateService : ITemplateService
         return await _storageService.DownloadFileAsync(template.ObjectKey);
     }
 
+    public async Task<string> GeneratePresignedUrlAsync(Guid templateId, int expirationMinutes = 60)
+    {
+        var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
+        
+        if (template == null)
+            throw new KeyNotFoundException($"Template with ID {templateId} not found");
+
+        if (!template.IsActive)
+            throw new InvalidOperationException($"Template {templateId} is not active");
+
+        return await _storageService.GeneratePresignedUrlAsync(template.ObjectKey, expirationMinutes);
+    }
+
     #endregion
 }

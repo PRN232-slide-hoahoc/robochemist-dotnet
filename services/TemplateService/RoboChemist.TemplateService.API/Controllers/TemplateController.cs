@@ -100,6 +100,52 @@ public class TemplateController : ControllerBase
     }
 
     /// <summary>
+    /// Generate a presigned URL for template preview
+    /// </summary>
+    /// <param name="id">The unique identifier of the template</param>
+    /// <param name="expirationMinutes">URL expiration time in minutes (default: 60)</param>
+    /// <returns>Presigned URL for direct file access</returns>
+    /// <response code="200">Returns the presigned URL</response>
+    /// <response code="404">Template not found</response>
+    /// <response code="500">Internal server error occurred</response>
+    /// <remarks>
+    /// This endpoint generates a temporary public URL (valid for 60 minutes by default)
+    /// that can be used with Microsoft Office Online Viewer for PowerPoint preview.
+    /// The URL provides direct access to the file without authentication.
+    /// </remarks>
+    [HttpGet("{id}/presigned-url")]
+    [Authorize(Roles ="User, Staff, Admin")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ApiResponse<string>>> GetPresignedUrl(Guid id, [FromQuery] int expirationMinutes = 60)
+    {
+        try
+        {
+            var presignedUrl = await _templateService.GeneratePresignedUrlAsync(id, expirationMinutes);
+            
+            if (string.IsNullOrEmpty(presignedUrl))
+                return NotFound(ApiResponse<string>.ErrorResult($"Template with ID {id} not found"));
+
+            var response = ApiResponse<string>.SuccessResult(
+                presignedUrl,
+                "Presigned URL generated successfully"
+            );
+            
+            return Ok(response);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResponse<string>.ErrorResult($"Template with ID {id} not found"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating presigned URL for template {TemplateId}", id);
+            return StatusCode(500, ApiResponse<string>.ErrorResult("Lỗi hệ thống"));
+        }
+    }
+
+    /// <summary>
     /// Downloads a template file as a stream
     /// </summary>
     /// <param name="id">The unique identifier of the template to download</param>

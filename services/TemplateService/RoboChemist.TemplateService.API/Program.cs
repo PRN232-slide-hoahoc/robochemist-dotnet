@@ -197,6 +197,7 @@ builder.Services.AddHttpClient("ApiGateway", client =>
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.ITemplateService, RoboChemist.TemplateService.Service.Implements.TemplateService>();
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IStorageService, RoboChemist.TemplateService.Service.Implements.StorageService>();
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IOrderService, RoboChemist.TemplateService.Service.Implements.OrderService>();
+builder.Services.AddScoped<RoboChemist.TemplateService.Service.Interfaces.IUserTemplateService, RoboChemist.TemplateService.Service.Implements.UserTemplateService>();
 builder.Services.AddScoped<RoboChemist.TemplateService.Service.HttpClients.IAuthServiceClient, RoboChemist.TemplateService.Service.HttpClients.AuthServiceClient>();
 
 var accountId = builder.Configuration["CLOUDFLARE_R2_ACCOUNT_ID"];
