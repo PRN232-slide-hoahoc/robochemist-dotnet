@@ -11,5 +11,6 @@ public interface ITemplateService
     Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams);
     Task<bool> DeleteTemplateAsync(Guid templateId);
     Task<(Stream FileStream, string ContentType, string FileName)> DownloadTemplateAsync(Guid templateId);
+    Task<string> GeneratePresignedUrlAsync(Guid templateId, int expirationMinutes = 60);
 }
 
