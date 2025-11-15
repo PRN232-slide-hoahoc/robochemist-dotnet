@@ -29,8 +29,65 @@ public class TemplateRepository : GenericRepository<Template>, ITemplateReposito
 
     public async Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams)
     {
-        // Start with active templates
+        // NOTE: This method returns ONLY ACTIVE templates (IsActive = true)
+        // For Staff/Admin management that needs ALL templates (including inactive), use GetPagedTemplatesForStaffAsync
         var query = _appContext.Templates.Where(t => t.IsActive);
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(paginationParams.SearchTerm))
+        {
+            var searchTerm = paginationParams.SearchTerm.ToLower();
+            query = query.Where(t => 
+                t.TemplateName.ToLower().Contains(searchTerm) ||
+                (t.Description != null && t.Description.ToLower().Contains(searchTerm)));
+        }
+
+        // Apply type filter
+        if (!string.IsNullOrWhiteSpace(paginationParams.TemplateType))
+        {
+            query = query.Where(t => t.TemplateType == paginationParams.TemplateType);
+        }
+
+        // Apply premium filter
+        if (paginationParams.IsPremium.HasValue)
+        {
+            query = query.Where(t => t.IsPremium == paginationParams.IsPremium.Value);
+        }
+
+        // Apply sorting
+        query = paginationParams.SortBy.ToLower() switch
+        {
+            "name" => paginationParams.SortDirection.ToLower() == "asc" 
+                ? query.OrderBy(t => t.TemplateName) 
+                : query.OrderByDescending(t => t.TemplateName),
+            "price" => paginationParams.SortDirection.ToLower() == "asc" 
+                ? query.OrderBy(t => t.Price) 
+                : query.OrderByDescending(t => t.Price),
+            "downloadcount" => paginationParams.SortDirection.ToLower() == "asc" 
+                ? query.OrderBy(t => t.DownloadCount) 
+                : query.OrderByDescending(t => t.DownloadCount),
+            _ => paginationParams.SortDirection.ToLower() == "asc" 
+                ? query.OrderBy(t => t.CreatedAt) 
+                : query.OrderByDescending(t => t.CreatedAt)
+        };
+
+        // Get total count BEFORE pagination
+        var totalCount = await query.CountAsync();
+
+        // Apply pagination
+        var items = await query
+            .Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
+            .Take(paginationParams.PageSize)
+            .ToListAsync();
+
+        return PagedResult<Template>.Create(items, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+    }
+
+    public async Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams)
+    {
+        // NOTE: This method returns ALL templates (both active and inactive)
+        // Used for Staff/Admin management to view and manage all templates
+        var query = _appContext.Templates.AsQueryable();
 
         // Apply search filter
         if (!string.IsNullOrWhiteSpace(paginationParams.SearchTerm))

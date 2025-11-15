@@ -75,7 +75,7 @@ public class UserTemplateController : ControllerBase
     /// Revoke template access (Admin only)
     /// </summary>
     /// <param name="userTemplateId">User template ID to revoke</param>
-    /// <returns>Success status</returns>
+    /// <Presignedreturns>Success status</returns>
     [HttpDelete("{userTemplateId}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ApiResponse<bool>>> RevokeTemplateAccess(Guid userTemplateId)
