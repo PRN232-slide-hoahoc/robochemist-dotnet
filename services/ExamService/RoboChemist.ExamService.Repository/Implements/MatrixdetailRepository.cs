@@ -11,9 +11,6 @@ namespace RoboChemist.ExamService.Repository.Implements
         {
         }
 
-        /// <summary>
-        /// Lấy tất cả MatrixDetails theo MatrixId
-        /// </summary>
         public async Task<List<Matrixdetail>> GetByMatrixIdAsync(Guid matrixId)
         {
             return await _dbSet
@@ -22,9 +19,6 @@ namespace RoboChemist.ExamService.Repository.Implements
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Lấy tất cả MatrixDetails active theo MatrixId
-        /// </summary>
         public async Task<List<Matrixdetail>> GetActiveByMatrixIdAsync(Guid matrixId)
         {
             return await _dbSet

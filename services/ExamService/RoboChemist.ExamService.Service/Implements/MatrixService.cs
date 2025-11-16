@@ -68,7 +68,7 @@ namespace RoboChemist.ExamService.Service.Implements
 
         /// <summary>
         /// Lấy danh sách tất cả ma trận đề thi (chỉ đọc)
-        /// Role-based: User chỉ thấy ma trận do mình tạo, Teacher/Admin thấy tất cả
+        /// Role-based: User chỉ thấy ma trận do mình tạo, Admin thấy tất cả
         /// </summary>
         public async Task<ApiResponse<List<MatrixResponseDto>>> GetAllMatricesAsync(bool? isActive = null)
         {
@@ -79,7 +79,7 @@ namespace RoboChemist.ExamService.Service.Implements
                 
                 // Lấy matrices từ repository với query logic đã được tối ưu
                 List<Matrix> allMatrices;
-                if (currentUser != null && currentUser.Role == "User")
+                if (currentUser != null && currentUser.Role == RoboChemistConstants.ROLE_USER)
                 {
                     // User chỉ thấy ma trận do mình tạo
                     allMatrices = await _unitOfWork.Matrices.GetMatricesByUserAsync(currentUser.Id, isActive);
