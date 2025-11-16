@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using RoboChemist.ExamService.Service.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
 using static RoboChemist.Shared.DTOs.ExamServiceDTOs.ExamDTOs;
+using RoboChemist.Shared.Common.Constants;
 
 namespace RoboChemist.ExamService.API.Controllers
 {
@@ -29,23 +30,27 @@ namespace RoboChemist.ExamService.API.Controllers
         [Authorize]
         public async Task<ActionResult<ApiResponse<ExamRequestResponseDto>>> CreateExamRequest([FromBody] CreateExamRequestDto createExamRequestDto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(ApiResponse<ExamRequestResponseDto>.ErrorResult(string.Join("; ", errors)));
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(ApiResponse<ExamRequestResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                }
+
+                var result = await _examService.CreateExamRequestAsync(createExamRequestDto);
+
+                return result.Success 
+                    ? CreatedAtAction(nameof(GetExamRequestById), new { id = result.Data!.ExamRequestId }, result)
+                    : BadRequest(result);
             }
-
-            var result = await _examService.CreateExamRequestAsync(createExamRequestDto);
-
-            if (!result.Success)
+            catch (Exception)
             {
-                return BadRequest(result);
+                return StatusCode(500, ApiResponse<ExamRequestResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
-
-            return CreatedAtAction(nameof(GetExamRequestById), new { id = result.Data!.ExamRequestId }, result);
         }
 
         /// <summary>
@@ -54,17 +59,19 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">ID yêu cầu tạo đề</param>
         /// <returns>Thông tin yêu cầu</returns>
         [HttpGet("request/{id}")]
-        [Authorize] // Phải đăng nhập mới xem được exam request
+        [Authorize] 
         public async Task<ActionResult<ApiResponse<ExamRequestResponseDto>>> GetExamRequestById(Guid id)
         {
-            var result = await _examService.GetExamRequestByIdAsync(id);
-
-            if (!result.Success)
+            try
             {
-                return NotFound(result);
-            }
+                var result = await _examService.GetExamRequestByIdAsync(id);
 
-            return Ok(result);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<ExamRequestResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
         }
 
         /// <summary>
@@ -74,11 +81,19 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="status">Lọc theo trạng thái (Pending/Completed/Failed)</param>
         /// <returns>Danh sách yêu cầu tạo đề</returns>
         [HttpGet("request/user/{userId}")]
-        [Authorize] // Phải đăng nhập mới xem được exam requests của user
+        [Authorize] 
         public async Task<ActionResult<ApiResponse<List<ExamRequestResponseDto>>>> GetExamRequestsByUser(Guid userId, [FromQuery] string? status = null)
         {
-            var result = await _examService.GetExamRequestsByUserAsync(userId, status);
-            return Ok(result);
+            try
+            {
+                var result = await _examService.GetExamRequestsByUserAsync(userId, status);
+
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<List<ExamRequestResponseDto>>.ErrorResult("Lỗi hệ thống"));
+            }
         }
 
         /// <summary>
@@ -87,17 +102,19 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">ID đề thi</param>
         /// <returns>Thông tin đề thi chi tiết</returns>
         [HttpGet("{id}")]
-        [AllowAnonymous] // Ai cũng có thể xem đề thi đã generate
+        [AllowAnonymous] 
         public async Task<ActionResult<ApiResponse<GeneratedExamResponseDto>>> GetGeneratedExamById(Guid id)
         {
-            var result = await _examService.GetGeneratedExamByIdAsync(id);
-
-            if (!result.Success)
+            try
             {
-                return NotFound(result);
-            }
+                var result = await _examService.GetGeneratedExamByIdAsync(id);
 
-            return Ok(result);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<GeneratedExamResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
         }
 
         /// <summary>
@@ -106,23 +123,30 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="generatedExamId">ID đề thi đã được generate</param>
         /// <returns>File Word (.docx)</returns>
         [HttpGet("{generatedExamId}/export/word")]
-        [AllowAnonymous] // Ai cũng có thể export đề thi ra Word
+        [AllowAnonymous] 
         public async Task<IActionResult> ExportExamToWord(Guid generatedExamId)
         {
-            var result = await _examService.ExportExamToWordAsync(generatedExamId);
-
-            if (!result.Success || result.Data == null)
+            try
             {
-                return BadRequest(result);
-            }
+                var result = await _examService.ExportExamToWordAsync(generatedExamId);
 
-            var fileName = $"DeThi_{generatedExamId}_{DateTime.Now:yyyyMMddHHmmss}.docx";
-            
-            return File(
-                result.Data,
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                fileName
-            );
+                if (!result.Success || result.Data == null)
+                {
+                    return BadRequest(result);
+                }
+
+                var fileName = $"DeThi_{generatedExamId}_{DateTime.Now:yyyyMMddHHmmss}.docx";
+                
+                return File(
+                    result.Data,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    fileName
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResult("Lỗi hệ thống khi xuất file", [ex.Message]));
+            }
         }
 
         /// <summary>
@@ -132,17 +156,19 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="status">Trạng thái mới (Draft/Published/Archived)</param>
         /// <returns>Thông tin đề thi sau khi cập nhật</returns>
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Teacher,Admin")] // Chỉ Teacher và Admin mới được cập nhật trạng thái đề thi
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)] 
         public async Task<ActionResult<ApiResponse<GeneratedExamResponseDto>>> UpdateExamStatus(Guid id, [FromBody] string status)
         {
-            var result = await _examService.UpdateExamStatusAsync(id, status);
-
-            if (!result.Success)
+            try
             {
-                return BadRequest(result);
-            }
+                var result = await _examService.UpdateExamStatusAsync(id, status);
 
-            return Ok(result);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<GeneratedExamResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
         }
 
         /// <summary>
@@ -151,17 +177,19 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">ID đề thi</param>
         /// <returns>Kết quả xóa</returns>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Teacher,Admin")] // Chỉ Teacher và Admin mới được xóa đề thi
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)] 
         public async Task<ActionResult<ApiResponse<bool>>> DeleteGeneratedExam(Guid id)
         {
-            var result = await _examService.DeleteGeneratedExamAsync(id);
-
-            if (!result.Success)
+            try
             {
-                return NotFound(result);
-            }
+                var result = await _examService.DeleteGeneratedExamAsync(id);
 
-            return Ok(result);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<bool>.ErrorResult("Lỗi hệ thống"));
+            }
         }
     }
 }

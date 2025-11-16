@@ -11,12 +11,9 @@ namespace RoboChemist.ExamService.Repository.Implements
         {
         }
 
-        /// <summary>
-        /// Lấy generated exams theo examRequestId
-        /// </summary>
         public async Task<List<Generatedexam>> GetByExamRequestIdAsync(Guid examRequestId)
         {
-            return await _context.Set<Generatedexam>()
+            return await _dbSet
                 .Where(ge => ge.ExamRequestId == examRequestId)
                 .ToListAsync();
         }

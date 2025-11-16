@@ -12,7 +12,6 @@ namespace RoboChemist.ExamService.API.Controllers
     /// </summary>
     [Route("api/v1/matrices")]
     [ApiController]
-    [Authorize] // Yêu cầu authentication cho tất cả endpoints
     public class MatrixController : ControllerBase
     {
         private readonly IMatrixService _matrixService;
@@ -28,17 +27,18 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">ID của ma trận</param>
         /// <returns>Thông tin ma trận</returns>
         [HttpGet("{id}")]
-        [AllowAnonymous] // Ai cũng có thể xem chi tiết ma trận
         public async Task<ActionResult<ApiResponse<MatrixResponseDto>>> GetMatrixById(Guid id)
         {
-            var result = await _matrixService.GetMatrixByIdAsync(id);
-            
-            if (!result.Success)
+            try
             {
-                return NotFound(result);
-            }
+                var result = await _matrixService.GetMatrixByIdAsync(id);
 
-            return Ok(result);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<MatrixResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
         }
 
         /// <summary>
@@ -47,11 +47,19 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="isActive">Lọc theo trạng thái (true/false/null = tất cả)</param>
         /// <returns>Danh sách ma trận</returns>
         [HttpGet]
-        [AllowAnonymous] // Ai cũng có thể xem danh sách ma trận
+        [Authorize]
         public async Task<ActionResult<ApiResponse<List<MatrixResponseDto>>>> GetAllMatrices([FromQuery] bool? isActive = null)
         {
-            var result = await _matrixService.GetAllMatricesAsync(isActive);
-            return Ok(result);
+            try
+            {
+                var result = await _matrixService.GetAllMatricesAsync(isActive);
+
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<List<MatrixResponseDto>>.ErrorResult("Lỗi hệ thống"));
+            }
         }
 
         /// <summary>
@@ -61,22 +69,27 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="createDto">Thông tin ma trận cần tạo</param>
         /// <returns>Ma trận vừa tạo</returns>
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<MatrixResponseDto>>> CreateMatrix([FromBody] CreateMatrixDto createDto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                return BadRequest(ApiResponse<MatrixResponseDto>.ErrorResult("Dữ liệu không hợp lệ", errors));
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                    return BadRequest(ApiResponse<MatrixResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                }
+
+                var result = await _matrixService.CreateMatrixAsync(createDto);
+
+                return result.Success 
+                    ? CreatedAtAction(nameof(GetMatrixById), new { id = result.Data!.MatrixId }, result)
+                    : BadRequest(result);
             }
-
-            var result = await _matrixService.CreateMatrixAsync(createDto);
-
-            if (!result.Success)
+            catch (Exception)
             {
-                return BadRequest(result);
+                return StatusCode(500, ApiResponse<MatrixResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
-
-            return CreatedAtAction(nameof(GetMatrixById), new { id = result.Data!.MatrixId }, result);
         }
     }
 }
