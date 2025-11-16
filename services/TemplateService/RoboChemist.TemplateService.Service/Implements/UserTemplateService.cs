@@ -16,13 +16,16 @@ public class UserTemplateService : IUserTemplateService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuthServiceClient _authServiceClient;
+    private readonly IStorageService _storageService;
 
     public UserTemplateService(
         IUnitOfWork unitOfWork,
-        IAuthServiceClient authServiceClient)
+        IAuthServiceClient authServiceClient,
+        IStorageService storageService)
     {
         _unitOfWork = unitOfWork;
         _authServiceClient = authServiceClient;
+        _storageService = storageService;
     }
 
     public async Task<ApiResponse<IEnumerable<UserTemplateResponse>>> GetMyTemplatesAsync()
@@ -90,7 +93,55 @@ public class UserTemplateService : IUserTemplateService
             .OrderByDescending(t => t.CreatedAt)
             .ToList();
 
+        // Generate presigned URLs for thumbnails
+        await GenerateThumbnailPresignedUrlsAsync(distinctTemplates);
+
         return ApiResponse<IEnumerable<UserTemplateResponse>>.SuccessResult(distinctTemplates, "Retrieved user templates successfully");
+    }
+    
+    /// <summary>
+    /// Generate presigned URLs for template thumbnails
+    /// </summary>
+    private async Task GenerateThumbnailPresignedUrlsAsync(IEnumerable<UserTemplateResponse> templates)
+    {
+        foreach (var template in templates)
+        {
+            if (!string.IsNullOrEmpty(template.ThumbnailUrl))
+            {
+                // Extract object key from old presigned URL or use as-is if already object key
+                string objectKey;
+                
+                if (template.ThumbnailUrl.StartsWith("http"))
+                {
+                    // Old presigned URL format, extract object key
+                    var uri = new Uri(template.ThumbnailUrl);
+                    objectKey = uri.AbsolutePath.TrimStart('/');
+                    
+                    // Remove bucket name from path if present
+                    if (objectKey.StartsWith("template-service-bucket/"))
+                    {
+                        objectKey = objectKey.Replace("template-service-bucket/", "");
+                    }
+                }
+                else
+                {
+                    // Already an object key
+                    objectKey = template.ThumbnailUrl;
+                }
+                
+                // Generate new presigned URL (7 days = 10,080 minutes)
+                try
+                {
+                    template.ThumbnailUrl = await _storageService.GeneratePresignedUrlAsync(objectKey, 10080);
+                }
+                catch (Exception ex)
+                {
+                    // If generation fails, set to null and log
+                    Console.WriteLine($"Failed to generate presigned URL for {template.TemplateId}: {ex.Message}");
+                    template.ThumbnailUrl = null;
+                }
+            }
+        }
     }
 
     public async Task<ApiResponse<bool>> CheckTemplateAccessAsync(Guid templateId)

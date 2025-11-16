@@ -224,7 +224,8 @@ var credentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
 var s3Config = new AmazonS3Config
 {
     ServiceURL = $"https://{accountId}.r2.cloudflarestorage.com",
-    ForcePathStyle = true
+    ForcePathStyle = true,
+    AuthenticationRegion = "auto" // Required for R2 to use SigV4
 };
 Console.WriteLine($"DEBUG - R2 Endpoint: {s3Config.ServiceURL}"); 
 

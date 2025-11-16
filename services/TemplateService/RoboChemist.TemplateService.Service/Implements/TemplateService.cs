@@ -48,12 +48,68 @@ public class TemplateService : ITemplateService
 
     public async Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams)
     {
-        return await _unitOfWork.Templates.GetPagedTemplatesAsync(paginationParams);
+        var pagedResult = await _unitOfWork.Templates.GetPagedTemplatesAsync(paginationParams);
+        
+        // Generate presigned URLs for thumbnails (7 days expiration)
+        await GenerateThumbnailPresignedUrlsAsync(pagedResult.Items);
+        
+        return pagedResult;
     }
 
     public async Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams)
     {
-        return await _unitOfWork.Templates.GetPagedTemplatesForStaffAsync(paginationParams);
+        var pagedResult = await _unitOfWork.Templates.GetPagedTemplatesForStaffAsync(paginationParams);
+        
+        // Generate presigned URLs for thumbnails (7 days expiration)
+        await GenerateThumbnailPresignedUrlsAsync(pagedResult.Items);
+        
+        return pagedResult;
+    }
+    
+    /// <summary>
+    /// Generate presigned URLs for template thumbnails from object keys
+    /// </summary>
+    private async Task GenerateThumbnailPresignedUrlsAsync(IEnumerable<Template> templates)
+    {
+        foreach (var template in templates)
+        {
+            if (!string.IsNullOrEmpty(template.ThumbnailUrl))
+            {
+                // Extract object key from old presigned URL or use as-is if already object key
+                string objectKey;
+                
+                if (template.ThumbnailUrl.StartsWith("http"))
+                {
+                    // Old presigned URL format, extract object key
+                    // Example: https://...r2.cloudflarestorage.com/bucket-name/thumbnails/file.png?...
+                    var uri = new Uri(template.ThumbnailUrl);
+                    objectKey = uri.AbsolutePath.TrimStart('/');
+                    
+                    // Remove bucket name from path if present
+                    if (objectKey.StartsWith("template-service-bucket/"))
+                    {
+                        objectKey = objectKey.Replace("template-service-bucket/", "");
+                    }
+                }
+                else
+                {
+                    // Already an object key
+                    objectKey = template.ThumbnailUrl;
+                }
+                
+                // Generate new presigned URL (7 days = 10,080 minutes)
+                try
+                {
+                    template.ThumbnailUrl = await _storageService.GeneratePresignedUrlAsync(objectKey, 10080);
+                }
+                catch (Exception ex)
+                {
+                    // If generation fails, set to null and log
+                    Console.WriteLine($"Failed to generate presigned URL for {template.TemplateId}: {ex.Message}");
+                    template.ThumbnailUrl = null;
+                }
+            }
+        }
     }
 
     #endregion
@@ -86,8 +142,8 @@ public class TemplateService : ITemplateService
                     request.ThumbnailFile.FileName, 
                     "thumbnails");
                 
-                // Generate presigned URL (valid 1 year)
-                thumbnailUrl = await _storageService.GeneratePresignedUrlAsync(thumbnailObjectKey, 525600);
+                // Store only object key, will generate presigned URL when retrieving
+                thumbnailUrl = thumbnailObjectKey;
             }
 
             var template = new Template
