@@ -26,7 +26,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
 
-                var url = "/wallet/v1/wallets/payment";
+                var url = "/wallet/v1/wallet/payment";
                 Console.WriteLine($"[SAGA] WalletService.CreatePayment: {httpClient.BaseAddress}{url}");
                 Console.WriteLine($"[SAGA] Payment Request JSON: {JsonSerializer.Serialize(request)}");
 
@@ -35,14 +35,23 @@ namespace RoboChemist.ExamService.Service.HttpClients
 
                 var response = await httpClient.PostAsync(url, content);
 
+                var responseJson = await response.Content.ReadAsStringAsync();
+                
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[SAGA FAILED] Payment failed: {response.StatusCode} - {errorContent}");
+                    Console.WriteLine($"[SAGA FAILED] Payment failed: {response.StatusCode} - {responseJson}");
+                    
+                    // Thử parse error message từ response
+                    try
+                    {
+                        var errorResponse = JsonSerializer.Deserialize<ApiResponse<PaymentResponseDto>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        Console.WriteLine($"[SAGA FAILED] Error message: {errorResponse?.Message}");
+                    }
+                    catch { }
+                    
                     return null;
                 }
 
-                var responseJson = await response.Content.ReadAsStringAsync();
                 var apiResponse = JsonSerializer.Deserialize<ApiResponse<PaymentResponseDto>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (apiResponse?.Success == true)
@@ -73,7 +82,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
 
-                var url = "/wallet/v1/wallets/refund";
+                var url = "/wallet/v1/wallet/refund";
                 Console.WriteLine($"[SAGA COMPENSATE] WalletService.RefundPayment: {httpClient.BaseAddress}{url}");
 
                 var json = JsonSerializer.Serialize(request);

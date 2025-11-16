@@ -23,8 +23,10 @@ namespace RoboChemist.ExamService.Service.Interfaces
         Task<ApiResponse<List<MatrixResponseDto>>> GetAllMatricesAsync(bool? isActive = null);
 
         /// <summary>
-        /// Tạo mới một ma trận đề thi kèm chi tiết
+        /// Tạo mới một ma trận đề thi kèm chi tiết. Tự động lấy userId từ JWT token.
         /// </summary>
-        Task<ApiResponse<MatrixResponseDto>> CreateMatrixAsync(CreateMatrixDto createDto, Guid? createdBy = null);
+        /// <param name="createDto">Thông tin ma trận cần tạo</param>
+        /// <returns>Ma trận vừa tạo</returns>
+        Task<ApiResponse<MatrixResponseDto>> CreateMatrixAsync(CreateMatrixDto createDto);
     }
 }

@@ -55,12 +55,12 @@ namespace RoboChemist.ExamService.API.Controllers
         }
 
         /// <summary>
-        /// Tạo mới một ma trận đề thi kèm chi tiết phân bổ câu hỏi theo chủ đề
+        /// Tạo mới một ma trận đề thi kèm chi tiết phân bổ câu hỏi theo chủ đề.
+        /// Tự động validate số lượng câu hỏi có sẵn trong hệ thống.
         /// </summary>
         /// <param name="createDto">Thông tin ma trận cần tạo</param>
         /// <returns>Ma trận vừa tạo</returns>
         [HttpPost]
-        [Authorize(Roles = "Teacher,Admin")] // Chỉ Teacher và Admin mới được tạo ma trận
         public async Task<ActionResult<ApiResponse<MatrixResponseDto>>> CreateMatrix([FromBody] CreateMatrixDto createDto)
         {
             if (!ModelState.IsValid)
@@ -69,15 +69,7 @@ namespace RoboChemist.ExamService.API.Controllers
                 return BadRequest(ApiResponse<MatrixResponseDto>.ErrorResult("Dữ liệu không hợp lệ", errors));
             }
 
-            // Lấy UserId từ JWT token
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            Guid? createdBy = null;
-            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
-            {
-                createdBy = userId;
-            }
-
-            var result = await _matrixService.CreateMatrixAsync(createDto, createdBy);
+            var result = await _matrixService.CreateMatrixAsync(createDto);
 
             if (!result.Success)
             {

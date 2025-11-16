@@ -69,5 +69,55 @@ namespace RoboChemist.ExamService.Service.HttpClients
                 throw new HttpRequestException($"Failed to get topic {topicId} from Slide Service", ex);
             }
         }
+
+        /// <summary>
+        /// Get multiple topics by IDs from Slide Service (BATCH GET - Tránh N+1 query)
+        /// </summary>
+        /// <param name="topicIds">List of topic IDs</param>
+        /// <returns>Dictionary mapping TopicId to TopicDto</returns>
+        public async Task<Dictionary<Guid, TopicDto>> GetTopicsByIdsAsync(IEnumerable<Guid> topicIds)
+        {
+            var result = new Dictionary<Guid, TopicDto>();
+            
+            if (topicIds == null || !topicIds.Any())
+            {
+                return result;
+            }
+
+            try
+            {
+                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                AuthorizeHttpClient(httpClient);
+
+                // Gọi từng topic (tạm thời - nếu Slides Service có batch endpoint thì dùng batch)
+                // TODO: Nếu SlidesService có endpoint GET /topics?ids=guid1,guid2,guid3 thì dùng endpoint đó
+                var tasks = topicIds.Distinct().Select(async topicId =>
+                {
+                    try
+                    {
+                        var response = await GetTopicByIdAsync(topicId);
+                        if (response?.Success == true && response.Data != null)
+                        {
+                            return new KeyValuePair<Guid, TopicDto>(topicId, response.Data);
+                        }
+                    }
+                    catch { }
+                    return new KeyValuePair<Guid, TopicDto>(topicId, null!);
+                });
+
+                var responses = await Task.WhenAll(tasks);
+                
+                foreach (var kvp in responses.Where(x => x.Value != null))
+                {
+                    result[kvp.Key] = kvp.Value;
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new HttpRequestException($"Failed to batch get topics from Slide Service", ex);
+            }
+        }
     }
 }

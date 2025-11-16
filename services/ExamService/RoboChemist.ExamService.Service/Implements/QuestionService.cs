@@ -186,26 +186,44 @@ namespace RoboChemist.ExamService.Service.Implements
                 // ĐỪNG QUERY TRÊN LỚP SERVICE - Gọi Repository method thay thế
                 var questions = await _unitOfWork.Questions.GetQuestionsWithFiltersAsync(topicId, search);
 
-                var result = questions.Select(q => new QuestionResponseDto
+                // BATCH GET Topics - Thu thập tất cả TopicIds duy nhất
+                var topicIds = questions
+                    .Where(q => q.TopicId.HasValue)
+                    .Select(q => q.TopicId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                // Gọi 1 lần duy nhất để lấy tất cả topics (tránh N+1 query)
+                var topicsDict = await _slideServiceClient.GetTopicsByIdsAsync(topicIds);
+
+                var result = questions.Select(q =>
                 {
-                    QuestionId = q.QuestionId,
-                    TopicId = q.TopicId ?? Guid.Empty,
-                    TopicName = "", // TODO: Batch fetch topic names
-                    QuestionType = q.QuestionType,
-                    QuestionText = q.QuestionText,
-                    Explanation = q.Explanation,
-                    Level = q.Level,
-                    Status = q.IsActive == true ? "1" : "0",
-                    CreatedAt = q.CreatedAt,
-                    CreatedBy = q.CreatedBy,
-                    Options = q.Options.Select(o => new OptionResponseDto
+                    var qTopicId = q.TopicId ?? Guid.Empty;
+                    var topicName = topicsDict.TryGetValue(qTopicId, out var topic)
+                        ? topic.Name
+                        : "";
+
+                    return new QuestionResponseDto
                     {
-                        OptionId = o.OptionId,
-                        Answer = o.Answer,
-                        IsCorrect = o.IsCorrect ?? false,
-                        CreatedAt = o.CreatedAt,
-                        CreatedBy = o.CreatedBy
-                    }).ToList()
+                        QuestionId = q.QuestionId,
+                        TopicId = qTopicId,
+                        TopicName = topicName,
+                        QuestionType = q.QuestionType,
+                        QuestionText = q.QuestionText,
+                        Explanation = q.Explanation,
+                        Level = q.Level,
+                        Status = q.IsActive == true ? "1" : "0",
+                        CreatedAt = q.CreatedAt,
+                        CreatedBy = q.CreatedBy,
+                        Options = q.Options.Select(o => new OptionResponseDto
+                        {
+                            OptionId = o.OptionId,
+                            Answer = o.Answer,
+                            IsCorrect = o.IsCorrect ?? false,
+                            CreatedAt = o.CreatedAt,
+                            CreatedBy = o.CreatedBy
+                        }).ToList()
+                    };
                 }).ToList();
 
                 return ApiResponse<List<QuestionResponseDto>>.SuccessResult(result, $"Lấy danh sách {result.Count} câu hỏi thành công");

@@ -32,5 +32,15 @@ namespace RoboChemist.ExamService.Repository.Interfaces
         /// <param name="search">Tìm kiếm trong QuestionText (nullable)</param>
         /// <returns>Danh sách câu hỏi với Options</returns>
         Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search);
+
+        /// <summary>
+        /// Lấy random questions theo TopicId, QuestionType và Level, giới hạn số lượng
+        /// </summary>
+        Task<List<Question>> GetRandomQuestionsByFiltersAsync(Guid topicId, string questionType, string? level, int count);
+
+        /// <summary>
+        /// Đếm số lượng câu hỏi theo filters (TopicId, QuestionType, Level, IsActive)
+        /// </summary>
+        Task<int> CountQuestionsByFiltersAsync(Guid topicId, string questionType, string? level = null, bool isActive = true);
     }
 }

@@ -9,12 +9,12 @@ namespace RoboChemist.ExamService.Service.Interfaces
     public interface IExamService
     {
         /// <summary>
-        /// Tạo yêu cầu tạo đề thi mới và tự động generate câu hỏi (gọi sau khi thanh toán thành công)
+        /// Tạo yêu cầu tạo đề thi mới và tự động generate câu hỏi. Tự động lấy userId từ JWT token.
+        /// User chỉ có thể tạo đề từ ma trận do chính mình tạo.
         /// </summary>
-        /// <param name="createExamRequestDto">Thông tin yêu cầu tạo đề</param>
-        /// <param name="userId">ID người dùng yêu cầu</param>
+        /// <param name="createExamRequestDto">Thông tin yêu cầu tạo đề (MatrixId, Price)</param>
         /// <returns>Thông tin yêu cầu tạo đề và đề thi đã được generate</returns>
-        Task<ApiResponse<ExamRequestResponseDto>> CreateExamRequestAsync(CreateExamRequestDto createExamRequestDto, Guid userId);
+        Task<ApiResponse<ExamRequestResponseDto>> CreateExamRequestAsync(CreateExamRequestDto createExamRequestDto);
 
         /// <summary>
         /// Lấy thông tin yêu cầu tạo đề theo ID

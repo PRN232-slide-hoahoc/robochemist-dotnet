@@ -17,57 +17,73 @@ namespace RoboChemist.ExamService.Service.Implements
     public class ExamService : IExamService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IWalletServiceHttpClient _walletServiceHttpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWordExportService _wordExportService;
         private readonly ITemplateServiceClient _templateServiceClient;
+        private readonly IAuthServiceClient _authServiceClient;
         private readonly ILogger<ExamService> _logger;
 
         public ExamService(
             IUnitOfWork unitOfWork, 
-            IHttpClientFactory httpClientFactory, 
             IWalletServiceHttpClient walletServiceHttpClient, 
             IHttpContextAccessor httpContextAccessor,
             IWordExportService wordExportService,
             ITemplateServiceClient templateServiceClient,
+            IAuthServiceClient authServiceClient,
             ILogger<ExamService> logger)
         {
             _unitOfWork = unitOfWork;
-            _httpClientFactory = httpClientFactory;
             _walletServiceHttpClient = walletServiceHttpClient;
             _httpContextAccessor = httpContextAccessor;
             _wordExportService = wordExportService;
             _templateServiceClient = templateServiceClient;
+            _authServiceClient = authServiceClient;
             _logger = logger;
         }
 
-        /// <summary>
-        /// Tạo yêu cầu tạo đề thi mới và tự động generate câu hỏi (gọi sau khi thanh toán thành công)
-        /// </summary>
-        public async Task<ApiResponse<ExamRequestResponseDto>> CreateExamRequestAsync(CreateExamRequestDto createExamRequestDto, Guid userId)
+        public async Task<ApiResponse<ExamRequestResponseDto>> CreateExamRequestAsync(CreateExamRequestDto createExamRequestDto)
         {
             Guid? examRequestId = null;
             PaymentResponseDto? paymentResponse = null;
 
             try
             {
-                // Extract JWT token from HttpContext
+                var currentUser = await _authServiceClient.GetCurrentUserAsync();
+                if (currentUser == null)
+                {
+                    _logger.LogWarning("CreateExamRequest failed: User not authenticated");
+                    return ApiResponse<ExamRequestResponseDto>.ErrorResult("Người dùng chưa xác thực");
+                }
+
+                var userId = currentUser.Id;
+                _logger.LogInformation("CreateExamRequest started for userId={UserId}, matrixId={MatrixId}, price={Price}", 
+                    userId, createExamRequestDto.MatrixId, createExamRequestDto.Price);
+
                 var authToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString()?.Replace("Bearer ", "");
                 if (string.IsNullOrEmpty(authToken))
                 {
+                    _logger.LogWarning("CreateExamRequest failed: Missing authentication token");
                     return ApiResponse<ExamRequestResponseDto>.ErrorResult("Không tìm thấy token xác thực");
                 }
 
-                // SAGA Step 1: Validate Matrix
                 var matrix = await _unitOfWork.Matrices.GetByIdAsync(createExamRequestDto.MatrixId);
                 if (matrix == null)
                 {
+                    _logger.LogWarning("Matrix not found: matrixId={MatrixId}", createExamRequestDto.MatrixId);
                     return ApiResponse<ExamRequestResponseDto>.ErrorResult($"Không tìm thấy ma trận với ID: {createExamRequestDto.MatrixId}");
+                }
+
+                if (matrix.CreatedBy.HasValue && matrix.CreatedBy.Value != userId)
+                {
+                    _logger.LogWarning("User {UserId} attempted to use matrix {MatrixId} created by {CreatedBy}", 
+                        userId, createExamRequestDto.MatrixId, matrix.CreatedBy.Value);
+                    return ApiResponse<ExamRequestResponseDto>.ErrorResult("Bạn chỉ có thể tạo đề thi từ ma trận do bạn tạo");
                 }
 
                 if (matrix.IsActive == false)
                 {
+                    _logger.LogWarning("Matrix is inactive: matrixId={MatrixId}", createExamRequestDto.MatrixId);
                     return ApiResponse<ExamRequestResponseDto>.ErrorResult("Ma trận đã bị vô hiệu hóa");
                 }
 
@@ -137,32 +153,35 @@ namespace RoboChemist.ExamService.Service.Implements
 
                 // SAGA Step 5: Random questions and create ExamQuestion
                 Console.WriteLine($"[SAGA] Step 5: Generating random questions");
-                
-                var allQuestions = await _unitOfWork.Questions.GetAllAsync();
+
                 var examQuestions = new List<Examquestion>();
+                var selectedQuestionIds = new HashSet<Guid>(); // Track đã chọn để tránh trùng
 
                 foreach (var detail in matrixDetails)
                 {
-                    // Filter questions by TopicId, QuestionType, Level, and IsActive
-                    var matchingQuestions = allQuestions
-                        .Where(q => q.TopicId == detail.TopicId 
-                                 && q.QuestionType == detail.QuestionType
-                                 && (string.IsNullOrEmpty(detail.Level) || q.Level == detail.Level)
-                                 && q.IsActive == true)
-                        .OrderBy(x => Guid.NewGuid()) // Random shuffle
+                    // Lấy random questions từ repository - đã lọc TopicId, QuestionType, Level, IsActive
+                    var matchingQuestions = await _unitOfWork.Questions.GetRandomQuestionsByFiltersAsync(
+                        detail.TopicId!.Value, 
+                        detail.QuestionType,
+                        null, // Không filter theo level
+                        detail.QuestionCount);
+
+                    // Loại bỏ câu hỏi đã được chọn trước đó
+                    var availableQuestions = matchingQuestions
+                        .Where(q => !selectedQuestionIds.Contains(q.QuestionId))
                         .Take(detail.QuestionCount)
                         .ToList();
 
-                    if (matchingQuestions.Count < detail.QuestionCount)
+                    if (availableQuestions.Count < detail.QuestionCount)
                     {
                         var levelInfo = string.IsNullOrEmpty(detail.Level) ? "" : $", Level {detail.Level}";
                         throw new Exception(
                             $"Không đủ câu hỏi cho Topic {detail.TopicId}, Type {detail.QuestionType}{levelInfo}. " +
-                            $"Cần {detail.QuestionCount}, chỉ có {matchingQuestions.Count}");
+                            $"Cần {detail.QuestionCount}, chỉ có {availableQuestions.Count} (sau khi loại bỏ trùng)");
                     }
 
                     // Create ExamQuestion for each selected question
-                    foreach (var question in matchingQuestions)
+                    foreach (var question in availableQuestions)
                     {
                         var examQuestion = new Examquestion
                         {
@@ -175,6 +194,7 @@ namespace RoboChemist.ExamService.Service.Implements
 
                         await _unitOfWork.ExamQuestions.CreateAsync(examQuestion);
                         examQuestions.Add(examQuestion);
+                        selectedQuestionIds.Add(question.QuestionId); // Mark đã chọn
                     }
                 }
 
@@ -281,9 +301,8 @@ namespace RoboChemist.ExamService.Service.Implements
                 // Lấy Matrix info
                 var matrix = await _unitOfWork.Matrices.GetByIdAsync(examRequest.MatrixId);
 
-                // Lấy các GeneratedExam liên quan
-                var allGeneratedExams = await _unitOfWork.GeneratedExams.GetAllAsync();
-                var generatedExams = allGeneratedExams.Where(ge => ge.ExamRequestId == examRequestId).ToList();
+                // Lấy các GeneratedExam liên quan - Dùng repository method
+                var generatedExams = await _unitOfWork.GeneratedExams.GetByExamRequestIdAsync(examRequestId);
 
                 var response = new ExamRequestResponseDto
                 {
@@ -319,18 +338,8 @@ namespace RoboChemist.ExamService.Service.Implements
         {
             try
             {
-                var allExamRequests = await _unitOfWork.ExamRequests.GetAllAsync();
-                
-                // Filter theo userId
-                var userExamRequests = allExamRequests.Where(er => er.UserId == userId);
-
-                // Filter theo status nếu có
-                if (!string.IsNullOrEmpty(status))
-                {
-                    userExamRequests = userExamRequests.Where(er => er.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
-                }
-
-                var examRequests = userExamRequests.OrderByDescending(er => er.CreatedAt).ToList();
+                // Lấy exam requests từ repository - đã filter và sort
+                var examRequests = await _unitOfWork.ExamRequests.GetExamRequestsByUserAsync(userId, status);
 
                 var response = new List<ExamRequestResponseDto>();
                 foreach (var examRequest in examRequests)
@@ -385,8 +394,8 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<GeneratedExamResponseDto>.ErrorResult("Không tìm thấy ma trận đề thi");
                 }
 
-                var allMatrixDetails = await _unitOfWork.MatrixDetails.GetAllAsync();
-                var matrixDetails = allMatrixDetails.Where(md => md.MatrixId == matrix.MatrixId && md.IsActive == true).ToList();
+                // Lấy MatrixDetails active từ repository
+                var matrixDetails = await _unitOfWork.MatrixDetails.GetActiveByMatrixIdAsync(matrix.MatrixId);
 
                 if (!matrixDetails.Any())
                 {
@@ -405,20 +414,17 @@ namespace RoboChemist.ExamService.Service.Implements
                 await _unitOfWork.GeneratedExams.CreateAsync(generatedExam);
 
                 // 5. Lấy câu hỏi theo từng MatrixDetail và tạo ExamQuestion
-                var allQuestions = await _unitOfWork.Questions.GetAllAsync();
                 var examQuestions = new List<Examquestion>();
                 int questionOrder = 1;
 
                 foreach (var detail in matrixDetails)
                 {
-                    // Lọc câu hỏi theo TopicId, QuestionType và IsActive
-                    var matchingQuestions = allQuestions
-                        .Where(q => q.TopicId == detail.TopicId 
-                                 && q.QuestionType == detail.QuestionType 
-                                 && q.IsActive == true)
-                        .OrderBy(x => Guid.NewGuid()) // Random order
-                        .Take(detail.QuestionCount)
-                        .ToList();
+                    // Lấy random questions từ repository - đã lọc TopicId, QuestionType, IsActive
+                    var matchingQuestions = await _unitOfWork.Questions.GetRandomQuestionsByFiltersAsync(
+                        detail.TopicId!.Value, 
+                        detail.QuestionType,
+                        null, // Không filter theo level
+                        detail.QuestionCount);
 
                     if (matchingQuestions.Count < detail.QuestionCount)
                     {
