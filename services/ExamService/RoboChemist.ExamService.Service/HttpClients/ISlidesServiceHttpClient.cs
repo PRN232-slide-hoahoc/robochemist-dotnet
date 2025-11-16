@@ -15,5 +15,12 @@ namespace RoboChemist.ExamService.Service.HttpClients
         /// <param name="topicId">Topic unique identifier</param>
         /// <returns>API response containing topic details or null if not found</returns>
         Task<ApiResponse<TopicDto>?> GetTopicByIdAsync(Guid topicId);
+
+        /// <summary>
+        /// Get multiple topics by IDs from Slide Service (BATCH GET - Tránh N+1 query)
+        /// </summary>
+        /// <param name="topicIds">List of topic IDs</param>
+        /// <returns>Dictionary mapping TopicId to TopicDto</returns>
+        Task<Dictionary<Guid, TopicDto>> GetTopicsByIdsAsync(IEnumerable<Guid> topicIds);
     }
 }

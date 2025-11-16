@@ -81,5 +81,44 @@ namespace RoboChemist.ExamService.Repository.Implements
                 .OrderByDescending(q => q.CreatedAt)
                 .ToListAsync();
         }
+
+        /// <summary>
+        /// Lấy random questions theo TopicId, QuestionType, Level (optional), giới hạn số lượng
+        /// Dùng cho generate exam - lấy ngẫu nhiên câu hỏi active
+        /// </summary>
+        public async Task<List<Question>> GetRandomQuestionsByFiltersAsync(Guid topicId, string questionType, string? level, int count)
+        {
+            var query = _context.Set<Question>()
+                .Where(q => q.TopicId == topicId 
+                         && q.QuestionType == questionType 
+                         && q.IsActive == true);
+
+            // Lọc theo Level nếu có
+            if (!string.IsNullOrEmpty(level))
+            {
+                query = query.Where(q => q.Level == level);
+            }
+
+            return await query
+                .OrderBy(x => Guid.NewGuid())
+                .Take(count)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountQuestionsByFiltersAsync(Guid topicId, string questionType, string? level = null, bool isActive = true)
+        {
+            var query = _dbSet.Where(q => 
+                q.TopicId == topicId && 
+                q.QuestionType == questionType &&
+                q.IsActive == isActive
+            );
+
+            if (!string.IsNullOrEmpty(level))
+            {
+                query = query.Where(q => q.Level == level);
+            }
+
+            return await query.CountAsync();
+        }
     }
 }

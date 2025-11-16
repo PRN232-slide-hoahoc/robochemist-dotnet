@@ -21,15 +21,14 @@ namespace RoboChemist.ExamService.API.Controllers
         }
 
         /// <summary>
-        /// Tạo yêu cầu tạo đề thi mới
+        /// Tạo yêu cầu tạo đề thi mới. User chỉ có thể tạo đề từ ma trận do chính mình tạo.
         /// </summary>
-        /// <param name="createExamRequestDto">Thông tin yêu cầu tạo đề</param>
-        /// <returns>Thông tin yêu cầu đã tạo</returns>
+        /// <param name="createExamRequestDto">Thông tin yêu cầu tạo đề (MatrixId, Price)</param>
+        /// <returns>Thông tin yêu cầu tạo đề và đề thi đã được generate</returns>
         [HttpPost("request")]
-        [Authorize(Roles = "Teacher,Admin")] // Chỉ Teacher và Admin mới được tạo yêu cầu đề thi
+        [Authorize]
         public async Task<ActionResult<ApiResponse<ExamRequestResponseDto>>> CreateExamRequest([FromBody] CreateExamRequestDto createExamRequestDto)
         {
-            // Validate ModelState
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
@@ -39,26 +38,7 @@ namespace RoboChemist.ExamService.API.Controllers
                 return BadRequest(ApiResponse<ExamRequestResponseDto>.ErrorResult(string.Join("; ", errors)));
             }
 
-            // Lấy UserId từ JWT token
-            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-            
-            // Debug: Print all claims
-            Console.WriteLine("[EXAM CONTROLLER] JWT Claims:");
-            foreach (var claim in User?.Claims ?? Enumerable.Empty<System.Security.Claims.Claim>())
-            {
-                Console.WriteLine($"  - {claim.Type}: {claim.Value}");
-            }
-            
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            {
-                Console.WriteLine($"[EXAM CONTROLLER ERROR] UserId claim not found or invalid. NameIdentifier claim: {userIdClaim?.Value ?? "NULL"}");
-                return Unauthorized(ApiResponse<ExamRequestResponseDto>.ErrorResult(
-                    "Token không hợp lệ hoặc không có userId"));
-            }
-
-            Console.WriteLine($"[EXAM CONTROLLER] Extracted UserId from JWT: {userId}");
-
-            var result = await _examService.CreateExamRequestAsync(createExamRequestDto, userId);
+            var result = await _examService.CreateExamRequestAsync(createExamRequestDto);
 
             if (!result.Success)
             {
