@@ -90,7 +90,8 @@ public class StorageService : IStorageService
         {
             BucketName = _bucketName,
             Key = objectKey,
-            Expires = DateTime.UtcNow.AddMinutes(expirationMinutes)
+            Expires = DateTime.UtcNow.AddMinutes(expirationMinutes),
+            Protocol = Protocol.HTTPS
         };
 
         return await Task.FromResult(_s3Client.GetPreSignedURL(request));
