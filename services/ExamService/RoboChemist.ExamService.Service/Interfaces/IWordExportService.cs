@@ -20,5 +20,22 @@ namespace RoboChemist.ExamService.Service.Interfaces
             List<Question> questions,
             int totalQuestions,
             int? timeLimit = null);
+
+        /// <summary>
+        /// Export exam questions only (without answers) to Word document
+        /// </summary>
+        Task<byte[]> ExportExamQuestionsOnlyAsync(
+            string matrixName, 
+            List<Question> questions,
+            int totalQuestions,
+            int? timeLimit = null);
+
+        /// <summary>
+        /// Export answer key only to Word document
+        /// </summary>
+        Task<byte[]> ExportAnswerKeyOnlyAsync(
+            string matrixName, 
+            List<Question> questions,
+            int totalQuestions);
     }
 }

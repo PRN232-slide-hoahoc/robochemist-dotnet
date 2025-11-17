@@ -48,10 +48,9 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string? Level { get; set; }
 
             /// <summary>
-            /// Danh sách đáp án (tối thiểu 0 cho Essay, 2-6 cho các loại khác)
+            /// Danh sách đáp án
             /// </summary>
             [Required(ErrorMessage = "Options là bắt buộc")]
-            [MaxLength(6, ErrorMessage = "Không được có quá 6 đáp án")]
             public List<CreateOptionDto> Options { get; set; } = new();
         }
 
@@ -184,10 +183,9 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string Status { get; set; } = RoboChemistConstants.QUESTION_STATUS_ACTIVE;
 
             /// <summary>
-            /// Danh sách đáp án (tối thiểu 0 cho Essay, 2-6 cho các loại khác)
+            /// Danh sách đáp án
             /// </summary>
             [Required(ErrorMessage = "Options là bắt buộc")]
-            [MaxLength(6, ErrorMessage = "Không được có quá 6 đáp án")]
             public List<CreateOptionDto> Options { get; set; } = new();
         }
 
@@ -231,6 +229,17 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public string QuestionType { get; set; } = string.Empty;
             public List<Guid> CreatedQuestionIds { get; set; } = new();
             public string Message { get; set; } = string.Empty;
+        }
+
+        /// <summary>
+        /// DTO Response cho đếm câu hỏi theo filters
+        /// </summary>
+        public class QuestionCountResponseDto
+        {
+            public Guid TopicId { get; set; }
+            public string QuestionType { get; set; } = string.Empty;
+            public string? Level { get; set; }
+            public int AvailableCount { get; set; }
         }
     }
 }

@@ -22,20 +22,22 @@ namespace RoboChemist.ExamService.API.Controllers
         }
 
         /// <summary>
-        /// Get all questions, optionally filtered by topic and search term
+        /// Get all questions, optionally filtered by topic, search term and level
         /// </summary>
         /// <param name="topicId">Optional: Filter questions by topic ID from Slide Service</param>
         /// <param name="search">Optional: Search term for question text</param>
+        /// <param name="level">Optional: Filter by difficulty level (NhanBiet, ThongHieu, VanDung, VanDungCao)</param>
         /// <returns>List of questions</returns>
         [HttpGet]
         [AllowAnonymous] 
         public async Task<ActionResult<ApiResponse<List<QuestionResponseDto>>>> GetQuestions(
             [FromQuery] Guid? topicId,
-            [FromQuery] string? search)
+            [FromQuery] string? search,
+            [FromQuery] string? level)
         {
             try
             {
-                var result = await _questionService.GetQuestionsAsync(topicId, search);
+                var result = await _questionService.GetQuestionsAsync(topicId, search, level);
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
@@ -71,7 +73,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="request">Question creation details including options</param>
         /// <returns>The newly created question</returns>
         [HttpPost]
-        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)] 
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
         public async Task<ActionResult<ApiResponse<QuestionResponseDto>>> CreateQuestion([FromBody] CreateQuestionDto request)
         {
             try
@@ -83,15 +85,23 @@ namespace RoboChemist.ExamService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
+                    Console.WriteLine($"[CREATE QUESTION] ModelState Invalid: {string.Join(", ", errors)}");
                     return BadRequest(ApiResponse<QuestionResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _questionService.CreateQuestionAsync(request);
 
+                if (!result.Success)
+                {
+                    Console.WriteLine($"[CREATE QUESTION] Service failed: {result.Message}");
+                }
+
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[CREATE QUESTION] Exception: {ex.Message}");
+                Console.WriteLine($"[CREATE QUESTION] StackTrace: {ex.StackTrace}");
                 return StatusCode(500, ApiResponse<QuestionResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
@@ -104,7 +114,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <returns>The updated question</returns>
       
         [HttpPut("{id}")]
-        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)] 
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
         public async Task<ActionResult<ApiResponse<QuestionResponseDto>>> UpdateQuestion(
             [FromRoute] Guid id, 
             [FromBody] UpdateQuestionDto request)
@@ -118,15 +128,23 @@ namespace RoboChemist.ExamService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
+                    Console.WriteLine($"[UPDATE QUESTION] ModelState Invalid: {string.Join(", ", errors)}");
                     return BadRequest(ApiResponse<QuestionResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _questionService.UpdateQuestionAsync(id, request);
 
+                if (!result.Success)
+                {
+                    Console.WriteLine($"[UPDATE QUESTION] Service failed: {result.Message}");
+                }
+
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[UPDATE QUESTION] Exception: {ex.Message}");
+                Console.WriteLine($"[UPDATE QUESTION] StackTrace: {ex.StackTrace}");
                 return StatusCode(500, ApiResponse<QuestionResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
@@ -137,7 +155,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">The unique identifier of the question to delete</param>
         /// <returns>Success status</returns>
         [HttpDelete("{id}")]
-        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)] 
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)] 
         public async Task<ActionResult<ApiResponse<bool>>> DeleteQuestion([FromRoute] Guid id)
         {
             try
@@ -158,7 +176,7 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="request">Bulk creation details with topic ID and list of questions</param>
         /// <returns>Bulk creation result with created question IDs</returns>
         [HttpPost("bulk")]
-        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN)]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
         public async Task<ActionResult<ApiResponse<BulkCreateQuestionsResponseDto>>> BulkCreateQuestions([FromBody] BulkCreateQuestionsDto request)
         {
             try
@@ -180,6 +198,32 @@ namespace RoboChemist.ExamService.API.Controllers
             catch (Exception)
             {
                 return StatusCode(500, ApiResponse<BulkCreateQuestionsResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        /// <summary>
+        /// Count available questions by topic, question type, and level (for matrix creation validation)
+        /// </summary>
+        /// <param name="topicId">Topic ID from Slides Service</param>
+        /// <param name="questionType">Question type: MultipleChoice, TrueFalse, FillBlank, Essay</param>
+        /// <param name="level">Optional: Question level (NhanBiet, ThongHieu, VanDung, VanDungCao)</param>
+        /// <returns>Available question count</returns>
+        [HttpGet("count")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<QuestionCountResponseDto>>> CountQuestions(
+            [FromQuery] Guid topicId,
+            [FromQuery] string questionType,
+            [FromQuery] string? level = null)
+        {
+            try
+            {
+                var result = await _questionService.CountQuestionsByFiltersAsync(topicId, questionType, level);
+
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<QuestionCountResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
     }

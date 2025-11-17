@@ -23,12 +23,13 @@ namespace RoboChemist.ExamService.Service.Interfaces
         Task<ApiResponse<QuestionResponseDto>> GetQuestionByIdAsync(Guid id);
 
         /// <summary>
-        /// Get all questions, optionally filtered by topic and search term
+        /// Get all questions, optionally filtered by topic, search term and level
         /// </summary>
         /// <param name="topicId">Optional: Filter by topic ID</param>
         /// <param name="search">Optional: Search term for question text</param>
+        /// <param name="level">Optional: Filter by difficulty level</param>
         /// <returns>List of questions</returns>
-        Task<ApiResponse<List<QuestionResponseDto>>> GetQuestionsAsync(Guid? topicId = null, string? search = null);
+        Task<ApiResponse<List<QuestionResponseDto>>> GetQuestionsAsync(Guid? topicId = null, string? search = null, string? level = null);
 
         /// <summary>
         /// Update an existing question
@@ -50,6 +51,11 @@ namespace RoboChemist.ExamService.Service.Interfaces
         /// </summary>
         /// <param name="bulkCreateDto">Bulk creation details</param>
         /// <returns>Bulk creation result</returns>
-        Task<ApiResponse<BulkCreateQuestionsResponseDto>> BulkCreateQuestionsAsync(BulkCreateQuestionsDto bulkCreateDto);
+        Task<ApiResponse<BulkCreateQuestionsResponseDto>> BulkCreateQuestionsAsync(BulkCreateQuestionsDto request);
+
+        /// <summary>
+        /// Đếm số câu hỏi available theo TopicId, QuestionType, và Level
+        /// </summary>
+        Task<ApiResponse<QuestionCountResponseDto>> CountQuestionsByFiltersAsync(Guid topicId, string questionType, string? level = null);
     }
 }

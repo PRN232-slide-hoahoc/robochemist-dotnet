@@ -46,6 +46,16 @@ namespace RoboChemist.ExamService.Service.Interfaces
         Task<ApiResponse<byte[]>> ExportExamToWordAsync(Guid generatedExamId);
 
         /// <summary>
+        /// Export chỉ đề thi (không có đáp án) ra file Word
+        /// </summary>
+        Task<ApiResponse<byte[]>> ExportExamQuestionsOnlyAsync(Guid generatedExamId);
+
+        /// <summary>
+        /// Export chỉ đáp án ra file Word
+        /// </summary>
+        Task<ApiResponse<byte[]>> ExportAnswerKeyOnlyAsync(Guid generatedExamId);
+
+        /// <summary>
         /// Cập nhật trạng thái đề thi (PENDING -> READY -> EXPIRED)
         /// </summary>
         /// <param name="generatedExamId">ID đề thi</param>

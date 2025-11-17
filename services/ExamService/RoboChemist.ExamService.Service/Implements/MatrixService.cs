@@ -118,6 +118,45 @@ namespace RoboChemist.ExamService.Service.Implements
             }
         }
 
+        public async Task<ApiResponse<List<MatrixBasicDto>>> GetAllMatrixNamesAsync(bool? isActive = null)
+        {
+            try
+            {
+                var currentUser = await _authServiceClient.GetCurrentUserAsync();
+                if (currentUser == null)
+                {
+                    return ApiResponse<List<MatrixBasicDto>>.ErrorResult("Người dùng chưa xác thực");
+                }
+
+                List<Matrix> allMatrices;
+                if (currentUser.Role == RoboChemistConstants.ROLE_USER)
+                {
+                    allMatrices = await _unitOfWork.Matrices.GetMatricesByUserAsync(currentUser.Id, isActive);
+                }
+                else
+                {
+                    allMatrices = await _unitOfWork.Matrices.GetMatricesByStatusAsync(isActive);
+                }
+
+                var response = allMatrices.Select(m => new MatrixBasicDto
+                {
+                    MatrixId = m.MatrixId,
+                    Name = m.Name,
+                    TotalQuestion = m.TotalQuestion ?? 0,
+                    IsActive = m.IsActive ?? true,
+                    CreatedAt = m.CreatedAt,
+                    CreatedBy = m.CreatedBy
+                }).ToList();
+
+                return ApiResponse<List<MatrixBasicDto>>.SuccessResult(response, $"Tìm thấy {response.Count} ma trận");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách thông tin cơ bản ma trận");
+                return ApiResponse<List<MatrixBasicDto>>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Helper: Map Matrix entity sang MatrixResponseDto với topics đã cache (SYNC - không gọi API)
         /// </summary>
@@ -257,10 +296,7 @@ namespace RoboChemist.ExamService.Service.Implements
                         _logger.LogWarning("Topic not found: topicId={TopicId}", detail.TopicId);
                         return ApiResponse<MatrixResponseDto>.ErrorResult($"Không tìm thấy Topic với ID: {detail.TopicId}");
                     }
-                }
 
-                foreach (var detail in createDto.MatrixDetails)
-                {
                     var availableQuestionCount = await _unitOfWork.Questions.CountQuestionsByFiltersAsync(
                         detail.TopicId,
                         detail.QuestionType,
@@ -270,9 +306,10 @@ namespace RoboChemist.ExamService.Service.Implements
 
                     if (availableQuestionCount < detail.QuestionCount)
                     {
-                        var levelInfo = string.IsNullOrEmpty(detail.Level) ? "" : $", Level '{detail.Level}'";
-                        var errorMsg = $"Không đủ câu hỏi cho Topic {detail.TopicId}, QuestionType '{detail.QuestionType}'{levelInfo}. " +
-                            $"Yêu cầu {detail.QuestionCount} câu, chỉ có {availableQuestionCount} câu trong hệ thống";
+                        var topicName = topicResponse.Data.Name;
+                        var levelInfo = string.IsNullOrEmpty(detail.Level) ? "tất cả mức độ" : $"mức độ {detail.Level}";
+                        var errorMsg = $"Hệ thống không đủ câu hỏi cho topic {topicName}, {levelInfo}. " +
+                            $"Yêu cầu {detail.QuestionCount} câu, chỉ có {availableQuestionCount} câu";
                         
                         _logger.LogError("Matrix validation failed: {ErrorMessage}", errorMsg);
                         return ApiResponse<MatrixResponseDto>.ErrorResult(errorMsg);
