@@ -43,7 +43,7 @@ namespace RoboChemist.ExamService.Repository.Implements
                 .ToListAsync();
         }
 
-        public async Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search)
+        public async Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search, string? level)
         {
             var query = _dbSet
                 .Include(q => q.Options)
@@ -57,6 +57,11 @@ namespace RoboChemist.ExamService.Repository.Implements
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(q => q.QuestionText.Contains(search));
+            }
+
+            if (!string.IsNullOrWhiteSpace(level))
+            {
+                query = query.Where(q => q.Level == level);
             }
 
             return await query
@@ -96,6 +101,14 @@ namespace RoboChemist.ExamService.Repository.Implements
             }
 
             return await query.CountAsync();
+        }
+
+        public async Task<Question?> GetQuestionsByIdsAsync(Guid id)
+        {
+            return await _dbSet
+                .Include(q => q.Options)
+                .Where(q => q.QuestionId == id)
+                .FirstOrDefaultAsync();
         }
     }
 }

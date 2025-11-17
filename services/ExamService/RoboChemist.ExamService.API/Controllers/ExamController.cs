@@ -150,6 +150,62 @@ namespace RoboChemist.ExamService.API.Controllers
         }
 
         /// <summary>
+        /// Export chỉ đề thi (không có đáp án) ra file Word. Tên file là tên ma trận.
+        /// </summary>
+        [HttpGet("{generatedExamId}/export/questions")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExportExamQuestions(Guid generatedExamId)
+        {
+            try
+            {
+                var result = await _examService.ExportExamQuestionsOnlyAsync(generatedExamId);
+
+                if (!result.Success || result.Data == null)
+                {
+                    return BadRequest(result);
+                }
+
+                return File(
+                    result.Data,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    result.Message ?? "DeThi.docx"
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResult("Lỗi hệ thống khi xuất đề thi", [ex.Message]));
+            }
+        }
+
+        /// <summary>
+        /// Export chỉ đáp án ra file Word. Tên file là "DapAn_" + tên ma trận.
+        /// </summary>
+        [HttpGet("{generatedExamId}/export/answers")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExportAnswerKey(Guid generatedExamId)
+        {
+            try
+            {
+                var result = await _examService.ExportAnswerKeyOnlyAsync(generatedExamId);
+
+                if (!result.Success || result.Data == null)
+                {
+                    return BadRequest(result);
+                }
+
+                return File(
+                    result.Data,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    result.Message ?? "DapAn.docx"
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResult("Lỗi hệ thống khi xuất đáp án", [ex.Message]));
+            }
+        }
+
+        /// <summary>
         /// Cập nhật trạng thái đề thi
         /// </summary>
         /// <param name="id">ID đề thi</param>

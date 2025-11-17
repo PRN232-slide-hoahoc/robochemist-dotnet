@@ -190,5 +190,41 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             /// </summary>
             public bool IsActive { get; set; }
         }
+
+        /// <summary>
+        /// DTO trả về thông tin cơ bản của ma trận (không bao gồm chi tiết)
+        /// </summary>
+        public class MatrixBasicDto
+        {
+            /// <summary>
+            /// ID của ma trận
+            /// </summary>
+            public Guid MatrixId { get; set; }
+
+            /// <summary>
+            /// Tên ma trận
+            /// </summary>
+            public string Name { get; set; } = string.Empty;
+
+            /// <summary>
+            /// Tổng số câu hỏi
+            /// </summary>
+            public int TotalQuestion { get; set; }
+
+            /// <summary>
+            /// Trạng thái hoạt động
+            /// </summary>
+            public bool IsActive { get; set; }
+
+            /// <summary>
+            /// Ngày tạo
+            /// </summary>
+            public DateTime? CreatedAt { get; set; }
+
+            /// <summary>
+            /// Người tạo
+            /// </summary>
+            public Guid? CreatedBy { get; set; }
+        }
     }
 }

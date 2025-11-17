@@ -23,6 +23,13 @@ namespace RoboChemist.ExamService.Service.Interfaces
         Task<ApiResponse<List<MatrixResponseDto>>> GetAllMatricesAsync(bool? isActive = null);
 
         /// <summary>
+        /// Lấy danh sách thông tin cơ bản của tất cả ma trận (không bao gồm chi tiết)
+        /// </summary>
+        /// <param name="isActive">Lọc theo trạng thái (null = tất cả)</param>
+        /// <returns>Danh sách thông tin cơ bản của ma trận</returns>
+        Task<ApiResponse<List<MatrixBasicDto>>> GetAllMatrixNamesAsync(bool? isActive = null);
+
+        /// <summary>
         /// Tạo mới một ma trận đề thi kèm chi tiết. Tự động lấy userId từ JWT token.
         /// </summary>
         /// <param name="createDto">Thông tin ma trận cần tạo</param>

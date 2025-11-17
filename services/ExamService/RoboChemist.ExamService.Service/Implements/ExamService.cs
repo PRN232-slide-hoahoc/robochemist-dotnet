@@ -159,11 +159,11 @@ namespace RoboChemist.ExamService.Service.Implements
 
                 foreach (var detail in matrixDetails)
                 {
-                    // Lấy random questions từ repository - đã lọc TopicId, QuestionType, Level, IsActive
+                    // Lấy random questions từ repository - PHẢI filter theo Level giống như validation ở CreateMatrix
                     var matchingQuestions = await _unitOfWork.Questions.GetRandomQuestionsByFiltersAsync(
                         detail.TopicId!.Value, 
                         detail.QuestionType,
-                        null, // Không filter theo level
+                        detail.Level, // Filter theo level để đồng bộ với CreateMatrix
                         detail.QuestionCount);
 
                     // Loại bỏ câu hỏi đã được chọn trước đó
@@ -174,9 +174,9 @@ namespace RoboChemist.ExamService.Service.Implements
 
                     if (availableQuestions.Count < detail.QuestionCount)
                     {
-                        var levelInfo = string.IsNullOrEmpty(detail.Level) ? "" : $", Level {detail.Level}";
+                        var levelInfo = string.IsNullOrEmpty(detail.Level) ? "" : $", mức độ {detail.Level}";
                         throw new Exception(
-                            $"Không đủ câu hỏi cho Topic {detail.TopicId}, Type {detail.QuestionType}{levelInfo}. " +
+                            $"Không đủ câu hỏi cho Topic {detail.TopicId}, loại {detail.QuestionType}{levelInfo}. " +
                             $"Cần {detail.QuestionCount}, chỉ có {availableQuestions.Count} (sau khi loại bỏ trùng)");
                     }
 
@@ -669,6 +669,139 @@ namespace RoboChemist.ExamService.Service.Implements
                         _logger.LogWarning(ex, "[ExportExamToWord] Failed to delete temp file: {TempFilePath}", tempFilePath);
                     }
                 }
+            }
+        }
+
+        public async Task<ApiResponse<byte[]>> ExportExamQuestionsOnlyAsync(Guid generatedExamId)
+        {
+            try
+            {
+                _logger.LogInformation("[ExportExamQuestions] Starting export for GeneratedExamId: {GeneratedExamId}", generatedExamId);
+
+                var generatedExam = await _unitOfWork.GeneratedExams.GetByIdAsync(generatedExamId);
+                if (generatedExam == null)
+                {
+                    return ApiResponse<byte[]>.ErrorResult($"Không tìm thấy đề thi với ID: {generatedExamId}");
+                }
+
+                if (generatedExam.Status != RoboChemistConstants.GENERATED_EXAM_STATUS_READY)
+                {
+                    return ApiResponse<byte[]>.ErrorResult($"Đề thi chưa sẵn sàng để xuất. Trạng thái: {generatedExam.Status}");
+                }
+
+                var examRequest = await _unitOfWork.ExamRequests.GetByIdAsync(generatedExam.ExamRequestId);
+                if (examRequest == null)
+                {
+                    return ApiResponse<byte[]>.ErrorResult("Không tìm thấy yêu cầu tạo đề");
+                }
+
+                var matrix = await _unitOfWork.Matrices.GetByIdAsync(examRequest.MatrixId);
+                if (matrix == null)
+                {
+                    return ApiResponse<byte[]>.ErrorResult("Không tìm thấy ma trận đề thi");
+                }
+
+                var examQuestions = await _unitOfWork.ExamQuestions.GetByGeneratedExamIdAsync(
+                    generatedExamId,
+                    RoboChemistConstants.EXAMQUESTION_STATUS_ACTIVE
+                );
+
+                if (!examQuestions.Any())
+                {
+                    return ApiResponse<byte[]>.ErrorResult("Đề thi không có câu hỏi nào");
+                }
+
+                var questionIds = examQuestions.Select(eq => eq.QuestionId).ToList();
+                var questions = await _unitOfWork.Questions.GetQuestionsWithOptionsByIdsAsync(questionIds);
+
+                var orderedQuestions = examQuestions
+                    .Select(eq => questions.FirstOrDefault(q => q.QuestionId == eq.QuestionId))
+                    .Where(q => q != null)
+                    .Cast<Question>()
+                    .ToList();
+
+                var wordBytes = await _wordExportService.ExportExamQuestionsOnlyAsync(
+                    matrixName: matrix.Name ?? "Đề thi",
+                    questions: orderedQuestions,
+                    totalQuestions: matrix.TotalQuestion ?? orderedQuestions.Count,
+                    timeLimit: null
+                );
+
+                var fileName = $"{matrix.Name?.Replace(" ", "_") ?? "DeThi"}.docx";
+                _logger.LogInformation("[ExportExamQuestions] SUCCESS - FileName: {FileName}", fileName);
+
+                return ApiResponse<byte[]>.SuccessResult(wordBytes, fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[ExportExamQuestions] Error");
+                return ApiResponse<byte[]>.ErrorResult($"Lỗi export đề thi: {ex.Message}");
+            }
+        }
+
+        public async Task<ApiResponse<byte[]>> ExportAnswerKeyOnlyAsync(Guid generatedExamId)
+        {
+            try
+            {
+                _logger.LogInformation("[ExportAnswerKey] Starting export for GeneratedExamId: {GeneratedExamId}", generatedExamId);
+
+                var generatedExam = await _unitOfWork.GeneratedExams.GetByIdAsync(generatedExamId);
+                if (generatedExam == null)
+                {
+                    return ApiResponse<byte[]>.ErrorResult($"Không tìm thấy đề thi với ID: {generatedExamId}");
+                }
+
+                if (generatedExam.Status != RoboChemistConstants.GENERATED_EXAM_STATUS_READY)
+                {
+                    return ApiResponse<byte[]>.ErrorResult($"Đề thi chưa sẵn sàng để xuất. Trạng thái: {generatedExam.Status}");
+                }
+
+                var examRequest = await _unitOfWork.ExamRequests.GetByIdAsync(generatedExam.ExamRequestId);
+                if (examRequest == null)
+                {
+                    return ApiResponse<byte[]>.ErrorResult("Không tìm thấy yêu cầu tạo đề");
+                }
+
+                var matrix = await _unitOfWork.Matrices.GetByIdAsync(examRequest.MatrixId);
+                if (matrix == null)
+                {
+                    return ApiResponse<byte[]>.ErrorResult("Không tìm thấy ma trận đề thi");
+                }
+
+                var examQuestions = await _unitOfWork.ExamQuestions.GetByGeneratedExamIdAsync(
+                    generatedExamId,
+                    RoboChemistConstants.EXAMQUESTION_STATUS_ACTIVE
+                );
+
+                if (!examQuestions.Any())
+                {
+                    return ApiResponse<byte[]>.ErrorResult("Đề thi không có câu hỏi nào");
+                }
+
+                var questionIds = examQuestions.Select(eq => eq.QuestionId).ToList();
+                var questions = await _unitOfWork.Questions.GetQuestionsWithOptionsByIdsAsync(questionIds);
+
+                var orderedQuestions = examQuestions
+                    .Select(eq => questions.FirstOrDefault(q => q.QuestionId == eq.QuestionId))
+                    .Where(q => q != null)
+                    .Cast<Question>()
+                    .ToList();
+
+                var wordBytes = await _wordExportService.ExportAnswerKeyOnlyAsync(
+                    matrixName: matrix.Name ?? "Đề thi",
+                    questions: orderedQuestions,
+                    totalQuestions: matrix.TotalQuestion ?? orderedQuestions.Count
+                );
+
+                var fileName = $"DapAn_{matrix.Name?.Replace(" ", "_") ?? "DeThi"}.docx";
+                _logger.LogInformation("[ExportAnswerKey] SUCCESS - FileName: {FileName}", fileName);
+
+                return ApiResponse<byte[]>.SuccessResult(wordBytes, fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[ExportAnswerKey] Error");
+                return ApiResponse<byte[]>.ErrorResult($"Lỗi export đáp án: {ex.Message}");
             }
         }
 

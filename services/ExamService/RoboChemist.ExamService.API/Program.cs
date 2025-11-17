@@ -28,9 +28,7 @@ builder.Services.AddEndpointsApiExplorer();
 // Add HttpContextAccessor for token forwarding
 builder.Services.AddHttpContextAccessor();
 
-// ============================================
 // JWT Authentication Configuration
-// ============================================
 var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "your-secret-key-min-32-characters-long-for-security";
 var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "RoboChemist.AuthService";
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "RoboChemist.Client";
@@ -94,7 +92,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Enable XML comments for Swagger documentation
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -103,11 +100,6 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// ============================================
-// Microservices: HTTP Typed Clients
-// ============================================
-// Register Auth Service client for user authentication
-// Uses IHttpClientFactory pattern to support token forwarding
 builder.Services.AddHttpClient("ApiGateway", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5000");
@@ -118,19 +110,10 @@ builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
 builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
 builder.Services.AddScoped<ITemplateServiceClient, TemplateServiceClient>();
 
-// TODO: Add more typed clients as needed
-// builder.Services.AddHttpClient<IWalletServiceClient, WalletServiceClient>(client => { ... });
-
-// ============================================
-// Database & Repositories
-// ============================================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("EXAM_DB")));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// ============================================
-// Business Services
-// ============================================
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IMatrixService, MatrixService>();
 builder.Services.AddScoped<IWordExportService, WordExportService>();
@@ -139,7 +122,6 @@ builder.Services.AddScoped<IWalletServiceHttpClient, WalletServiceHttpClient>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

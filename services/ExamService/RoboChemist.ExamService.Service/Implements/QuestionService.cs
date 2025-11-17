@@ -61,8 +61,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 }
 
                 // Create Question entity
-                var createdAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-                
                 var question = new Question
                 {
                     QuestionId = Guid.NewGuid(),
@@ -72,7 +70,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     Explanation = createQuestionDto.Explanation,
                     Level = createQuestionDto.Level,
                     IsActive = true,
-                    CreatedAt = createdAt,
+                    CreatedAt = DateTime.Now,
                     CreatedBy = currentUser?.Id  // Get from authenticated user
                 };
 
@@ -83,7 +81,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     QuestionId = question.QuestionId,
                     Answer = opt.Answer,
                     IsCorrect = opt.IsCorrect,
-                    CreatedAt = createdAt,
+                    CreatedAt = DateTime.Now,
                     CreatedBy = currentUser?.Id
                 }).ToList();
 
@@ -179,12 +177,12 @@ namespace RoboChemist.ExamService.Service.Implements
         /// <summary>
         /// Get all questions, optionally filtered by topic and search term
         /// </summary>
-        public async Task<ApiResponse<List<QuestionResponseDto>>> GetQuestionsAsync(Guid? topicId = null, string? search = null)
+        public async Task<ApiResponse<List<QuestionResponseDto>>> GetQuestionsAsync(Guid? topicId = null, string? search = null, string? level = null)
         {
             try
             {
                 // ĐỪNG QUERY TRÊN LỚP SERVICE - Gọi Repository method thay thế
-                var questions = await _unitOfWork.Questions.GetQuestionsWithFiltersAsync(topicId, search);
+                var questions = await _unitOfWork.Questions.GetQuestionsWithFiltersAsync(topicId, search, level);
 
                 // BATCH GET Topics - Thu thập tất cả TopicIds duy nhất
                 var topicIds = questions
@@ -247,7 +245,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<QuestionResponseDto>.ErrorResult("Phải có ít nhất một đáp án đúng");
                 }
 
-                var question = await _unitOfWork.Questions.GetByIdAsync(id);
+                var question = await _unitOfWork.Questions.GetQuestionsByIdsAsync(id);
 
                 if (question == null)
                 {
@@ -261,32 +259,37 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<QuestionResponseDto>.ErrorResult("Topic không tồn tại");
                 }
 
-                // Update Question
+                // Update Question fields
                 question.QuestionType = updateQuestionDto.QuestionType;
                 question.QuestionText = updateQuestionDto.QuestionText;
                 question.Explanation = updateQuestionDto.Explanation;
                 question.Level = updateQuestionDto.Level;
                 question.IsActive = updateQuestionDto.Status == "1";
 
-                // Remove old options
+                await _unitOfWork.Questions.UpdateAsync(question);
+
+                // Xóa options cũ
                 foreach (var option in question.Options.ToList())
                 {
                     await _unitOfWork.Options.RemoveAsync(option);
                 }
 
-                // Add new options
-                var newOptions = updateQuestionDto.Options.Select(opt => new Option
+                // Tạo options mới
+                var newOptions = new List<Option>();
+                foreach (var opt in updateQuestionDto.Options)
                 {
-                    OptionId = Guid.NewGuid(),
-                    QuestionId = question.QuestionId,
-                    Answer = opt.Answer,
-                    IsCorrect = opt.IsCorrect,
-                    CreatedAt = DateTime.UtcNow
-                }).ToList();
+                    var newOption = new Option
+                    {
+                        OptionId = Guid.NewGuid(),
+                        QuestionId = question.QuestionId,
+                        Answer = opt.Answer,
+                        IsCorrect = opt.IsCorrect,
+                        CreatedAt = DateTime.Now
+                    };
+                    await _unitOfWork.Options.CreateAsync(newOption);
+                    newOptions.Add(newOption);
+                }
 
-                question.Options = newOptions;
-
-                await _unitOfWork.Questions.UpdateAsync(question);
                 await _unitOfWork.SaveChangesAsync();
 
                 var result = new QuestionResponseDto
@@ -442,6 +445,33 @@ namespace RoboChemist.ExamService.Service.Implements
                     ? $"{ex.Message} Chi tiết: {ex.InnerException.Message}" 
                     : ex.Message;
                 return ApiResponse<BulkCreateQuestionsResponseDto>.ErrorResult($"Lỗi hệ thống: {errorMsg}");
+            }
+        }
+
+        public async Task<ApiResponse<QuestionCountResponseDto>> CountQuestionsByFiltersAsync(Guid topicId, string questionType, string? level = null)
+        {
+            try
+            {
+                var count = await _unitOfWork.Questions.CountQuestionsByFiltersAsync(
+                    topicId,
+                    questionType,
+                    level,
+                    isActive: true
+                );
+
+                var response = new QuestionCountResponseDto
+                {
+                    TopicId = topicId,
+                    QuestionType = questionType,
+                    Level = level,
+                    AvailableCount = count
+                };
+
+                return ApiResponse<QuestionCountResponseDto>.SuccessResult(response);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<QuestionCountResponseDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}");
             }
         }
     }

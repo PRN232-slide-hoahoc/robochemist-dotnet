@@ -63,6 +63,26 @@ namespace RoboChemist.ExamService.API.Controllers
         }
 
         /// <summary>
+        /// Lấy danh sách thông tin cơ bản của tất cả ma trận (không bao gồm chi tiết)
+        /// </summary>
+        /// <param name="isActive">Lọc theo trạng thái: true=active, false=inactive, null=tất cả</param>
+        /// <returns>Danh sách thông tin cơ bản của ma trận</returns>
+        [HttpGet("names")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<List<MatrixBasicDto>>>> GetAllMatrixNames([FromQuery] bool? isActive = null)
+        {
+            try
+            {
+                var result = await _matrixService.GetAllMatrixNamesAsync(isActive);
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<List<MatrixBasicDto>>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        /// <summary>
         /// Tạo mới một ma trận đề thi kèm chi tiết phân bổ câu hỏi theo chủ đề.
         /// Tự động validate số lượng câu hỏi có sẵn trong hệ thống.
         /// </summary>

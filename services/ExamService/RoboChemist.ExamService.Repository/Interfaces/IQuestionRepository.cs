@@ -26,12 +26,13 @@ namespace RoboChemist.ExamService.Repository.Interfaces
         Task<List<Question>> GetQuestionsWithOptionsByIdsAsync(List<Guid> questionIds);
 
         /// <summary>
-        /// Lấy danh sách Questions với filters (TopicId, search term)
+        /// Lấy danh sách Questions với filters (TopicId, search term, level)
         /// </summary>
         /// <param name="topicId">Lọc theo Topic (nullable)</param>
         /// <param name="search">Tìm kiếm trong QuestionText (nullable)</param>
+        /// <param name="level">Lọc theo mức độ (nullable)</param>
         /// <returns>Danh sách câu hỏi với Options</returns>
-        Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search);
+        Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search, string? level);
 
         /// <summary>
         /// Lấy random questions theo TopicId, QuestionType và Level, giới hạn số lượng
@@ -42,5 +43,8 @@ namespace RoboChemist.ExamService.Repository.Interfaces
         /// Đếm số lượng câu hỏi theo filters (TopicId, QuestionType, Level, IsActive)
         /// </summary>
         Task<int> CountQuestionsByFiltersAsync(Guid topicId, string questionType, string? level = null, bool isActive = true);
+
+        Task<Question?> GetQuestionsByIdsAsync(Guid id);
+
     }
 }
