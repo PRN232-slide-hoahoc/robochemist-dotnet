@@ -6,7 +6,7 @@ using static RoboChemist.Shared.DTOs.SyllabusDTOs.SyllabusResponseDTOs;
 
 namespace RoboChemist.SlidesService.API.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/syllabuses")]
     [ApiController]
     public class SyllabusController : ControllerBase
     {

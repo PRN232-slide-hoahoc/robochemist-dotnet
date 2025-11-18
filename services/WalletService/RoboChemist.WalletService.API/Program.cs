@@ -1,25 +1,144 @@
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using RoboChemist.WalletService.Repository.Data;
-using System;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using RoboChemist.WalletService.API;
+using RoboChemist.WalletService.Model.Data;
+using RoboChemist.WalletService.Repository.Implements;
+using RoboChemist.WalletService.Repository.Interfaces;
+using RoboChemist.WalletService.Service.BackgroundServices;
+using RoboChemist.WalletService.Service.Implements;
+using RoboChemist.WalletService.Service.Interfaces;
+using System.Text;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.VNPayDTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Load .env file from solution root
 var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".."));
 var envPath = Path.Combine(solutionRoot, ".env");
-Console.WriteLine($"[DEBUG] Looking for .env at: {envPath}");
-Console.WriteLine($"[DEBUG] .env exists: {File.Exists(envPath)}");
 DotNetEnv.Env.Load(envPath);
 builder.Configuration.AddEnvironmentVariables();
-
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // Database
 builder.Services.AddDbContext<WalletDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("WALLET_DB")));
+
+// Register DbContext as DbContext for repositories
+builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<WalletDbContext>());
+
+// Unit of Work (repositories are created internally by UnitOfWork)
+builder.Services.AddScoped<UnitOfWork>();
+builder.Services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<UnitOfWork>());
+
+// Dependency Injection for Services
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<IPaymentService,PaymentService>();
+
+// Background Services
+builder.Services.AddHostedService<TransactionStatusUpdateService>();
+
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+
+if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
+{
+    throw new Exception("❌ Không tìm thấy thông tin JWT trong appsettings.json!");
+}
+
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = key,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "RoboChemist Wallet Service API",
+        Version = "v1",
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {your token}'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+//load variables VNPay save in .env
+builder.Services.AddSingleton(new VNPayConfig
+{
+    TmnCode = Environment.GetEnvironmentVariable("VNP_TMN_CODE") ?? string.Empty,
+    HashSecret = Environment.GetEnvironmentVariable("VNP_HASH_SECRET") ?? string.Empty,
+    VnpayUrl = Environment.GetEnvironmentVariable("VNP_URL") ?? string.Empty,
+    CallbackUrl = Environment.GetEnvironmentVariable("CALLBACK_URL") ?? string.Empty
+});
 
 var app = builder.Build();
 
@@ -32,10 +151,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-Console.WriteLine($"[DEBUG] WALLET_DB: {Environment.GetEnvironmentVariable("WALLET_DB")}");
 
 app.Run();

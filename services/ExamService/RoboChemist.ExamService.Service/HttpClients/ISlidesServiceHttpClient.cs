@@ -7,17 +7,20 @@ namespace RoboChemist.ExamService.Service.HttpClients
     /// Interface for Slide Service HTTP client
     /// Provides contract for service-to-service communication with Slide Service
     /// </summary>
-    public interface ISlideServiceClient
+    public interface ISlidesServiceHttpClient
     {
         /// <summary>
         /// Get topic by ID from Slide Service
         /// </summary>
         /// <param name="topicId">Topic unique identifier</param>
-        /// <returns>API response containing topic details</returns>
+        /// <returns>API response containing topic details or null if not found</returns>
         Task<ApiResponse<TopicDto>?> GetTopicByIdAsync(Guid topicId);
 
-        // TODO: Add more method signatures as needed
-        // Task<ApiResponse<SyllabusDto>?> GetSyllabusByIdAsync(Guid syllabusId);
-        // Task<ApiResponse<List<TopicDto>>?> GetTopicsByGradeAsync(Guid gradeId);
+        /// <summary>
+        /// Get multiple topics by IDs from Slide Service (BATCH GET - Tránh N+1 query)
+        /// </summary>
+        /// <param name="topicIds">List of topic IDs</param>
+        /// <returns>Dictionary mapping TopicId to TopicDto</returns>
+        Task<Dictionary<Guid, TopicDto>> GetTopicsByIdsAsync(IEnumerable<Guid> topicIds);
     }
 }

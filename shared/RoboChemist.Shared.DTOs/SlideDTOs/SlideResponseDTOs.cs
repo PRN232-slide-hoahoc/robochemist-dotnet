@@ -25,6 +25,57 @@
             public DateTime? GeneratedAt { get; set; }
         }
 
+        public class SlideDetailDto
+        {
+            public Guid GeneratedSlideId { get; set; }
+
+            public Guid SlideRequestId { get; set; }
+
+            public string? FileFormat { get; set; }
+
+            public string? FilePath { get; set; }
+
+            public int? FileSize { get; set; }
+
+            public int? SlideCount { get; set; }
+
+            public string? GenerationStatus { get; set; }
+
+            public double? ProcessingTime { get; set; }
+
+            public DateTime? GeneratedAt { get; set; }
+
+            // Slide Request Information
+            public int? NumberOfSlides { get; set; }
+
+            public string? AiPrompt { get; set; }
+
+            public string? RequestStatus { get; set; }
+
+            public DateTime? RequestedAt { get; set; }
+
+            // Syllabus Information
+            public Guid SyllabusId { get; set; }
+
+            public string SyllabusLesson { get; set; } = null!;
+
+            public string? LearningObjectives { get; set; }
+
+            public int? LessonOrder { get; set; }
+
+            // Topic Information
+            public Guid TopicId { get; set; }
+
+            public string TopicName { get; set; } = null!;
+
+            public int? TopicSortOrder { get; set; }
+
+            // Grade Information
+            public Guid GradeId { get; set; }
+
+            public string GradeName { get; set; } = null!;
+        }
+
         public class ResponseGenerateDataDto
         {
             public FisrtSlideTemplateDto FirstSlide { get; set; } = null!;

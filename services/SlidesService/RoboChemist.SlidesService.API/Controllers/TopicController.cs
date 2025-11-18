@@ -5,7 +5,7 @@ using static RoboChemist.Shared.DTOs.TopicDTOs.TopicDTOs;
 
 namespace RoboChemist.SlidesService.API.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/topics")]
     [ApiController]
     public class TopicController : ControllerBase
     {
@@ -89,9 +89,11 @@ namespace RoboChemist.SlidesService.API.Controllers
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return StatusCode(500, ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống"));
+                Console.WriteLine($"[ERROR] GetTopicById failed: {ex.Message}");
+                Console.WriteLine($"[ERROR] StackTrace: {ex.StackTrace}");
+                return StatusCode(500, ApiResponse<TopicDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
             }
         }
     }

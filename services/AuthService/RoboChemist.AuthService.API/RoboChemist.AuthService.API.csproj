@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\RoboChemist.Shared.DTOs\RoboChemist.Shared.DTOs.csproj" />
     <ProjectReference Include="..\RoboChemist.AuthService.Service\RoboChemist.AuthService.Service.csproj" />
   </ItemGroup>
 

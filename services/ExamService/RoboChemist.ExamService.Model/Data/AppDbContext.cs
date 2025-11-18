@@ -7,6 +7,10 @@ namespace RoboChemist.ExamService.Model.Data;
 
 public partial class AppDbContext : DbContext
 {
+    public AppDbContext()
+    {
+    }
+
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {
@@ -25,6 +29,10 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Option> Options { get; set; }
 
     public virtual DbSet<Question> Questions { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseNpgsql("Host=ep-snowy-cell-a19ensgj-pooler.ap-southeast-1.aws.neon.tech;Port=5432;Database=robochemist_examservice;Username=neondb_owner;Password=npg_CeHyrLVF3pb6;SSL Mode=Require");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,9 +83,7 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
-            entity.Property(e => e.GradeId).HasColumnName("grade_id");
             entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
-            entity.Property(e => e.Prompt).HasColumnName("prompt");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
@@ -95,6 +101,10 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("generatedexam");
 
+            entity.HasIndex(e => e.ExportedAt, "idx_generatedexam_exported_at");
+
+            entity.HasIndex(e => e.ExportedBy, "idx_generatedexam_exported_by");
+
             entity.Property(e => e.GeneratedExamId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("generated_exam_id");
@@ -103,6 +113,16 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("created_at");
             entity.Property(e => e.ExamRequestId).HasColumnName("exam_request_id");
+            entity.Property(e => e.ExportedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("exported_at");
+            entity.Property(e => e.ExportedBy).HasColumnName("exported_by");
+            entity.Property(e => e.ExportedFileName)
+                .HasMaxLength(255)
+                .HasColumnName("exported_file_name");
+            entity.Property(e => e.FileFormat)
+                .HasMaxLength(10)
+                .HasColumnName("file_format");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasColumnName("status");
@@ -134,11 +154,6 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("name");
             entity.Property(e => e.TotalQuestion).HasColumnName("total_question");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
         });
 
         modelBuilder.Entity<Matrixdetail>(entity =>
@@ -146,6 +161,8 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.MatrixDetailsId).HasName("matrixdetails_pkey");
 
             entity.ToTable("matrixdetails");
+
+            entity.HasIndex(e => e.Level, "idx_matrixdetails_level");
 
             entity.Property(e => e.MatrixDetailsId)
                 .HasDefaultValueSql("gen_random_uuid()")
@@ -158,17 +175,15 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("is_active");
+            entity.Property(e => e.Level)
+                .HasMaxLength(50)
+                .HasColumnName("level");
             entity.Property(e => e.MatrixId).HasColumnName("matrix_id");
             entity.Property(e => e.QuestionCount).HasColumnName("question_count");
             entity.Property(e => e.QuestionType)
                 .HasMaxLength(50)
                 .HasColumnName("question_type");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
 
             entity.HasOne(d => d.Matrix).WithMany(p => p.Matrixdetails)
                 .HasForeignKey(d => d.MatrixId)
@@ -195,11 +210,6 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("is_correct");
             entity.Property(e => e.QuestionId).HasColumnName("question_id");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
 
             entity.HasOne(d => d.Question).WithMany(p => p.Options)
                 .HasForeignKey(d => d.QuestionId)
@@ -213,6 +223,10 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("questions");
 
+            entity.HasIndex(e => e.Level, "idx_questions_level");
+
+            entity.HasIndex(e => new { e.TopicId, e.QuestionType, e.Level }, "idx_questions_topic_type_level");
+
             entity.Property(e => e.QuestionId)
                 .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("question_id");
@@ -225,16 +239,14 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("is_active");
-            entity.Property(e => e.Question1).HasColumnName("question");
+            entity.Property(e => e.Level)
+                .HasMaxLength(50)
+                .HasColumnName("level");
+            entity.Property(e => e.QuestionText).HasColumnName("question_text");
             entity.Property(e => e.QuestionType)
                 .HasMaxLength(50)
                 .HasColumnName("question_type");
             entity.Property(e => e.TopicId).HasColumnName("topic_id");
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("updated_at");
-            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by");
         });
 
         OnModelCreatingPartial(modelBuilder);

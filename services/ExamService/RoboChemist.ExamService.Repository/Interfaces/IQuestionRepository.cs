@@ -5,5 +5,46 @@ namespace RoboChemist.ExamService.Repository.Interfaces
 {
     public interface IQuestionRepository : IGenericRepository<Question>
     {
+        /// <summary>
+        /// Lấy danh sách Questions theo TopicId
+        /// </summary>
+        Task<List<Question>> GetByTopicIdAsync(Guid topicId);
+
+        /// <summary>
+        /// Lấy danh sách Questions theo Status (IsActive)
+        /// </summary>
+        Task<List<Question>> GetByStatusAsync(bool isActive);
+
+        /// <summary>
+        /// Lấy danh sách Questions theo TopicId và Status
+        /// </summary>
+        Task<List<Question>> GetByTopicIdAndStatusAsync(Guid topicId, bool isActive);
+
+        /// <summary>
+        /// Lấy danh sách Questions với Options theo danh sách QuestionIds
+        /// </summary>
+        Task<List<Question>> GetQuestionsWithOptionsByIdsAsync(List<Guid> questionIds);
+
+        /// <summary>
+        /// Lấy danh sách Questions với filters (TopicId, search term, level)
+        /// </summary>
+        /// <param name="topicId">Lọc theo Topic (nullable)</param>
+        /// <param name="search">Tìm kiếm trong QuestionText (nullable)</param>
+        /// <param name="level">Lọc theo mức độ (nullable)</param>
+        /// <returns>Danh sách câu hỏi với Options</returns>
+        Task<List<Question>> GetQuestionsWithFiltersAsync(Guid? topicId, string? search, string? level);
+
+        /// <summary>
+        /// Lấy random questions theo TopicId, QuestionType và Level, giới hạn số lượng
+        /// </summary>
+        Task<List<Question>> GetRandomQuestionsByFiltersAsync(Guid topicId, string questionType, string? level, int count);
+
+        /// <summary>
+        /// Đếm số lượng câu hỏi theo filters (TopicId, QuestionType, Level, IsActive)
+        /// </summary>
+        Task<int> CountQuestionsByFiltersAsync(Guid topicId, string questionType, string? level = null, bool isActive = true);
+
+        Task<Question?> GetQuestionsByIdsAsync(Guid id);
+
     }
 }

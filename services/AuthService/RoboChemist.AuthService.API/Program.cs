@@ -2,10 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 using RoboChemist.AuthService.Model.Data;
 using RoboChemist.AuthService.Repository;
 using RoboChemist.AuthService.Services;
+using System.Text;
 
 namespace RoboChemist.AuthService.API
 {
@@ -15,21 +15,42 @@ namespace RoboChemist.AuthService.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            //  Load .env từ thư mục gốc solution
+            var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".."));
+            var envPath = Path.Combine(solutionRoot, ".env");
+            Console.WriteLine($"[DEBUG] Looking for .env at: {envPath}");
+            Console.WriteLine($"[DEBUG] .env exists: {File.Exists(envPath)}");
+            DotNetEnv.Env.Load(envPath);
+            builder.Configuration.AddEnvironmentVariables();
 
+            //  Lấy connection string từ biến môi trường AUTH_DB
+            var connectionString = Environment.GetEnvironmentVariable("USER_DB");
+            Console.WriteLine($"[DEBUG] AUTH_DB: {connectionString}");
 
-            var connectionString = "Host=ep-snowy-cell-a19ensgj-pooler.ap-southeast-1.aws.neon.tech;Port=5432;Database=robochemist_authservice;Username=neondb_owner;Password=npg_CeHyrLVF3pb6;SSL Mode=Require;Trust Server Certificate=true";
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new Exception("❌ Không tìm thấy connection string! Hãy set biến AUTH_DB trong file .env hoặc thêm vào appsettings.json");
+            }
 
+            //  Add DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(connectionString));
 
-            // Add Repository & Service
+            // Cấu hình Repository & Services
             builder.Services.AddScoped<UserRepository>();
             builder.Services.AddScoped<UserService>();
 
-            // Cấu hình JWT Authentication - Hardcode (không cần appsettings)
-            var secretKey = "YourSuperSecretKeyMinimum32CharactersLong!@#$%^&*()";
-            var issuer = "RoboChemist.AuthService";
-            var audience = "RoboChemist.Client";
+            // Load JWT settings từ appsettings.json
+            builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+            var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+
+            if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
+            {
+                throw new Exception("❌ Không tìm thấy thông tin JWT trong appsettings.json!");
+            }
+
+            // Cấu hình JWT Authentication (không hardcode)
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
 
             builder.Services.AddAuthentication(options =>
             {
@@ -44,32 +65,32 @@ namespace RoboChemist.AuthService.API
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = issuer,
-                    ValidAudience = audience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = key,
                     ClockSkew = TimeSpan.Zero
                 };
             });
 
             builder.Services.AddAuthorization();
 
-            // Add Controllers
+            // Add Controllers, Swagger & CORS
             builder.Services.AddControllers();
 
-            // Cấu hình Swagger với JWT
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "RoboChemist Auth API",
-                    Version = "v1"
+                    Version = "v1",
+                    Description = "Authentication and User Management Service for RoboChemist"
                 });
 
-                // Thêm JWT Authentication vào Swagger
+                // Swagger JWT Authorization
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token",
+                    Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {your token}'",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,
@@ -92,7 +113,6 @@ namespace RoboChemist.AuthService.API
                 });
             });
 
-            // Cấu hình CORS (nếu cần)
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -103,9 +123,9 @@ namespace RoboChemist.AuthService.API
                 });
             });
 
+            // Build app
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -113,15 +133,10 @@ namespace RoboChemist.AuthService.API
             }
 
             app.UseHttpsRedirection();
-
-            // QUAN TRỌNG: Thứ tự phải đúng
             app.UseCors("AllowAll");
-
-            app.UseAuthentication(); // Phải đặt trước UseAuthorization
+            app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
-
             app.Run();
         }
     }

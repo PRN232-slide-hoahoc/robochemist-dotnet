@@ -10,5 +10,17 @@ namespace RoboChemist.ExamService.Repository.Implements
         public ExamrequestRepository(DbContext context) : base(context)
         {
         }
+
+        public async Task<List<Examrequest>> GetExamRequestsByUserAsync(Guid userId, string? status = null)
+        {
+            var query = _dbSet.Where(er => er.UserId == userId);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = query.Where(er => er.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return await query.OrderByDescending(er => er.CreatedAt).ToListAsync();
+        }
     }
 }

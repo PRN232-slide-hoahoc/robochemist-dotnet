@@ -3,7 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-
+using BCrypt.Net;
 using RoboChemist.AuthService.Model.Models;
 using RoboChemist.AuthService.Repository;
 
@@ -13,15 +13,23 @@ namespace RoboChemist.AuthService.Services
     {
         private readonly UserRepository _userRepository;
 
-        // Hardcode JWT settings
-        private const string SecretKey = "YourSuperSecretKeyMinimum32CharactersLong!@#$%^&*()";
-        private const string Issuer = "RoboChemist.AuthService";
-        private const string Audience = "RoboChemist.Client";
+        // JWT settings - ĐỌC TỪ ENVIRONMENT VARIABLES
+        private readonly string SecretKey;
+        private readonly string Issuer;
+        private readonly string Audience;
         private const int ExpirationMinutes = 60;
 
         public UserService(UserRepository userRepository)
         {
             _userRepository = userRepository;
+            
+            // Đọc từ biến môi trường (.env)
+            SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET") 
+                ?? throw new Exception("JWT_SECRET not found in environment variables!");
+            Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+                ?? throw new Exception("JWT_ISSUER not found in environment variables!");
+            Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+                ?? throw new Exception("JWT_AUDIENCE not found in environment variables!");
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -33,8 +41,9 @@ namespace RoboChemist.AuthService.Services
                 throw new UnauthorizedAccessException("Email hoặc mật khẩu không đúng");
             }
 
-            // So sánh plain text password
-            if (user.PasswordHash != request.Password)
+            // ✅ So sánh mật khẩu bằng BCrypt
+            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            if (!isPasswordValid)
             {
                 throw new UnauthorizedAccessException("Email hoặc mật khẩu không đúng");
             }
@@ -62,18 +71,19 @@ namespace RoboChemist.AuthService.Services
             {
                 throw new InvalidOperationException("Email đã được sử dụng");
             }
-
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
             var user = new User
             {
                 Id = Guid.NewGuid(),
                 Fullname = request.Fullname,
                 Email = request.Email,
-                PasswordHash = request.Password, // Lưu plain text (KHÔNG AN TOÀN!)
+                PasswordHash = hashedPassword, // Lưu plain text (KHÔNG AN TOÀN!)
                 Phone = request.Phone,
+                Role = "User",
                 Status = "Active",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             await _userRepository.CreateAsync(user);
@@ -84,6 +94,7 @@ namespace RoboChemist.AuthService.Services
             {
                 UserId = user.Id,
                 Fullname = user.Fullname,
+               
                 Email = user.Email,
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(ExpirationMinutes)
@@ -102,6 +113,7 @@ namespace RoboChemist.AuthService.Services
                 Id = user.Id,
                 Fullname = user.Fullname,
                 Email = user.Email,
+                Role = user.Role,
                 Phone = user.Phone,
                 Status = user.Status,
                 IsActive = user.IsActive
@@ -119,6 +131,7 @@ namespace RoboChemist.AuthService.Services
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim(JwtRegisteredClaimNames.Name, user.Fullname),
+                new Claim(ClaimTypes.Role, user.Role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

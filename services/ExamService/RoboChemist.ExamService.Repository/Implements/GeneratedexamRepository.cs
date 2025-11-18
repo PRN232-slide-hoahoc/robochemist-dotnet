@@ -10,5 +10,12 @@ namespace RoboChemist.ExamService.Repository.Implements
         public GeneratedexamRepository(DbContext context) : base(context)
         {
         }
+
+        public async Task<List<Generatedexam>> GetByExamRequestIdAsync(Guid examRequestId)
+        {
+            return await _dbSet
+                .Where(ge => ge.ExamRequestId == examRequestId)
+                .ToListAsync();
+        }
     }
 }

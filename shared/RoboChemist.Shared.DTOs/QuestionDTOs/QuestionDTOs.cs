@@ -45,6 +45,11 @@ namespace RoboChemist.Shared.DTOs.QuestionDTOs
             public List<OptionDto> Options { get; set; } = new();
 
             /// <summary>
+            /// Question difficulty level (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            public string? Level { get; set; }
+
+            /// <summary>
             /// Indicates if the question is active
             /// </summary>
             public bool IsActive { get; set; }
@@ -92,6 +97,12 @@ namespace RoboChemist.Shared.DTOs.QuestionDTOs
             public string? Explanation { get; set; }
 
             /// <summary>
+            /// Question difficulty level (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            [StringLength(50, ErrorMessage = "Level không được vượt quá 50 ký tự")]
+            public string? Level { get; set; }
+
+            /// <summary>
             /// List of answer options (minimum 2 required)
             /// </summary>
             [Required(ErrorMessage = "Phải có ít nhất 2 đáp án")]
@@ -129,6 +140,12 @@ namespace RoboChemist.Shared.DTOs.QuestionDTOs
             /// </summary>
             [StringLength(1000, ErrorMessage = "Giải thích không được vượt quá 1000 ký tự")]
             public string? Explanation { get; set; }
+
+            /// <summary>
+            /// Question difficulty level (NhanBiet, ThongHieu, VanDung, VanDungCao)
+            /// </summary>
+            [StringLength(50, ErrorMessage = "Level không được vượt quá 50 ký tự")]
+            public string? Level { get; set; }
 
             /// <summary>
             /// List of answer options

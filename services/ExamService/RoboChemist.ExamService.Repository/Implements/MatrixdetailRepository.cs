@@ -10,5 +10,21 @@ namespace RoboChemist.ExamService.Repository.Implements
         public MatrixdetailRepository(DbContext context) : base(context)
         {
         }
+
+        public async Task<List<Matrixdetail>> GetByMatrixIdAsync(Guid matrixId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(md => md.MatrixId == matrixId)
+                .ToListAsync();
+        }
+
+        public async Task<List<Matrixdetail>> GetActiveByMatrixIdAsync(Guid matrixId)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(md => md.MatrixId == matrixId && md.IsActive == true)
+                .ToListAsync();
+        }
     }
 }

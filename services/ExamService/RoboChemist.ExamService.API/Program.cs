@@ -1,6 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using RoboChemist.ExamService.Model.Data;
 using RoboChemist.ExamService.Service.Interfaces;
 using RoboChemist.ExamService.Service.Implements;
@@ -21,6 +24,34 @@ builder.Configuration.AddEnvironmentVariables();
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Add HttpContextAccessor for token forwarding
+builder.Services.AddHttpContextAccessor();
+
+// JWT Authentication Configuration
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "your-secret-key-min-32-characters-long-for-security";
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "RoboChemist.AuthService";
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "RoboChemist.Client";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo 
@@ -36,7 +67,31 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 
-    // Enable XML comments for Swagger documentation
+    // Add JWT Bearer Authentication to Swagger UI
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -45,42 +100,28 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// ============================================
-// Microservices: HTTP Client for API Gateway
-// ============================================
-// Chỉ cần 1 HttpClient trỏ đến Gateway, tất cả services đều gọi qua đây
 builder.Services.AddHttpClient("ApiGateway", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5001");
+    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5000");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
+builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
+builder.Services.AddScoped<ITemplateServiceClient, TemplateServiceClient>();
 
-builder.Services.AddHttpClient<ISlideServiceClient, SlideServiceClient>("ApiGateway");
-// Hoặc nếu muốn inject IHttpClientFactory trong service:
-// var httpClient = _httpClientFactory.CreateClient("ApiGateway");
-// await httpClient.GetAsync("/slides/v1/Topic/123");  // Slides Service
-// await httpClient.GetAsync("/wallet/Wallet/user/456"); // Wallet Service
-// await httpClient.GetAsync("/auth/User/validate");     // Auth Service
-
-// ============================================
-// Database & Repositories
-// ============================================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("EXAM_DB")));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// ============================================
-// Business Services
-// ============================================
 builder.Services.AddScoped<IQuestionService, QuestionService>();
-// TODO: Register other services as needed
-// builder.Services.AddScoped<IMatrixService, MatrixService>();
-// builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<IMatrixService, MatrixService>();
+builder.Services.AddScoped<IWordExportService, WordExportService>();
+builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<IWalletServiceHttpClient, WalletServiceHttpClient>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -89,6 +130,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

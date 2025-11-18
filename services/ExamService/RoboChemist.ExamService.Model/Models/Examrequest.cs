@@ -11,11 +11,7 @@ public partial class Examrequest
 
     public Guid MatrixId { get; set; }
 
-    public int GradeId { get; set; }
-
     public string Status { get; set; } = null!;
-
-    public string? Prompt { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 

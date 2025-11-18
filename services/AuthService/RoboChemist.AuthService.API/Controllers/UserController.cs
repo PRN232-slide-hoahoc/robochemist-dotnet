@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.AuthService.Model.Models;
 using RoboChemist.AuthService.Services;
+using RoboChemist.Shared.DTOs.Common;
 using System.Security.Claims;
 
 namespace RoboChemist.AuthService.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/users")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
@@ -92,7 +93,7 @@ namespace RoboChemist.AuthService.API.Controllers
         /// </summary>
         [Authorize]
         [HttpGet("me")]
-        public async Task<IActionResult> GetCurrentUser()
+        public async Task<ActionResult<ApiResponse<UserDto>>> GetCurrentUser()
         {
             try
             {
@@ -118,11 +119,7 @@ namespace RoboChemist.AuthService.API.Controllers
                     });
                 }
 
-                return Ok(new
-                {
-                    success = true,
-                    data = user
-                });
+                return ApiResponse<UserDto>.SuccessResult(user);
             }
             catch (Exception ex)
             {

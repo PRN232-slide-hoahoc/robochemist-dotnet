@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.ExamService.Service.Interfaces;
-using static RoboChemist.Shared.DTOs.QuestionDTOs.QuestionDTOs;
+using static RoboChemist.Shared.DTOs.ExamServiceDTOs.QuestionDTOs;
+using RoboChemist.Shared.Common.Constants;
 
 namespace RoboChemist.ExamService.API.Controllers
 {
@@ -20,28 +22,28 @@ namespace RoboChemist.ExamService.API.Controllers
         }
 
         /// <summary>
-        /// Get all questions, optionally filtered by topic
+        /// Get all questions, optionally filtered by topic, search term and level
         /// </summary>
         /// <param name="topicId">Optional: Filter questions by topic ID from Slide Service</param>
+        /// <param name="search">Optional: Search term for question text</param>
+        /// <param name="level">Optional: Filter by difficulty level (NhanBiet, ThongHieu, VanDung, VanDungCao)</param>
         /// <returns>List of questions</returns>
-        /// <response code="200">Returns the list of questions</response>
-        /// <response code="400">If the request is invalid</response>
-        /// <response code="500">If there is an internal server error</response>
         [HttpGet]
-        [ProducesResponseType(typeof(ApiResponse<List<QuestionDto>>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<List<QuestionDto>>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponse<List<QuestionDto>>), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<List<QuestionDto>>>> GetQuestions([FromQuery] Guid? topicId)
+        [AllowAnonymous] 
+        public async Task<ActionResult<ApiResponse<List<QuestionResponseDto>>>> GetQuestions(
+            [FromQuery] Guid? topicId,
+            [FromQuery] string? search,
+            [FromQuery] string? level)
         {
             try
             {
-                var result = await _questionService.GetQuestionsAsync(topicId);
+                var result = await _questionService.GetQuestionsAsync(topicId, search, level);
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, ApiResponse<List<QuestionDto>>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
+                return StatusCode(500, ApiResponse<List<QuestionResponseDto>>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -50,14 +52,8 @@ namespace RoboChemist.ExamService.API.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the question</param>
         /// <returns>Question details with all options</returns>
-        /// <response code="200">Returns the requested question</response>
-        /// <response code="400">If the question is not found or request is invalid</response>
-        /// <response code="500">If there is an internal server error</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<QuestionDto>>> GetQuestionById([FromRoute] Guid id)
+        public async Task<ActionResult<ApiResponse<QuestionResponseDto>>> GetQuestionById([FromRoute] Guid id)
         {
             try
             {
@@ -65,9 +61,9 @@ namespace RoboChemist.ExamService.API.Controllers
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, ApiResponse<QuestionDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
+                return StatusCode(500, ApiResponse<QuestionResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -76,44 +72,9 @@ namespace RoboChemist.ExamService.API.Controllers
         /// </summary>
         /// <param name="request">Question creation details including options</param>
         /// <returns>The newly created question</returns>
-        /// <response code="200">Returns the newly created question</response>
-        /// <response code="400">If the request data is invalid (validation errors, topic not found, etc.)</response>
-        /// <response code="500">If there is an internal server error</response>
-        /// <remarks>
-        /// Sample request:
-        /// 
-        ///     POST /api/v1/Question
-        ///     {
-        ///         "topicId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        ///         "questionType": "Multiple Choice",
-        ///         "questionText": "Công thức hóa học của nước là gì?",
-        ///         "explanation": "Nước được tạo thành từ 2 nguyên tử Hydro và 1 nguyên tử Oxygen",
-        ///         "options": [
-        ///             {
-        ///                 "answer": "H2O",
-        ///                 "isCorrect": true
-        ///             },
-        ///             {
-        ///                 "answer": "CO2",
-        ///                 "isCorrect": false
-        ///             },
-        ///             {
-        ///                 "answer": "O2",
-        ///                 "isCorrect": false
-        ///             },
-        ///             {
-        ///                 "answer": "H2",
-        ///                 "isCorrect": false
-        ///             }
-        ///         ]
-        ///     }
-        /// 
-        /// </remarks>
         [HttpPost]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<QuestionDto>>> CreateQuestion([FromBody] CreateQuestionDto request)
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
+        public async Task<ActionResult<ApiResponse<QuestionResponseDto>>> CreateQuestion([FromBody] CreateQuestionDto request)
         {
             try
             {
@@ -124,16 +85,24 @@ namespace RoboChemist.ExamService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
-                    return BadRequest(ApiResponse<QuestionDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                    Console.WriteLine($"[CREATE QUESTION] ModelState Invalid: {string.Join(", ", errors)}");
+                    return BadRequest(ApiResponse<QuestionResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _questionService.CreateQuestionAsync(request);
+
+                if (!result.Success)
+                {
+                    Console.WriteLine($"[CREATE QUESTION] Service failed: {result.Message}");
+                }
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ApiResponse<QuestionDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
+                Console.WriteLine($"[CREATE QUESTION] Exception: {ex.Message}");
+                Console.WriteLine($"[CREATE QUESTION] StackTrace: {ex.StackTrace}");
+                return StatusCode(500, ApiResponse<QuestionResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -143,14 +112,10 @@ namespace RoboChemist.ExamService.API.Controllers
         /// <param name="id">The unique identifier of the question to update</param>
         /// <param name="request">Updated question details</param>
         /// <returns>The updated question</returns>
-        /// <response code="200">Returns the updated question</response>
-        /// <response code="400">If the request data is invalid or question not found</response>
-        /// <response code="500">If there is an internal server error</response>
+      
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponse<QuestionDto>), StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ApiResponse<QuestionDto>>> UpdateQuestion(
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
+        public async Task<ActionResult<ApiResponse<QuestionResponseDto>>> UpdateQuestion(
             [FromRoute] Guid id, 
             [FromBody] UpdateQuestionDto request)
         {
@@ -163,16 +128,24 @@ namespace RoboChemist.ExamService.API.Controllers
                         .Select(e => e.ErrorMessage)
                         .ToList();
 
-                    return BadRequest(ApiResponse<QuestionDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                    Console.WriteLine($"[UPDATE QUESTION] ModelState Invalid: {string.Join(", ", errors)}");
+                    return BadRequest(ApiResponse<QuestionResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
                 }
 
                 var result = await _questionService.UpdateQuestionAsync(id, request);
+
+                if (!result.Success)
+                {
+                    Console.WriteLine($"[UPDATE QUESTION] Service failed: {result.Message}");
+                }
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ApiResponse<QuestionDto>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
+                Console.WriteLine($"[UPDATE QUESTION] Exception: {ex.Message}");
+                Console.WriteLine($"[UPDATE QUESTION] StackTrace: {ex.StackTrace}");
+                return StatusCode(500, ApiResponse<QuestionResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
 
@@ -181,13 +154,8 @@ namespace RoboChemist.ExamService.API.Controllers
         /// </summary>
         /// <param name="id">The unique identifier of the question to delete</param>
         /// <returns>Success status</returns>
-        /// <response code="200">Returns success if question was deleted</response>
-        /// <response code="400">If the question is not found</response>
-        /// <response code="500">If there is an internal server error</response>
         [HttpDelete("{id}")]
-        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status500InternalServerError)]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)] 
         public async Task<ActionResult<ApiResponse<bool>>> DeleteQuestion([FromRoute] Guid id)
         {
             try
@@ -196,9 +164,66 @@ namespace RoboChemist.ExamService.API.Controllers
 
                 return result.Success ? Ok(result) : BadRequest(result);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, ApiResponse<bool>.ErrorResult($"Lỗi hệ thống: {ex.Message}"));
+                return StatusCode(500, ApiResponse<bool>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        /// <summary>
+        /// Bulk create multiple questions for a single topic
+        /// </summary>
+        /// <param name="request">Bulk creation details with topic ID and list of questions</param>
+        /// <returns>Bulk creation result with created question IDs</returns>
+        [HttpPost("bulk")]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
+        public async Task<ActionResult<ApiResponse<BulkCreateQuestionsResponseDto>>> BulkCreateQuestions([FromBody] BulkCreateQuestionsDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    return BadRequest(ApiResponse<BulkCreateQuestionsResponseDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                }
+
+                var result = await _questionService.BulkCreateQuestionsAsync(request);
+
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<BulkCreateQuestionsResponseDto>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
+
+        /// <summary>
+        /// Count available questions by topic, question type, and level (for matrix creation validation)
+        /// </summary>
+        /// <param name="topicId">Topic ID from Slides Service</param>
+        /// <param name="questionType">Question type: MultipleChoice, TrueFalse, FillBlank, Essay</param>
+        /// <param name="level">Optional: Question level (NhanBiet, ThongHieu, VanDung, VanDungCao)</param>
+        /// <returns>Available question count</returns>
+        [HttpGet("count")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResponse<QuestionCountResponseDto>>> CountQuestions(
+            [FromQuery] Guid topicId,
+            [FromQuery] string questionType,
+            [FromQuery] string? level = null)
+        {
+            try
+            {
+                var result = await _questionService.CountQuestionsByFiltersAsync(topicId, questionType, level);
+
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<QuestionCountResponseDto>.ErrorResult("Lỗi hệ thống"));
             }
         }
     }
