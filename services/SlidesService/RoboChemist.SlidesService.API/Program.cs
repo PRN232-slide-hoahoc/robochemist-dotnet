@@ -61,7 +61,7 @@ builder.Services.AddScoped <IWalletServiceClient, WalletServiceClient>();
 // Semantic Kernel with Gemini
 builder.Services.AddKernel();
 builder.Services.AddGoogleAIGeminiChatCompletion(
-    modelId: "gemini-2.5-flash",
+    modelId: "gemini-2.0-flash",
     apiKey: Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty
 );
 

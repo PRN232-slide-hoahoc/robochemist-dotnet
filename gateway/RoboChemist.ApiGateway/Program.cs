@@ -108,19 +108,18 @@ var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
 
 // Configure middleware
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAll");
 
 app.UseRouting();
 

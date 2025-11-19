@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.SlidesService.Service.Interfaces;
 using static RoboChemist.Shared.DTOs.SlideDTOs.SlideRequestDTOs;
@@ -9,6 +10,7 @@ namespace RoboChemist.SlidesService.API.Controllers
 {
     [Route("api/v1/slides")]
     [ApiController]
+    [Authorize]
     public class SlideController : ControllerBase
     {
         private readonly ISlideService _slideService;

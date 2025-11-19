@@ -11,6 +11,7 @@
       ],
       "UpstreamPathTemplate": "/auth/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "Priority": 1,
       "SwaggerKey": "auth"
     },
     {
@@ -27,6 +28,7 @@
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
       },
+      "Priority": 2,
       "SwaggerKey": "slides"
     },
     {
@@ -43,6 +45,7 @@
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
       },
+      "Priority": 2,
       "SwaggerKey": "exam"
     },
     {
@@ -59,6 +62,7 @@
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
       },
+      "Priority": 2,
       "SwaggerKey": "wallet"
     },
     {
@@ -75,6 +79,7 @@
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
       },
+      "Priority": 2,
       "SwaggerKey": "template"
     }
   ],

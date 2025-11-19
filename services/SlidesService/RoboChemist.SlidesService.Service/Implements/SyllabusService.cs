@@ -53,15 +53,13 @@ namespace RoboChemist.SlidesService.Service.Implements
         {
             try
             {
-                var gradeTask = gradeId.HasValue ? _uow.Grades.GetByIdAsync(gradeId.Value) : Task.FromResult<Grade?>(null);
-                var topicTask = topicId.HasValue ? _uow.Topics.GetByIdAsync(topicId.Value) : Task.FromResult<Topic?>(null);
+                var gradeTask = gradeId.HasValue ? await _uow.Grades.GetByIdAsync(gradeId.Value) : null;
+                var topicTask = topicId.HasValue ? await _uow.Topics.GetByIdAsync(topicId.Value) : null;
 
-                await Task.WhenAll(gradeTask, topicTask);
-
-                if (gradeId.HasValue && gradeTask.Result == null)
+                if (gradeId.HasValue && gradeTask == null)
                     return ApiResponse<List<SyllabusDto>>.ErrorResult("Khối lớp không tồn tại");
 
-                if (topicId.HasValue && topicTask.Result == null)
+                if (topicId.HasValue && topicTask == null)
                     return ApiResponse<List<SyllabusDto>>.ErrorResult("Chủ đề không tồn tại");
 
                 var syllabuses = await _uow.Syllabuses.GetFullInformationAsync(gradeId, topicId);

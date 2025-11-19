@@ -20,7 +20,7 @@ namespace RoboChemist.SlidesService.Service.Implements
             _logger = logger;
         }
 
-        public async Task<ResponseGenerateDataDto?> GenerateSlidesAsync(DataForGenerateSlideRequest request)
+        public async Task<(ResponseGenerateDataDto? dto, string? json)> GenerateSlidesAsync(DataForGenerateSlideRequest request)
         {
             var jsonStructure = """
                             {
@@ -139,7 +139,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 if (result is null || string.IsNullOrWhiteSpace(result.ToString()))
                 {
                     _logger.LogWarning("AI không trả về kết quả hợp lệ (null hoặc rỗng).");
-                    return null;
+                    return (null, null);
                 }
 
                 // Parse JSON response thành DTO
@@ -150,7 +150,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 if (!jsonResponse.StartsWith('{') && !jsonResponse.StartsWith('}'))
                 {
                     _logger.LogWarning("AI trả về không phải JSON. Response: {Response}", jsonResponse);
-                    return null;
+                    return (null, null);
                 }
 
                 JsonSerializerOptions jsonSerializerOptions = new()
@@ -170,17 +170,17 @@ namespace RoboChemist.SlidesService.Service.Implements
                 if (responseDto is null)
                 {
                     _logger.LogWarning("Không thể parse JSON từ AI thành ResponseGenerateDataDto. JSON: {Json}", jsonResponse);
-                    return null;
+                    return (null, null);
                 }
 
                 if (!ValidateResponseDto(responseDto))
                 {
                     _logger.LogWarning("Dữ liệu từ AI không hợp lệ (thiếu field bắt buộc).");
-                    return null;
+                    return (null, null);
                 }
 
                 _logger.LogInformation("Tạo slide thành công cho: {Lesson}", request.Lesson);
-                return responseDto;
+                return (responseDto, jsonResponse);
             }
             catch (JsonException jsonEx)
             {

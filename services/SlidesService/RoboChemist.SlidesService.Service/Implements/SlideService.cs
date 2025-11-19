@@ -76,7 +76,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 DataForGenerateSlideRequest reqData = await _uow.Sliderequests.GetDataRequestModelAsync(slideReq.Id);
 
                 //Generate data
-                ResponseGenerateDataDto? responseDto = await _geminiService.GenerateSlidesAsync(reqData);
+                (ResponseGenerateDataDto? responseDto, string? jsonResponse) = await _geminiService.GenerateSlidesAsync(reqData);
 
                 if (responseDto == null)
                 {
@@ -87,7 +87,7 @@ namespace RoboChemist.SlidesService.Service.Implements
 
                 Generatedslide generatedSlide = new()
                 {
-                    JsonContent = string.Empty,
+                    JsonContent = jsonResponse,
                     SlideRequestId = slideReq.Id,
                     GenerationStatus = RoboChemistConstants.GENSLIDE_STATUS_JSON,
                     FileFormat = RoboChemistConstants.File_Format_PPTX,
@@ -218,6 +218,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     user.Id,
                     request,
                     string.Equals(user.Role?.ToLower(), RoboChemistConstants.ROLE_ADMIN.ToLower())
+                    || string.Equals(user.Role?.ToLower(), RoboChemistConstants.ROLE_STAFF.ToLower())
                 );
 
                 var paginatedResult = PaginatedResult<SlideDetailDto>.Create(slides, totalCount, request.PageNumber, request.PageSize);
