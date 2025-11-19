@@ -86,6 +86,16 @@
         public const string FILE_FORMAT_PDF = "pdf";
 
         /// <summary>
+        /// Generated Exam Type: Questions File (File đề thi)
+        /// </summary>
+        public const string GENERATED_EXAM_TYPE_QUESTIONS = "QUESTIONS";
+
+        /// <summary>
+        /// Generated Exam Type: Answers File (File đáp án)
+        /// </summary>
+        public const string GENERATED_EXAM_TYPE_ANSWERS = "ANSWERS";
+
+        /// <summary>
         /// Question Type: Multiple Choice
         /// </summary>
         public const string QUESTION_TYPE_MULTIPLE_CHOICE = "MultipleChoice";
