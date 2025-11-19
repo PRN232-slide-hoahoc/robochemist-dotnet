@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using RoboChemist.Shared.Common.Constants;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.Shared.DTOs.UserDTOs;
@@ -6,6 +7,7 @@ using RoboChemist.TemplateService.Model.Models;
 using RoboChemist.TemplateService.Repository.Interfaces;
 using RoboChemist.TemplateService.Service.HttpClients;
 using RoboChemist.TemplateService.Service.Interfaces;
+using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
 
 namespace RoboChemist.TemplateService.Service.Implements;
 
@@ -17,15 +19,21 @@ public class UserTemplateService : IUserTemplateService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuthServiceClient _authServiceClient;
     private readonly IStorageService _storageService;
+    private readonly IWalletServiceClient _walletServiceClient;
+    private readonly ILogger<UserTemplateService> _logger;
 
     public UserTemplateService(
         IUnitOfWork unitOfWork,
         IAuthServiceClient authServiceClient,
-        IStorageService storageService)
+        IStorageService storageService,
+        IWalletServiceClient walletServiceClient,
+        ILogger<UserTemplateService> logger)
     {
         _unitOfWork = unitOfWork;
         _authServiceClient = authServiceClient;
         _storageService = storageService;
+        _walletServiceClient = walletServiceClient;
+        _logger = logger;
     }
 
     public async Task<ApiResponse<IEnumerable<UserTemplateResponse>>> GetMyTemplatesAsync()
@@ -53,17 +61,13 @@ public class UserTemplateService : IUserTemplateService
             ObjectKey = t.ObjectKey,
             TemplateName = t.TemplateName,
             Description = t.Description,
-            ThumbnailUrl = t.ThumbnailUrl,
-            PreviewUrl = t.PreviewUrl,
-            ContentStructure = t.ContentStructure,
             SlideCount = t.SlideCount,
             IsPremium = t.IsPremium,
             Price = t.Price,
             DownloadCount = t.DownloadCount,
             CreatedAt = t.CreatedAt,
             UpdatedAt = t.UpdatedAt,
-            CreatedBy = t.CreatedBy,
-            Version = t.Version
+            CreatedBy = t.CreatedBy
         }));
         
         // Add user's premium templates
@@ -73,17 +77,13 @@ public class UserTemplateService : IUserTemplateService
             ObjectKey = ut.Template.ObjectKey,
             TemplateName = ut.Template.TemplateName,
             Description = ut.Template.Description,
-            ThumbnailUrl = ut.Template.ThumbnailUrl,
-            PreviewUrl = ut.Template.PreviewUrl,
-            ContentStructure = ut.Template.ContentStructure,
             SlideCount = ut.Template.SlideCount,
             IsPremium = ut.Template.IsPremium,
             Price = ut.Template.Price,
             DownloadCount = ut.Template.DownloadCount,
             CreatedAt = ut.Template.CreatedAt,
             UpdatedAt = ut.Template.UpdatedAt,
-            CreatedBy = ut.Template.CreatedBy,
-            Version = ut.Template.Version
+            CreatedBy = ut.Template.CreatedBy
         }));
         
         // Remove duplicates and sort by CreatedAt descending
@@ -104,35 +104,17 @@ public class UserTemplateService : IUserTemplateService
     /// </summary>
     private async Task GenerateThumbnailPresignedUrlsAsync(IEnumerable<UserTemplateResponse> templates)
     {
-        foreach (var template in templates)
+        foreach (var template in templates.Where(t => !string.IsNullOrEmpty(t.ObjectKey)))
         {
-            if (!string.IsNullOrEmpty(template.ThumbnailUrl))
+            // Get the actual template entity to access ThumbnailKey
+            var templateEntity = await _unitOfWork.Templates.GetByIdAsync(template.TemplateId);
+            
+            if (templateEntity != null && !string.IsNullOrEmpty(templateEntity.ThumbnailKey))
             {
-                // Extract object key from old presigned URL or use as-is if already object key
-                string objectKey;
-                
-                if (template.ThumbnailUrl.StartsWith("http"))
-                {
-                    // Old presigned URL format, extract object key
-                    var uri = new Uri(template.ThumbnailUrl);
-                    objectKey = uri.AbsolutePath.TrimStart('/');
-                    
-                    // Remove bucket name from path if present
-                    if (objectKey.StartsWith("template-service-bucket/"))
-                    {
-                        objectKey = objectKey.Replace("template-service-bucket/", "");
-                    }
-                }
-                else
-                {
-                    // Already an object key
-                    objectKey = template.ThumbnailUrl;
-                }
-                
-                // Generate new presigned URL (7 days = 10,080 minutes)
+                // Generate presigned URL from thumbnail key (7 days = 10,080 minutes)
                 try
                 {
-                    template.ThumbnailUrl = await _storageService.GeneratePresignedUrlAsync(objectKey, 10080);
+                    template.ThumbnailUrl = await _storageService.GeneratePresignedUrlAsync(templateEntity.ThumbnailKey, 10080);
                 }
                 catch (Exception ex)
                 {
@@ -198,17 +180,13 @@ public class UserTemplateService : IUserTemplateService
             ObjectKey = template.ObjectKey,
             TemplateName = template.TemplateName,
             Description = template.Description,
-            ThumbnailUrl = template.ThumbnailUrl,
-            PreviewUrl = template.PreviewUrl,
-            ContentStructure = template.ContentStructure,
             SlideCount = template.SlideCount,
             IsPremium = template.IsPremium,
             Price = template.Price,
             DownloadCount = template.DownloadCount,
             CreatedAt = template.CreatedAt,
             UpdatedAt = template.UpdatedAt,
-            CreatedBy = template.CreatedBy,
-            Version = template.Version
+            CreatedBy = template.CreatedBy
         };
 
         return ApiResponse<UserTemplateResponse>.SuccessResult(response, "Template access granted successfully");
@@ -237,19 +215,191 @@ public class UserTemplateService : IUserTemplateService
             ObjectKey = ut.Template.ObjectKey,
             TemplateName = ut.Template.TemplateName,
             Description = ut.Template.Description,
-            ThumbnailUrl = ut.Template.ThumbnailUrl,
-            PreviewUrl = ut.Template.PreviewUrl,
-            ContentStructure = ut.Template.ContentStructure,
             SlideCount = ut.Template.SlideCount,
             IsPremium = ut.Template.IsPremium,
             Price = ut.Template.Price,
             DownloadCount = ut.Template.DownloadCount,
             CreatedAt = ut.Template.CreatedAt,
             UpdatedAt = ut.Template.UpdatedAt,
-            CreatedBy = ut.Template.CreatedBy,
-            Version = ut.Template.Version
+            CreatedBy = ut.Template.CreatedBy
         });
 
         return ApiResponse<IEnumerable<UserTemplateResponse>>.SuccessResult(response, "Retrieved user templates successfully");
+    }
+
+    public async Task<ApiResponse<PurchaseTemplateResponse>> PurchaseTemplateAsync(PurchaseTemplateRequest request)
+    {
+        // Get current user
+        UserDto? user = await _authServiceClient.GetCurrentUserAsync();
+        if (user == null)
+        {
+            return ApiResponse<PurchaseTemplateResponse>.ErrorResult("User not authenticated");
+        }
+
+        // Validate template exists and is active
+        var template = await _unitOfWork.Templates.GetByIdAsync(request.TemplateId);
+        if (template == null)
+        {
+            return ApiResponse<PurchaseTemplateResponse>.ErrorResult("Template not found");
+        }
+
+        if (!template.IsActive)
+        {
+            return ApiResponse<PurchaseTemplateResponse>.ErrorResult("Template is not available for purchase");
+        }
+
+        if (!template.IsPremium)
+        {
+            return ApiResponse<PurchaseTemplateResponse>.ErrorResult("This template is free, no purchase needed");
+        }
+
+        // Check if user already owns this template
+        bool alreadyOwns = await _unitOfWork.UserTemplates.UserHasTemplateAsync(user.Id, request.TemplateId);
+        if (alreadyOwns)
+        {
+            return ApiResponse<PurchaseTemplateResponse>.ErrorResult("You already own this template");
+        }
+
+        // Step 1: Create Order (pending)
+        var order = new Order
+        {
+            OrderId = Guid.NewGuid(),
+            UserId = user.Id,
+            OrderNumber = GenerateOrderNumber(),
+            TotalAmount = template.Price,
+            Status = RoboChemistConstants.ORDER_STATUS_PENDING,
+            Notes = $"Purchase template: {template.TemplateName}",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var orderDetail = new OrderDetail
+        {
+            OrderDetailId = Guid.NewGuid(),
+            OrderId = order.OrderId,
+            TemplateId = request.TemplateId,
+            Subtotal = template.Price,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _unitOfWork.Orders.CreateAsync(order);
+        await _unitOfWork.OrderDetails.CreateAsync(orderDetail);
+
+        // Step 2: Process payment via WalletService
+        var paymentRequest = new CreatePaymentDto
+        {
+            UserId = user.Id,
+            Amount = template.Price,
+            ReferenceId = order.OrderId, // Use OrderId as ReferenceId
+            ReferenceType = RoboChemistConstants.PAYMENT_REF_TEMPLATE_PURCHASE,
+            Description = $"Order {order.OrderNumber} - Purchase template: {template.TemplateName}"
+        };
+
+        var paymentResult = await _walletServiceClient.CreatePaymentAsync(paymentRequest);
+        
+        if (paymentResult == null || !paymentResult.Success)
+        {
+            // Payment failed - cancel order
+            order.Status = RoboChemistConstants.ORDER_STATUS_CANCELLED;
+            order.UpdatedAt = DateTime.UtcNow;
+            await _unitOfWork.Orders.UpdateAsync(order);
+            
+            return ApiResponse<PurchaseTemplateResponse>.ErrorResult(
+                paymentResult?.Message ?? "Payment failed");
+        }
+
+        // Step 3: Update order status and payment info
+        order.Status = RoboChemistConstants.ORDER_STATUS_COMPLETED;
+        order.PaymentTransactionId = paymentResult.Data.TransactionId.ToString();
+        order.PaymentDate = paymentResult.Data.CreateAt.ToUniversalTime();
+        order.UpdatedAt = DateTime.UtcNow;
+        await _unitOfWork.Orders.UpdateAsync(order);
+
+        // Step 4: Grant template access
+        try
+        {
+            var userTemplate = new UserTemplate
+            {
+                UserTemplateId = Guid.NewGuid(),
+                UserId = user.Id,
+                TemplateId = request.TemplateId
+            };
+
+            await _unitOfWork.UserTemplates.CreateAsync(userTemplate);
+
+            // Step 5: Return success response
+            var response = new PurchaseTemplateResponse
+            {
+                TransactionId = paymentResult.Data.TransactionId,
+                TemplateId = template.TemplateId,
+                TemplateName = template.TemplateName,
+                Amount = paymentResult.Data.Amount,
+                NewBalance = paymentResult.Data.NewBalance,
+                Status = paymentResult.Data.Status,
+                PurchasedAt = paymentResult.Data.CreateAt
+            };
+
+            return ApiResponse<PurchaseTemplateResponse>.SuccessResult(response, "Template purchased successfully");
+        }
+        catch (Exception ex)
+        {
+            // Failed to grant access - attempt automatic refund
+            _logger.LogError(ex, $"Failed to grant template access for Order {order.OrderNumber}");
+            
+            try
+            {
+                var refundRequest = new RefundRequestDto
+                {
+                    ReferenceId = paymentResult.Data.TransactionId,
+                    Reason = $"Auto-refund: Failed to grant template access - {ex.Message}"
+                };
+
+                var refundResult = await _walletServiceClient.RefundAsync(refundRequest);
+                
+                if (refundResult != null && refundResult.Success && refundResult.Data != null)
+                {
+                    // Refund successful - update order status
+                    order.Status = RoboChemistConstants.ORDER_STATUS_CANCELLED;
+                    order.Notes += $" | AUTO-REFUND: {refundResult.Data.RefundTransactionId} - {ex.Message}";
+                    order.UpdatedAt = DateTime.UtcNow;
+                    await _unitOfWork.Orders.UpdateAsync(order);
+                    
+                    return ApiResponse<PurchaseTemplateResponse>.ErrorResult(
+                        $"Failed to grant template access. Payment has been refunded automatically. Refund ID: {refundResult.Data.RefundTransactionId}");
+                }
+                else
+                {
+                    // Refund failed - manual intervention required
+                    order.Status = RoboChemistConstants.ORDER_STATUS_FAILED;
+                    order.Notes += $" | REFUND FAILED - MANUAL INTERVENTION REQUIRED: {ex.Message}";
+                    order.UpdatedAt = DateTime.UtcNow;
+                    await _unitOfWork.Orders.UpdateAsync(order);
+                    
+                    return ApiResponse<PurchaseTemplateResponse>.ErrorResult(
+                        $"Payment successful but failed to grant template access AND automatic refund failed. Please contact support immediately. Order: {order.OrderNumber}");
+                }
+            }
+            catch (Exception refundEx)
+            {
+                _logger.LogError(refundEx, $"Refund attempt failed for Order {order.OrderNumber}");
+                
+                // Refund attempt crashed - mark for manual resolution
+                order.Status = RoboChemistConstants.ORDER_STATUS_FAILED;
+                order.Notes += $" | CRITICAL: Grant failed + Refund crashed - {ex.Message} | Refund error: {refundEx.Message}";
+                order.UpdatedAt = DateTime.UtcNow;
+                await _unitOfWork.Orders.UpdateAsync(order);
+                
+                return ApiResponse<PurchaseTemplateResponse>.ErrorResult(
+                    $"Critical error: Payment completed but access grant failed and refund system error. Support ticket required. Order: {order.OrderNumber}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Generate unique order number
+    /// </summary>
+    private string GenerateOrderNumber()
+    {
+        return $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
     }
 }

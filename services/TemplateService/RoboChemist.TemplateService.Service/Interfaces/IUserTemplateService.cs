@@ -32,4 +32,9 @@ public interface IUserTemplateService
     /// Get user templates by userId (Admin/Staff only)
     /// </summary>
     Task<ApiResponse<IEnumerable<UserTemplateResponse>>> GetUserTemplatesByUserIdAsync(Guid userId);
+
+    /// <summary>
+    /// Purchase a template (orchestrates payment and access granting)
+    /// </summary>
+    Task<ApiResponse<PurchaseTemplateResponse>> PurchaseTemplateAsync(PurchaseTemplateRequest request);
 }

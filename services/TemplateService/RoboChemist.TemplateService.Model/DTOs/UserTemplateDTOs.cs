@@ -13,6 +13,17 @@ public class GrantTemplateAccessRequest
     public Guid TemplateId { get; set; }
 }
 
+/// <summary>
+/// Request to purchase a template
+/// </summary>
+public class PurchaseTemplateRequest
+{
+    /// <summary>
+    /// Template ID to purchase
+    /// </summary>
+    public Guid TemplateId { get; set; }
+}
+
 #endregion
 
 #region UserTemplate Responses
@@ -27,8 +38,6 @@ public class UserTemplateResponse
     public string TemplateName { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? ThumbnailUrl { get; set; }
-    public string? PreviewUrl { get; set; }
-    public string? ContentStructure { get; set; }
     public int SlideCount { get; set; }
     public bool IsPremium { get; set; }
     public decimal Price { get; set; }
@@ -36,7 +45,20 @@ public class UserTemplateResponse
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public Guid? CreatedBy { get; set; }
-    public int Version { get; set; }
+}
+
+/// <summary>
+/// Response for template purchase
+/// </summary>
+public class PurchaseTemplateResponse
+{
+    public Guid TransactionId { get; set; }
+    public Guid TemplateId { get; set; }
+    public string TemplateName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal NewBalance { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime PurchasedAt { get; set; }
 }
 
 #endregion
