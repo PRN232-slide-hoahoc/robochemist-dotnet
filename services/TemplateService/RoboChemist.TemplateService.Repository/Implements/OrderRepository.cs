@@ -35,5 +35,22 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
             .ThenInclude(od => od.Template)
             .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
     }
+
+    public async Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersWithDetailsAsync(int pageNumber, int pageSize)
+    {
+        var query = _appContext.Orders
+            .Include(o => o.OrderDetails)
+            .ThenInclude(od => od.Template)
+            .OrderByDescending(o => o.CreatedAt);
+
+        var totalCount = await query.CountAsync();
+        
+        var orders = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (orders, totalCount);
+    }
 }
 

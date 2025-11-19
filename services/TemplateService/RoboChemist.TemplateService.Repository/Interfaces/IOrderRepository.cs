@@ -9,7 +9,7 @@ namespace RoboChemist.TemplateService.Repository.Interfaces;
 public interface IOrderRepository : IGenericRepository<Order>
 {
     /// <summary>
-    /// Get orders by user ID
+    /// Get orders by user ID with OrderDetails and Template navigation properties
     /// </summary>
     Task<IEnumerable<Order>> GetOrdersByUserIdAsync(Guid userId);
 
@@ -17,5 +17,10 @@ public interface IOrderRepository : IGenericRepository<Order>
     /// Get order by order number
     /// </summary>
     Task<Order?> GetOrderByOrderNumberAsync(string orderNumber);
+
+    /// <summary>
+    /// Get paginated orders with OrderDetails and Template navigation properties
+    /// </summary>
+    Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersWithDetailsAsync(int pageNumber, int pageSize);
 }
 

@@ -66,6 +66,7 @@ public class OrderSummaryResponse
     public decimal TotalAmount { get; set; }
     public string Status { get; set; } = string.Empty;
     public int ItemCount { get; set; }
+    public string? TemplateName { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

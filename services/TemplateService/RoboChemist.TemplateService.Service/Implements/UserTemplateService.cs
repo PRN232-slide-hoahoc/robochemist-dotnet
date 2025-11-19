@@ -291,7 +291,7 @@ public class UserTemplateService : IUserTemplateService
             UserId = user.Id,
             Amount = template.Price,
             ReferenceId = order.OrderId, // Use OrderId as ReferenceId
-            ReferenceType = RoboChemistConstants.PAYMENT_REF_TEMPLATE_PURCHASE,
+            ReferenceType = RoboChemistConstants.REFERENCE_TYPE_BUY_TEMPLATE,
             Description = $"Order {order.OrderNumber} - Purchase template: {template.TemplateName}"
         };
 
