@@ -50,7 +50,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
             {
                 _logger.LogInformation("[TemplateServiceClient] Uploading file: {FileName}", fileName);
 
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("TemplateService");
                 AuthorizeHttpClient(httpClient);
 
                 // Create multipart/form-data content
@@ -67,7 +67,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
 
                 content.Add(streamContent, "File", fileName);
 
-                var url = "/template/v1/files/upload";
+                var url = "/api/v1/files/upload";
                 var response = await httpClient.PostAsync(url, content);
 
                 if (!response.IsSuccessStatusCode)

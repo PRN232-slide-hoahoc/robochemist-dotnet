@@ -1,15 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using RoboChemist.ExamService.Model.Data;
+using RoboChemist.ExamService.Repository.Implements;
+using RoboChemist.ExamService.Repository.Interfaces;
+using RoboChemist.ExamService.Service.HttpClients;
+using RoboChemist.ExamService.Service.Implements;
+using RoboChemist.ExamService.Service.Interfaces;
 using System.Reflection;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using RoboChemist.ExamService.Model.Data;
-using RoboChemist.ExamService.Service.Interfaces;
-using RoboChemist.ExamService.Service.Implements;
-using RoboChemist.ExamService.Service.HttpClients;
-using RoboChemist.ExamService.Repository.Interfaces;
-using RoboChemist.ExamService.Repository.Implements;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,12 +101,35 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-builder.Services.AddHttpClient("ApiGateway", client =>
+// Configure named HttpClient for each service (direct communication)
+builder.Services.AddHttpClient("AuthService", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5000");
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("AUTH_SERVICE_URL") ?? "https://localhost:7188");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
+
+builder.Services.AddHttpClient("SlidesService", client =>
+{
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("SLIDES_SERVICE_URL") ?? "https://localhost:7205");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient("TemplateService", client =>
+{
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("TEMPLATE_SERVICE_URL") ?? "https://localhost:7206");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient("WalletService", client =>
+{
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("WALLET_SERVICE_URL") ?? "https://localhost:7100");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
 builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
 builder.Services.AddScoped<ITemplateServiceClient, TemplateServiceClient>();

@@ -45,10 +45,10 @@ namespace RoboChemist.ExamService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("SlidesService");
                 AuthorizeHttpClient(httpClient);
 
-                var url = $"/slides/v1/topics/{topicId}";
+                var url = $"/api/v1/topics/{topicId}";
                 var response = await httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
@@ -86,7 +86,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
 
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("SlidesService");
                 AuthorizeHttpClient(httpClient);
 
                 // Gọi từng topic (tạm thời - nếu Slides Service có batch endpoint thì dùng batch)
