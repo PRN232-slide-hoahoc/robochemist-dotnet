@@ -19,9 +19,13 @@ public partial class WalletTransaction
 
     public Guid? ReferenceId { get; set; }
 
+    public string? ReferenceType { get; set; }
+
     public DateTime? CreateAt { get; set; }
 
     public DateTime? UpdateAt { get; set; }
+
+    public string? Description { get; set; }
 
     public virtual UserWallet Wallet { get; set; } = null!;
 }

@@ -149,6 +149,7 @@ namespace RoboChemist.WalletService.Service.Implements
                 Method = TRANSACTION_METHOD_WALLET,
                 Status = TRANSACTION_STATUS_COMPLETED,
                 ReferenceId = request.ReferenceId,
+                ReferenceType = request.ReferenceType,
                 CreateAt = DateTime.Now,
                 UpdateAt = DateTime.Now
             };
@@ -157,7 +158,8 @@ namespace RoboChemist.WalletService.Service.Implements
             {
                 Amount = request.Amount,
                 TransactionType = "Payment",
-                ReferenceId = request.ReferenceId
+                ReferenceId = request.ReferenceId,
+                ReferenceType = request.ReferenceType,
             });
 
             var response = new PaymentResponseDto
@@ -217,15 +219,18 @@ namespace RoboChemist.WalletService.Service.Implements
                 Method = TRANSACTION_METHOD_WALLET,
                 Status = TRANSACTION_STATUS_COMPLETED,
                 ReferenceId = request.ReferenceId,
+                ReferenceType = originalTransaction.ReferenceType,
                 CreateAt = DateTime.Now,
-                UpdateAt = DateTime.Now
+                UpdateAt = DateTime.Now,
+                Description = request.Reason
             };
             await _unitOfWork.WalletTransactionRepo.CreateAsync(refundTransaction);
             await ChangeAdminBalanceAsync(new ChangeAdminBalanceDto
             {
                 Amount = originalTransaction.Amount,
                 TransactionType = "Refund",
-                ReferenceId = request.ReferenceId
+                ReferenceId = request.ReferenceId,
+                ReferenceType = originalTransaction.ReferenceType,
             });
 
             var response = new RefundResponseDto
@@ -339,6 +344,7 @@ namespace RoboChemist.WalletService.Service.Implements
                 Method = TRANSACTION_METHOD_SYSTEM,
                 Status = TRANSACTION_STATUS_COMPLETED,
                 ReferenceId = request.ReferenceId,
+                ReferenceType = request.ReferenceType,
                 CreateAt = DateTime.Now,
                 UpdateAt = DateTime.Now
             };
