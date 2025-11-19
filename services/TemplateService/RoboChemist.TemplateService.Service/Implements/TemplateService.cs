@@ -36,82 +36,89 @@ public class TemplateService : ITemplateService
 
     #region Query Methods
 
-    public async Task<Template?> GetTemplateByIdAsync(Guid templateId)
+    public async Task<TemplateResponse?> GetTemplateByIdAsync(Guid templateId)
     {
-        return await _unitOfWork.Templates.GetByIdAsync(templateId);
+        var template = await _unitOfWork.Templates.GetByIdAsync(templateId);
+        if (template == null) return null;
+        
+        return await MapToTemplateResponseAsync(template);
     }
 
-    public async Task<IEnumerable<Template>> GetAllTemplatesAsync()
-    {
-        return await _unitOfWork.Templates.GetActiveTemplatesAsync();
-    }
-
-    public async Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams)
+    public async Task<PagedResult<TemplateResponse>> GetPagedTemplatesAsync(PaginationParams paginationParams)
     {
         var pagedResult = await _unitOfWork.Templates.GetPagedTemplatesAsync(paginationParams);
         
-        // Generate presigned URLs for thumbnails (7 days expiration)
-        await GenerateThumbnailPresignedUrlsAsync(pagedResult.Items);
+        var responseDtos = new List<TemplateResponse>();
+        foreach (var template in pagedResult.Items)
+        {
+            responseDtos.Add(await MapToTemplateResponseAsync(template));
+        }
         
-        return pagedResult;
+        return new PagedResult<TemplateResponse>
+        {
+            Items = responseDtos,
+            TotalCount = pagedResult.TotalCount,
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize
+        };
     }
 
-    public async Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams)
+    public async Task<PagedResult<TemplateResponse>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams)
     {
         var pagedResult = await _unitOfWork.Templates.GetPagedTemplatesForStaffAsync(paginationParams);
         
-        // Generate presigned URLs for thumbnails (7 days expiration)
-        await GenerateThumbnailPresignedUrlsAsync(pagedResult.Items);
+        var responseDtos = new List<TemplateResponse>();
+        foreach (var template in pagedResult.Items)
+        {
+            responseDtos.Add(await MapToTemplateResponseAsync(template));
+        }
         
-        return pagedResult;
+        return new PagedResult<TemplateResponse>
+        {
+            Items = responseDtos,
+            TotalCount = pagedResult.TotalCount,
+            PageNumber = pagedResult.PageNumber,
+            PageSize = pagedResult.PageSize
+        };
     }
     
     /// <summary>
-    /// Generate presigned URLs for template thumbnails from object keys
+    /// Map Template entity to TemplateResponse DTO with presigned thumbnail URL
     /// </summary>
-    private async Task GenerateThumbnailPresignedUrlsAsync(IEnumerable<Template> templates)
+    private async Task<TemplateResponse> MapToTemplateResponseAsync(Template template)
     {
-        foreach (var template in templates)
+        string? thumbnailUrl = null;
+        
+        if (!string.IsNullOrEmpty(template.ThumbnailKey))
         {
-            if (!string.IsNullOrEmpty(template.ThumbnailUrl))
+            try
             {
-                // Extract object key from old presigned URL or use as-is if already object key
-                string objectKey;
-                
-                if (template.ThumbnailUrl.StartsWith("http"))
-                {
-                    // Old presigned URL format, extract object key
-                    // Example: https://...r2.cloudflarestorage.com/bucket-name/thumbnails/file.png?...
-                    var uri = new Uri(template.ThumbnailUrl);
-                    objectKey = uri.AbsolutePath.TrimStart('/');
-                    
-                    // Remove bucket name from path if present
-                    if (objectKey.StartsWith("template-service-bucket/"))
-                    {
-                        objectKey = objectKey.Replace("template-service-bucket/", "");
-                    }
-                }
-                else
-                {
-                    // Already an object key
-                    objectKey = template.ThumbnailUrl;
-                }
-                
-                // Generate new presigned URL (7 days = 10,080 minutes)
-                try
-                {
-                    template.ThumbnailUrl = await _storageService.GeneratePresignedUrlAsync(objectKey, 10080);
-                }
-                catch (Exception ex)
-                {
-                    // If generation fails, set to null and log
-                    Console.WriteLine($"Failed to generate presigned URL for {template.TemplateId}: {ex.Message}");
-                    template.ThumbnailUrl = null;
-                }
+                thumbnailUrl = await _storageService.GeneratePresignedUrlAsync(template.ThumbnailKey, 10080);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to generate thumbnail URL for {template.TemplateId}: {ex.Message}");
             }
         }
+        
+        return new TemplateResponse
+        {
+            TemplateId = template.TemplateId,
+            ObjectKey = template.ObjectKey,
+            TemplateName = template.TemplateName,
+            Description = template.Description,
+            ThumbnailUrl = thumbnailUrl,
+            SlideCount = template.SlideCount,
+            IsPremium = template.IsPremium,
+            Price = template.Price,
+            IsActive = template.IsActive,
+            DownloadCount = template.DownloadCount,
+            CreatedAt = template.CreatedAt,
+            UpdatedAt = template.UpdatedAt,
+            CreatedBy = template.CreatedBy
+        };
     }
-
+    
     #endregion
 
     #region Command Methods
@@ -126,7 +133,7 @@ public class TemplateService : ITemplateService
         }
 
         string? objectKey = null;
-        string? thumbnailUrl = null;
+        string? thumbnailKey = null;
         
         try
         {
@@ -143,7 +150,7 @@ public class TemplateService : ITemplateService
                     "thumbnails");
                 
                 // Store only object key, will generate presigned URL when retrieving
-                thumbnailUrl = thumbnailObjectKey;
+                thumbnailKey = thumbnailObjectKey;
             }
 
             var template = new Template
@@ -159,9 +166,8 @@ public class TemplateService : ITemplateService
                 DownloadCount = 0,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                Version = 1,
                 CreatedBy = user.Id,
-                ThumbnailUrl = thumbnailUrl
+                ThumbnailKey = thumbnailKey
             };
 
             await _unitOfWork.Templates.CreateAsync(template);
@@ -211,7 +217,6 @@ public class TemplateService : ITemplateService
             template.Price = request.Price;
             template.IsActive = request.IsActive;
             template.UpdatedAt = DateTime.UtcNow;
-            template.Version++;
 
             // Đảm bảo ObjectKey không bị null (required field)
             if (string.IsNullOrEmpty(template.ObjectKey))

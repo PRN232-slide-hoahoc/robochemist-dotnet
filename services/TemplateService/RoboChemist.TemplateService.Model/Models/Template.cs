@@ -23,16 +23,9 @@ public class Template
     [Column("description")]
     public string? Description { get; set; }
 
-    [Column("thumbnail_url")]
+    [Column("thumbnail_key")]
     [MaxLength(500)]
-    public string? ThumbnailUrl { get; set; }
-
-    [Column("preview_url")]
-    [MaxLength(500)]
-    public string? PreviewUrl { get; set; }
-
-    [Column("content_structure")]
-    public string? ContentStructure { get; set; } // JSON stored as string
+    public string? ThumbnailKey { get; set; }
 
     [Column("slide_count")]
     public int SlideCount { get; set; }
@@ -57,9 +50,6 @@ public class Template
 
     [Column("created_by")]
     public Guid? CreatedBy { get; set; }
-
-    [Column("version")]
-    public int Version { get; set; } = 1;
 
     // Navigation properties
     public virtual ICollection<UserTemplate> UserTemplates { get; set; } = new List<UserTemplate>();

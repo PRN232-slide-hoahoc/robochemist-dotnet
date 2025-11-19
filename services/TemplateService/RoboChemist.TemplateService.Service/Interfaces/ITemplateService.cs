@@ -6,18 +6,17 @@ namespace RoboChemist.TemplateService.Service.Interfaces;
 public interface ITemplateService
 {
     Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request);
-    Task<Template?> GetTemplateByIdAsync(Guid templateId);
-    Task<IEnumerable<Template>> GetAllTemplatesAsync();
+    Task<TemplateResponse?> GetTemplateByIdAsync(Guid templateId);
     
     /// <summary>
     /// Get paged templates - Returns ONLY ACTIVE templates for public users
     /// </summary>
-    Task<PagedResult<Template>> GetPagedTemplatesAsync(PaginationParams paginationParams);
+    Task<PagedResult<TemplateResponse>> GetPagedTemplatesAsync(PaginationParams paginationParams);
     
     /// <summary>
     /// Get paged templates for Staff/Admin - Returns ALL templates (including inactive)
     /// </summary>
-    Task<PagedResult<Template>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams);
+    Task<PagedResult<TemplateResponse>> GetPagedTemplatesForStaffAsync(PaginationParams paginationParams);
     
     Task<Template> UpdateTemplateAsync(Guid templateId, UpdateTemplateRequest request);
     Task<bool> DeleteTemplateAsync(Guid templateId);

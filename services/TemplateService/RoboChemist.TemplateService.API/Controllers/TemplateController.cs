@@ -16,6 +16,7 @@ public class TemplateController : ControllerBase
     #region Fields
 
     private readonly ITemplateService _templateService;
+    private readonly IUserTemplateService _userTemplateService;
     private readonly ILogger<TemplateController> _logger;
 
     #endregion
@@ -24,9 +25,11 @@ public class TemplateController : ControllerBase
 
     public TemplateController(
         ITemplateService templateService,
+        IUserTemplateService userTemplateService,
         ILogger<TemplateController> logger)
     {
         _templateService = templateService;
+        _userTemplateService = userTemplateService;
         _logger = logger;
     }
 
@@ -48,15 +51,15 @@ public class TemplateController : ControllerBase
     /// </remarks>
     [HttpGet]
     [Authorize(Roles ="User, Staff, Admin")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<Model.Models.Template>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<TemplateResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<PagedResult<Model.Models.Template>>>> GetAllTemplates([FromQuery] PaginationParams paginationParams)
+    public async Task<ActionResult<ApiResponse<PagedResult<TemplateResponse>>>> GetAllTemplates([FromQuery] PaginationParams paginationParams)
     {
         try
         {
             var pagedTemplates = await _templateService.GetPagedTemplatesAsync(paginationParams);
             
-            var response = ApiResponse<PagedResult<Model.Models.Template>>.SuccessResult(
+            var response = ApiResponse<PagedResult<TemplateResponse>>.SuccessResult(
                 pagedTemplates,
                 $"Retrieved {pagedTemplates.Items.Count()} active templates from page {pagedTemplates.PageNumber}"
             );
@@ -65,7 +68,7 @@ public class TemplateController : ControllerBase
         }
         catch (Exception)
         {
-            return StatusCode(500, ApiResponse<PagedResult<Model.Models.Template>>.ErrorResult("Lỗi hệ thống"));
+            return StatusCode(500, ApiResponse<PagedResult<TemplateResponse>>.ErrorResult("Lỗi hệ thống"));
         }
     }
 
@@ -83,15 +86,15 @@ public class TemplateController : ControllerBase
     /// </remarks>
     [HttpGet("staff")]
     [Authorize(Roles ="Staff, Admin")]
-    [ProducesResponseType(typeof(ApiResponse<PagedResult<Model.Models.Template>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<TemplateResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<PagedResult<Model.Models.Template>>>> GetAllTemplatesForStaff([FromQuery] PaginationParams paginationParams)
+    public async Task<ActionResult<ApiResponse<PagedResult<TemplateResponse>>>> GetAllTemplatesForStaff([FromQuery] PaginationParams paginationParams)
     {
         try
         {
             var pagedTemplates = await _templateService.GetPagedTemplatesForStaffAsync(paginationParams);
             
-            var response = ApiResponse<PagedResult<Model.Models.Template>>.SuccessResult(
+            var response = ApiResponse<PagedResult<TemplateResponse>>.SuccessResult(
                 pagedTemplates,
                 $"Retrieved {pagedTemplates.Items.Count()} templates (including inactive) from page {pagedTemplates.PageNumber}"
             );
@@ -100,7 +103,7 @@ public class TemplateController : ControllerBase
         }
         catch (Exception)
         {
-            return StatusCode(500, ApiResponse<PagedResult<Model.Models.Template>>.ErrorResult("Lỗi hệ thống"));
+            return StatusCode(500, ApiResponse<PagedResult<TemplateResponse>>.ErrorResult("Lỗi hệ thống"));
         }
     }
 
@@ -114,19 +117,19 @@ public class TemplateController : ControllerBase
     /// <response code="500">Internal server error occurred</response>
     [HttpGet("{id}")]
     [Authorize(Roles ="User, Staff, Admin")]
-    [ProducesResponseType(typeof(ApiResponse<Model.Models.Template>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<Model.Models.Template>>> GetTemplateById(Guid id)
+    public async Task<ActionResult<ApiResponse<TemplateResponse>>> GetTemplateById(Guid id)
     {
         try
         {
             var template = await _templateService.GetTemplateByIdAsync(id);
             
             if (template == null)
-                return NotFound(ApiResponse<Model.Models.Template>.ErrorResult($"Template with ID {id} not found"));
+                return NotFound(ApiResponse<TemplateResponse>.ErrorResult($"Template with ID {id} not found"));
 
-            var response = ApiResponse<Model.Models.Template>.SuccessResult(
+            var response = ApiResponse<TemplateResponse>.SuccessResult(
                 template,
                 "Template retrieved successfully"
             );
@@ -135,7 +138,7 @@ public class TemplateController : ControllerBase
         }
         catch (Exception)
         {
-            return StatusCode(500, ApiResponse<Model.Models.Template>.ErrorResult("Lỗi hệ thống"));
+            return StatusCode(500, ApiResponse<TemplateResponse>.ErrorResult("Lỗi hệ thống"));
         }
     }
 
@@ -405,6 +408,54 @@ public class TemplateController : ControllerBase
             _logger.LogError(ex, "Error deleting template {TemplateId}", id);
             return StatusCode(500, ApiResponse<bool>.ErrorResult("Lỗi hệ thống"));
         }
+    }
+
+    #endregion
+
+    #region User Template Endpoints
+
+    /// <summary>
+    /// Get templates accessible by current user (free templates + owned premium templates)
+    /// </summary>
+    /// <returns>List of accessible templates</returns>
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<IEnumerable<UserTemplateResponse>>>> GetMyTemplates()
+    {
+        var result = await _userTemplateService.GetMyTemplatesAsync();
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Check if current user has access to a specific template
+    /// </summary>
+    /// <param name="id">Template ID</param>
+    /// <returns>Access status</returns>
+    [HttpGet("{id}/access")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<bool>>> CheckTemplateAccess(Guid id)
+    {
+        var result = await _userTemplateService.CheckTemplateAccessAsync(id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Purchase a template (orchestrates payment and access granting)
+    /// </summary>
+    /// <param name="id">Template ID to purchase</param>
+    /// <param name="request">Purchase request with optional test flags</param>
+    /// <returns>Purchase result with transaction details</returns>
+    [HttpPost("{id}/purchase")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<PurchaseTemplateResponse>>> PurchaseTemplate(
+        Guid id, 
+        [FromBody] PurchaseTemplateRequest? request = null)
+    {
+        var purchaseRequest = request ?? new PurchaseTemplateRequest();
+        purchaseRequest.TemplateId = id; // Override TemplateId from route
+        
+        var result = await _userTemplateService.PurchaseTemplateAsync(purchaseRequest);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 
     #endregion
