@@ -76,7 +76,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 DataForGenerateSlideRequest reqData = await _uow.Sliderequests.GetDataRequestModelAsync(slideReq.Id);
 
                 //Generate data
-                ResponseGenerateDataDto? responseDto = await _geminiService.GenerateSlidesAsync(reqData);
+                (ResponseGenerateDataDto? responseDto, string? jsonResponse) = await _geminiService.GenerateSlidesAsync(reqData);
 
                 if (responseDto == null)
                 {
@@ -87,7 +87,7 @@ namespace RoboChemist.SlidesService.Service.Implements
 
                 Generatedslide generatedSlide = new()
                 {
-                    JsonContent = string.Empty,
+                    JsonContent = jsonResponse,
                     SlideRequestId = slideReq.Id,
                     GenerationStatus = RoboChemistConstants.GENSLIDE_STATUS_JSON,
                     FileFormat = RoboChemistConstants.File_Format_PPTX,
@@ -95,7 +95,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 await _uow.Generatedslides.CreateAsync(generatedSlide);
 
 
-                SlideFileInfomationDto fileInfo = await ProcessPptxFile(slideReq, responseDto);
+                SlideFileInfomationDto fileInfo = await ProcessPptxFile(slideReq, responseDto, slideReq.TemplateId!.Value);
 
                 generatedSlide.FilePath = fileInfo.FilePath;
                 generatedSlide.FileSize = fileInfo.FileSize;
@@ -130,7 +130,7 @@ namespace RoboChemist.SlidesService.Service.Implements
             }
         }
 
-        private async Task<SlideFileInfomationDto> ProcessPptxFile(Sliderequest slideReq, ResponseGenerateDataDto responseDto)
+        private async Task<SlideFileInfomationDto> ProcessPptxFile(Sliderequest slideReq, ResponseGenerateDataDto responseDto, Guid templateId)
         {
             string outputFilePath = Path.Combine(Path.GetTempPath(), $"slide_{slideReq.Id}_{Guid.NewGuid()}.pptx");
 
@@ -143,7 +143,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 }
 
                 // Download template as stream from TemplateService
-                (Stream templateStream, string contentType) = await _templateService.DownloadTemplateAsync(slideReq.TemplateId.Value);
+                (Stream templateStream, string contentType) = await _templateService.DownloadTemplateAsync(templateId);
 
                 using (templateStream)
                 {
@@ -218,6 +218,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                     user.Id,
                     request,
                     string.Equals(user.Role?.ToLower(), RoboChemistConstants.ROLE_ADMIN.ToLower())
+                    || string.Equals(user.Role?.ToLower(), RoboChemistConstants.ROLE_STAFF.ToLower())
                 );
 
                 var paginatedResult = PaginatedResult<SlideDetailDto>.Create(slides, totalCount, request.PageNumber, request.PageSize);
@@ -256,6 +257,54 @@ namespace RoboChemist.SlidesService.Service.Implements
             {
                 throw new InvalidOperationException($"Failed to download slide: {ex.Message}", ex);
             }
+        }
+
+        public async Task<ApiResponse<SlideDto>> ChangeTemplateAsync(ChangeTemplateRequest request)
+        {
+            Generatedslide oldSlide = await _uow.Generatedslides.GetByIdAsync(request.SlideId)
+                ?? throw new InvalidOperationException($"Generated slide with ID {request.SlideId} not found");
+
+            Sliderequest slideReq = await _uow.Sliderequests.GetByIdAsync(oldSlide.SlideRequestId) 
+                ?? throw new InvalidOperationException($"Slide request with ID {oldSlide.SlideRequestId} not found");
+
+            ResponseGenerateDataDto slideDto = _geminiService.ParseJsonToSlideDto(oldSlide.JsonContent ?? string.Empty)
+                ?? throw new InvalidOperationException("Failed to parse slide JSON content");
+
+            if (!slideReq.TemplateId.HasValue || slideReq.TemplateId.Value == request.TemplateId)
+            {
+                return ApiResponse<SlideDto>.ErrorResult("Template mới phải khác template hiện tại");
+            }
+
+            var pptFile = await ProcessPptxFile(slideReq, slideDto, request.TemplateId);
+
+            Generatedslide generatedSlide = new()
+            {
+                FilePath = pptFile.FilePath,
+                JsonContent = oldSlide.JsonContent,
+                SlideRequestId = slideReq.Id,
+                FileSize = pptFile.FileSize,
+                SlideCount = pptFile.SlideCount,
+                FileFormat = pptFile.FileFormat ?? RoboChemistConstants.File_Format_PPTX,
+                GenerationStatus = RoboChemistConstants.GENSLIDE_STATUS_COMPLETED,
+                GeneratedAt = DateTime.Now,
+                ProcessingTime = 0,
+            };
+            await _uow.Generatedslides.CreateAsync(generatedSlide);
+
+            SlideDto returnDto = new()
+            {
+                GeneratedSlideId = generatedSlide.Id,
+                SlideRequestId = generatedSlide.SlideRequestId,
+                JsonContent = generatedSlide.JsonContent,
+                FileFormat = generatedSlide.FileFormat,
+                FilePath = generatedSlide.FilePath,
+                FileSize = generatedSlide.FileSize,
+                SlideCount = generatedSlide.SlideCount,
+                GenerationStatus = generatedSlide.GenerationStatus,
+                ProcessingTime = generatedSlide.ProcessingTime,
+                GeneratedAt = generatedSlide.GeneratedAt
+            };
+            return ApiResponse<SlideDto>.SuccessResult(returnDto);
         }
     }
 }

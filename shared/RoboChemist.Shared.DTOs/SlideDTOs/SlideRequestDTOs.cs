@@ -58,5 +58,14 @@ namespace RoboChemist.Shared.DTOs.SlideDTOs
 
             public string? AiPrompt { get; set; }
         }
+
+        public class ChangeTemplateRequest
+        {
+            [Required(ErrorMessage = "TemplateId là bắt buộc.")]
+            public Guid TemplateId { get; set; }
+
+            [Required(ErrorMessage = "SlideId là bắt buộc.")]
+            public Guid SlideId { get; set; }
+        }
     }
 }

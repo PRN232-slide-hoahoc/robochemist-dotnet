@@ -22,10 +22,24 @@ builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddHttpContextAccessor();
 
-// HTTP Client Factory
-builder.Services.AddHttpClient("ApiGateway", client =>
+// Configure named HttpClient for each service (direct communication)
+builder.Services.AddHttpClient("AuthService", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5001");
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("AUTH_SERVICE_URL") ?? "https://localhost:7188");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient("TemplateService", client =>
+{
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("TEMPLATE_SERVICE_URL") ?? "https://localhost:7206");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient("WalletService", client =>
+{
+    client.BaseAddress = new Uri(Environment.GetEnvironmentVariable("WALLET_SERVICE_URL") ?? "https://localhost:7100");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
@@ -47,7 +61,7 @@ builder.Services.AddScoped <IWalletServiceClient, WalletServiceClient>();
 // Semantic Kernel with Gemini
 builder.Services.AddKernel();
 builder.Services.AddGoogleAIGeminiChatCompletion(
-    modelId: "gemini-2.5-flash",
+    modelId: "gemini-2.0-flash",
     apiKey: Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? string.Empty
 );
 
