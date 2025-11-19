@@ -60,7 +60,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                 {
                     Amount = 15000,
                     ReferenceId = slideReq.Id,
-                    ReferenceType = RoboChemistConstants.TRANSACTION_TYPE_PAYMENT,
+                    ReferenceType = RoboChemistConstants.REFERENCE_TYPE_CREATE_SLIDE,
                     UserId = user.Id,
                     Description = $"Thanh toán tạo slide cho người dùng {user.Id}"
                 };
