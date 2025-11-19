@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RoboChemist.Shared.DTOs.Common;
-using RoboChemist.WalletService.Service.Implements;
 using RoboChemist.WalletService.Service.Interfaces;
-using System.Security.Claims;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.UserWalletDTOs;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.VNPayDTOs;
 using static RoboChemist.Shared.DTOs.WalletServiceDTOs.WalletTransactionDTOs;
@@ -22,7 +19,10 @@ namespace RoboChemist.WalletService.API.Controllers
             _paymentService = paymentService;
         }
 
-        
+        /// <summary>
+        /// Lấy thông tin ví của người dùng
+        /// </summary>
+        /// <returns>Trả về các thông tin cơ bản của ví (id ví,số dư, lần cuối cập nhật)</returns>
         [HttpGet]
         public async Task<ActionResult<ApiResponse<UserWalletDto>>> GetUserWallet()
         {
@@ -37,7 +37,10 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Tạo ví cho người dùng
+        /// </summary>
+        /// <returns>nếu người dùng chưa có ví thì sẽ tạo mới, còn đã có thì vô hiệu</returns>
         [HttpPost]
         public async Task<ActionResult<ApiResponse<UserWalletDto>>> CreateUserWallet()
         {
@@ -53,7 +56,10 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Chỉ lấy số dư ví của người dùng
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("balance")]
         public async Task<ActionResult<ApiResponse<WalletBalanceDto>>> GetBalance()
         {
@@ -68,7 +74,11 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Tạo một giao dịch thanh toán
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost("payment")]
         public async Task<ActionResult<ApiResponse<PaymentResponseDto>>> CreatePayment([FromBody] CreatePaymentDto request)
         {
@@ -88,7 +98,11 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-         //?? chỉ role admin mới được call ??
+        /// <summary>
+        /// Tạo một giao dịch hoàn tiền
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost("refund")]
         public async Task<ActionResult<ApiResponse<RefundResponseDto>>> RefundPayment([FromBody] RefundRequestDto request)
         {
@@ -108,7 +122,11 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Tạo yêu cầu nạp tiền vào ví qua VNPay
+        /// </summary>
+        /// <param name="depositRequestDTO"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("deposit")]
         public async Task<ActionResult<ApiResponse<string>>> CreateDepositUrl([FromBody] DepositRequestDTO depositRequestDTO)
@@ -133,7 +151,11 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Xử lý callback nạp tiền từ VNPay
+        /// </summary>
+        /// <param name="callbackRequestDTO"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("deposit-callback")]
         public async Task<ActionResult<ApiResponse<DepositCallbackRequestDto>>> DepositCallback([FromBody] DepositCallbackRequestDto callbackRequestDTO)
@@ -149,7 +171,10 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Lấy tất cả giao dịch của người dùng
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("get-all-transaction")]
         public async Task<ActionResult<ApiResponse<List<WalletTransactionDto>>>> GetAllTransaction()
@@ -166,7 +191,11 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        
+        /// <summary>
+        /// Lấy các giao dịch theo ReferenceId
+        /// </summary>
+        /// <param name="referenceId"></param>
+        /// <returns></returns>
         [HttpGet("transactions/reference/{referenceId}")]
         public async Task<ActionResult<ApiResponse<TransactionsByReferenceDto>>> GetTransactionsByReference(Guid referenceId)
         {
