@@ -118,5 +118,35 @@ namespace RoboChemist.SlidesService.API.Controllers
                 return StatusCode(500, ApiResponse<string>.ErrorResult("Lỗi hệ thống khi tải file", [ex.Message]));
             }
         }
+
+        /// <summary>
+        /// Change the template of an existing slide and regenerate the PowerPoint file
+        /// </summary>
+        /// <param name="request">Slide id and new template id</param>
+        /// <returns>A new PowerPoint file with same contents but new template</returns>
+        [HttpPost("change-template")]
+        public async Task<ActionResult<ApiResponse<SlideDto>>> ChangeTemplate([FromBody] ChangeTemplateRequest request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    return BadRequest(ApiResponse<TopicDto>.ErrorResult("Dữ liệu xác thực không hợp lệ", errors));
+                }
+
+                var result = await _slideService.ChangeTemplateAsync(request);
+
+                return result.Success ? Ok(result) : BadRequest(result);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, ApiResponse<TopicDto>.ErrorResult("Lỗi hệ thống"));
+            }
+        }
     }
 }
