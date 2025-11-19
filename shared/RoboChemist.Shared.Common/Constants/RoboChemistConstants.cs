@@ -237,9 +237,17 @@
         /// Transaction Type: Refund
         /// </summary>
         public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
-
+        /// <summary>
+        /// Reference Type: Create Slide
+        /// </summary>
         public const string REFERENCE_TYPE_CREATE_SLIDE = "Tạo slide";
+        /// <summary>
+        /// Reference Type: Create Exam
+        /// </summary>
         public const string REFERENCE_TYPE_CREATE_EXAM = "Tạo đề thi";
+        /// <summary>
+        /// Reference Type: Buy Slide Template
+        /// </summary>
         public const string REFERENCE_TYPE_BUY_TEMPLATE = "Mua template";
         #endregion
 

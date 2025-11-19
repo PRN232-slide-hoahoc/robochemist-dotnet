@@ -22,24 +22,13 @@ namespace RoboChemist.WalletService.API.Controllers
             _paymentService = paymentService;
         }
 
-        [Authorize]
+        
         [HttpGet]
         public async Task<ActionResult<ApiResponse<UserWalletDto>>> GetUserWallet()
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized(ApiResponse<UserWalletDto>.ErrorResult("Người dùng chưa đăng nhập"));
-                }
-
-                if (!Guid.TryParse(userIdClaim, out Guid userId))
-                {
-                    return BadRequest(ApiResponse<UserWalletDto>.ErrorResult("User ID không hợp lệ"));
-                }
-
-                var result = await _walletService.GetWalletByUserIdAsync(userId);
+                var result = await _walletService.GetWalletByUserIdAsync();
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception)
@@ -48,24 +37,14 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpPost]
         public async Task<ActionResult<ApiResponse<UserWalletDto>>> CreateUserWallet()
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized(ApiResponse<UserWalletDto>.ErrorResult("Người dùng chưa đăng nhập"));
-                }
 
-                if (!Guid.TryParse(userIdClaim, out Guid userId))
-                {
-                    return BadRequest(ApiResponse<UserWalletDto>.ErrorResult("User ID không hợp lệ"));
-                }
-
-                var result = await _walletService.GenerateWalletAsync(userId);
+                var result = await _walletService.GenerateWalletAsync();
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception ex)
@@ -74,24 +53,13 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpGet("balance")]
         public async Task<ActionResult<ApiResponse<WalletBalanceDto>>> GetBalance()
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized(ApiResponse<WalletBalanceDto>.ErrorResult("Người dùng chưa đăng nhập"));
-                }
-
-                if (!Guid.TryParse(userIdClaim, out Guid userId))
-                {
-                    return BadRequest(ApiResponse<WalletBalanceDto>.ErrorResult("User ID không hợp lệ"));
-                }
-
-                var result = await _walletService.GetBalanceAsync(userId);
+                var result = await _walletService.GetBalanceAsync();
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception)
@@ -100,7 +68,7 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpPost("payment")]
         public async Task<ActionResult<ApiResponse<PaymentResponseDto>>> CreatePayment([FromBody] CreatePaymentDto request)
         {
@@ -120,7 +88,7 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize] //?? chỉ role admin mới được call ??
+         //?? chỉ role admin mới được call ??
         [HttpPost("refund")]
         public async Task<ActionResult<ApiResponse<RefundResponseDto>>> RefundPayment([FromBody] RefundRequestDto request)
         {
@@ -140,26 +108,13 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpPost]
         [Route("deposit")]
         public async Task<ActionResult<ApiResponse<string>>> CreateDepositUrl([FromBody] DepositRequestDTO depositRequestDTO)
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized(ApiResponse<string>.ErrorResult("Người dùng chưa đăng nhập"));
-                }
-
-                if (!Guid.TryParse(userIdClaim, out Guid userId))
-                {
-                    return BadRequest(ApiResponse<string>.ErrorResult("User ID không hợp lệ"));
-                }
-
-                depositRequestDTO.userId = userId;
-
                 if (depositRequestDTO.amount < 10000)
                 {
                     return BadRequest(ApiResponse<string>.ErrorResult("Số tiền nạp phải lớn hơn 10000"));
@@ -178,7 +133,7 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpPost]
         [Route("deposit-callback")]
         public async Task<ActionResult<ApiResponse<DepositCallbackRequestDto>>> DepositCallback([FromBody] DepositCallbackRequestDto callbackRequestDTO)
@@ -194,25 +149,14 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpGet]
         [Route("get-all-transaction")]
         public async Task<ActionResult<ApiResponse<List<WalletTransactionDto>>>> GetAllTransaction()
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized(ApiResponse<List<WalletTransactionDto>>.ErrorResult("Người dùng chưa đăng nhập"));
-                }
-
-                if (!Guid.TryParse(userIdClaim, out Guid userId))
-                {
-                    return BadRequest(ApiResponse<List<WalletTransactionDto>>.ErrorResult("User ID không hợp lệ"));
-                }
-
-                var result = await _paymentService.GetAllTransactionAsync(userId);
+                var result = await _paymentService.GetAllTransactionAsync();
                 return result.Success ? Ok(result) : BadRequest(result);
             }
             catch (Exception)
@@ -222,7 +166,7 @@ namespace RoboChemist.WalletService.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpGet("transactions/reference/{referenceId}")]
         public async Task<ActionResult<ApiResponse<TransactionsByReferenceDto>>> GetTransactionsByReference(Guid referenceId)
         {
