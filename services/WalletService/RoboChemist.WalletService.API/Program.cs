@@ -7,6 +7,7 @@ using RoboChemist.WalletService.Model.Data;
 using RoboChemist.WalletService.Repository.Implements;
 using RoboChemist.WalletService.Repository.Interfaces;
 using RoboChemist.WalletService.Service.BackgroundServices;
+using RoboChemist.WalletService.Service.HttpClients;
 using RoboChemist.WalletService.Service.Implements;
 using RoboChemist.WalletService.Service.Interfaces;
 using System.Text;
@@ -19,6 +20,17 @@ var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..",
 var envPath = Path.Combine(solutionRoot, ".env");
 DotNetEnv.Env.Load(envPath);
 builder.Configuration.AddEnvironmentVariables();
+
+// HTTP Context Accessor
+builder.Services.AddHttpContextAccessor();
+
+// HTTP Client Factory
+builder.Services.AddHttpClient("ApiGateway", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Services:ApiGateway:BaseUrl"] ?? "https://localhost:5001");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 // Database
 builder.Services.AddDbContext<WalletDbContext>(options =>
@@ -34,6 +46,7 @@ builder.Services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<
 // Dependency Injection for Services
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<IPaymentService,PaymentService>();
+builder.Services.AddScoped<IAuthServiceClient,AuthServiceClient>();
 
 // Background Services
 builder.Services.AddHostedService<TransactionStatusUpdateService>();

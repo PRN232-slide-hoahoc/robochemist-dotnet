@@ -28,6 +28,8 @@ namespace RoboChemist.WalletService.Repository.Implements
                     Method = t.Method,
                     Status = t.Status,
                     ReferenceId = t.ReferenceId,
+                    ReferenceType = t.ReferenceType,
+                    Description = t.Description,
                     CreateAt = t.CreateAt,
                     UpdateAt = t.UpdateAt
                 })

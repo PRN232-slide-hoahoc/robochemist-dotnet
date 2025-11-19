@@ -14,6 +14,8 @@ namespace RoboChemist.Shared.DTOs.WalletServiceDTOs
             public string Method { get; set; } = string.Empty;
             public string Status { get; set; } = string.Empty;
             public Guid? ReferenceId { get; set; }
+            public string? ReferenceType { get; set; }
+            public string? Description { get; set; }
             public DateTime? CreateAt { get; set; }
             public DateTime? UpdateAt { get; set; }
         }
@@ -102,6 +104,7 @@ namespace RoboChemist.Shared.DTOs.WalletServiceDTOs
             public string TransactionType { get; set; } = string.Empty;
             [Required(ErrorMessage = "ReferenceId là bắt buộc")]
             public Guid ReferenceId { get; set; }
+            public string? ReferenceType { get; set; }
             public string? Reason { get; set; }
         }
         public class TransactionsByReferenceDto

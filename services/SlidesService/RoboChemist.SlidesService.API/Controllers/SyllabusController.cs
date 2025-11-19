@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RoboChemist.Shared.Common.Constants;
 using RoboChemist.Shared.DTOs.Common;
 using RoboChemist.SlidesService.Service.Interfaces;
 using static RoboChemist.Shared.DTOs.SyllabusDTOs.SyllabusRequestDTOs;
@@ -64,6 +66,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <param name="request">Syllabus data including topic ID, lesson order, lesson name, objectives, outline, and key concepts</param>
         /// <returns>The newly created syllabus</returns>
         [HttpPost]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
         public async Task<ActionResult<ApiResponse<SyllabusDto>>> CreateSyllabus([FromBody] CreateSyllabusRequestDto request)
         {
             try
@@ -95,6 +98,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <param name="request">Updated syllabus data</param>
         /// <returns>The updated syllabus information</returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
         public async Task<ActionResult<ApiResponse<SyllabusDto>>> UpdateSyllabus([FromRoute] Guid id, [FromBody] CreateSyllabusRequestDto request)
         {
             try
@@ -125,6 +129,7 @@ namespace RoboChemist.SlidesService.API.Controllers
         /// <param name="id">The unique identifier of the syllabus</param>
         /// <returns>The new active status of the syllabus</returns>
         [HttpPatch("{id}/toggle-status")]
+        [Authorize(Roles = RoboChemistConstants.ROLE_ADMIN + "," + RoboChemistConstants.ROLE_STAFF)]
         public async Task<ActionResult<ApiResponse<bool>>> ToggleSyllabusStatus([FromRoute] Guid id)
         {
             try

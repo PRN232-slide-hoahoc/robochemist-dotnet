@@ -86,6 +86,16 @@
         public const string FILE_FORMAT_PDF = "pdf";
 
         /// <summary>
+        /// Generated Exam Type: Questions File (File đề thi)
+        /// </summary>
+        public const string GENERATED_EXAM_TYPE_QUESTIONS = "QUESTIONS";
+
+        /// <summary>
+        /// Generated Exam Type: Answers File (File đáp án)
+        /// </summary>
+        public const string GENERATED_EXAM_TYPE_ANSWERS = "ANSWERS";
+
+        /// <summary>
         /// Question Type: Multiple Choice
         /// </summary>
         public const string QUESTION_TYPE_MULTIPLE_CHOICE = "MultipleChoice";
@@ -237,6 +247,42 @@
         /// Transaction Type: Refund
         /// </summary>
         public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
+        /// <summary>
+        /// Reference Type: Create Slide
+        /// </summary>
+        public const string REFERENCE_TYPE_CREATE_SLIDE = "Tạo slide";
+        /// <summary>
+        /// Reference Type: Create Exam
+        /// </summary>
+        public const string REFERENCE_TYPE_CREATE_EXAM = "Tạo đề thi";
+        /// <summary>
+        /// Reference Type: Buy Slide Template
+        /// </summary>
+        public const string REFERENCE_TYPE_BUY_TEMPLATE = "Mua template";
+        #endregion
+
+        #region Template Service Constants
+
+        /// <summary>
+        /// Template Status: Active - Template is available for purchase/use
+        /// </summary>
+        public const bool TEMPLATE_STATUS_ACTIVE = true;
+
+        /// <summary>
+        /// Template Status: Inactive - Template is hidden/disabled
+        /// </summary>
+        public const bool TEMPLATE_STATUS_INACTIVE = false;
+
+        /// <summary>
+        /// Template Type: Free - No payment required
+        /// </summary>
+        public const bool TEMPLATE_TYPE_FREE = false;
+
+        /// <summary>
+        /// Template Type: Premium - Payment required
+        /// </summary>
+        public const bool TEMPLATE_TYPE_PREMIUM = true;
+
         #endregion
 
         #region Order Status
@@ -245,11 +291,6 @@
         /// Order Status: Pending - Order created but not yet paid
         /// </summary>
         public const string ORDER_STATUS_PENDING = "Chờ thanh toán";
-
-        /// <summary>
-        /// Order Status: Processing - Payment received, order being processed
-        /// </summary>
-        public const string ORDER_STATUS_PROCESSING = "Đang xử lý";
 
         /// <summary>
         /// Order Status: Completed - Order successfully completed and delivered
@@ -265,6 +306,15 @@
         /// Order Status: Failed - Order payment or processing failed
         /// </summary>
         public const string ORDER_STATUS_FAILED = "Thất bại";
+
+        #endregion
+
+        #region Payment Reference Types
+
+        /// <summary>
+        /// Payment Reference Type: Template Purchase
+        /// </summary>
+        public const string PAYMENT_REF_TEMPLATE_PURCHASE = "MUA_TEMPLATE";
 
         #endregion
     }

@@ -10,7 +10,6 @@ namespace RoboChemist.Shared.DTOs.WalletServiceDTOs
     {
         public class DepositRequestDTO
         {
-            public Guid? userId { get; set; }
             public decimal amount { get; set; }
         }
 

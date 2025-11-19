@@ -53,6 +53,26 @@ public class UpdateTemplateRequest
 #region Template Responses
 
 /// <summary>
+/// Response for template details with presigned thumbnail URL
+/// </summary>
+public class TemplateResponse
+{
+    public Guid TemplateId { get; set; }
+    public string ObjectKey { get; set; } = string.Empty;
+    public string TemplateName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? ThumbnailUrl { get; set; }
+    public int SlideCount { get; set; }
+    public bool IsPremium { get; set; }
+    public decimal Price { get; set; }
+    public bool IsActive { get; set; }
+    public int DownloadCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public Guid? CreatedBy { get; set; }
+}
+
+/// <summary>
 /// Response after uploading a template
 /// </summary>
 public class UploadTemplateResponse

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.DTOs.UserDTOs;
 using RoboChemist.WalletService.Model.Entities;
 using RoboChemist.WalletService.Repository.Implements;
+using RoboChemist.WalletService.Service.HttpClients;
 using RoboChemist.WalletService.Service.Interfaces;
 using RoboChemist.WalletService.Service.Libraries;
 using static RoboChemist.Shared.Common.Constants.RoboChemistConstants;
@@ -16,11 +18,13 @@ namespace RoboChemist.WalletService.Service.Implements
         private readonly UnitOfWork _unitOfWork;
         private readonly VNPayConfig _vnpayConfig;
         private readonly IWalletService _walletService;
-        public PaymentService(UnitOfWork unitOfWork, VNPayConfig vnpayConfig, IWalletService walletService)
+        private readonly IAuthServiceClient _authService;
+        public PaymentService(UnitOfWork unitOfWork, VNPayConfig vnpayConfig, IWalletService walletService, IAuthServiceClient authService)
         {
             _unitOfWork = unitOfWork;
             _vnpayConfig = vnpayConfig;
             _walletService = walletService;
+            _authService = authService;
         }
 
         #region VNPay Deposit
@@ -40,13 +44,14 @@ namespace RoboChemist.WalletService.Service.Implements
 
         public async Task<ApiResponse<string>> CreateDepositUrlAsync(DepositRequestDTO depositRequestDTO, HttpContext httpContext)
         {
-            Guid? userId = depositRequestDTO.userId;
-            if (userId == null)
+            //Get user info
+            UserDto? user = await _authService.GetCurrentUserAsync();
+            if (user == null)
             {
                 return ApiResponse<string>.ErrorResult("Người dùng không hợp lệ");
             }
 
-            var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(userId.Value);
+            var wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(user.Id);
             if (wallet == null)
             {
                 return ApiResponse<string>.ErrorResult("Ví người dùng không tồn tại");
@@ -258,13 +263,16 @@ namespace RoboChemist.WalletService.Service.Implements
         #endregion
 
         #region Transaction
-        public async Task<ApiResponse<List<WalletTransactionDto>>> GetAllTransactionAsync(Guid userId)
+        public async Task<ApiResponse<List<WalletTransactionDto>>> GetAllTransactionAsync()
         {
-            if (userId == null)
+            //Get user info
+            UserDto? user = await _authService.GetCurrentUserAsync();
+            if (user == null)
             {
                 return ApiResponse<List<WalletTransactionDto>>.ErrorResult("Người dùng không hợp lệ");
             }
-            UserWallet wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(userId);
+
+            UserWallet wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(user.Id);
             if (wallet == null)
             {
                 return ApiResponse<List<WalletTransactionDto>>.ErrorResult("Ví người dùng không tồn tại");
@@ -280,13 +288,15 @@ namespace RoboChemist.WalletService.Service.Implements
                 .Select(t => new WalletTransactionDto
                 {
                     TransactionId = t.TransactionId,
-                    UserId = userId,
+                    UserId = user.Id,
                     WalletId = t.WalletId,
                     TransactionType = t.TransactionType,
                     Amount = t.Amount,
                     Method = t.Method,
                     Status = t.Status,
                     ReferenceId = t.ReferenceId,
+                    ReferenceType = t.ReferenceType,
+                    Description = t.Description,
                     CreateAt = t.CreateAt,
                     UpdateAt = t.UpdateAt
                 })

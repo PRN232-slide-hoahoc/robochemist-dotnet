@@ -14,7 +14,6 @@ namespace RoboChemist.SlidesService.Service.Implements
         private readonly Kernel _kernel;
         private readonly ILogger<GeminiService> _logger;
 
-        // Kernel và Logger được tiêm (inject) vào qua Dependency Injection (DI)
         public GeminiService(Kernel kernel, ILogger<GeminiService> logger)
         {
             _kernel = kernel;
@@ -72,47 +71,66 @@ namespace RoboChemist.SlidesService.Service.Implements
                             """;
 
             var userPrompt = $"""
-                            Vui lòng tạo nội dung slide cho bài học sau:
-                            - Bài học: {request.Lesson} (Chủ đề: {request.TopicName})
+                            Bạn là một chuyên gia sư phạm và giáo viên Hóa học giàu kinh nghiệm, đồng thời là một chuyên gia thiết kế bài giảng trình chiếu. Nhiệm vụ của bạn là soạn thảo nội dung slide bài giảng chất lượng cao, hấp dẫn và chính xác về mặt khoa học.
+
+                            Dưới đây là thông tin đầu vào cho bài học:
+                            - Bài học: {request.Lesson}
+                            - Chủ đề: {request.TopicName}
                             - Lớp: {request.GradeName}
-                            - Mục tiêu: {request.LearningObjectives}
-                            - Dàn ý: {request.ContentOutline}
-                            - Khái niệm chính: {request.KeyConcepts}
-                            - Số slide nội dung mong muốn: {request.NumberOfSlides ?? 5}
-                            - Hướng dẫn thêm: {request.AiPrompt ?? "Không có"}
+                            - Mục tiêu bài học: {request.LearningObjectives}
+                            - Dàn ý sơ bộ: {request.ContentOutline}
+                            - Khái niệm/Từ khóa chính: {request.KeyConcepts}
+                            - Số lượng slide mong muốn: {request.NumberOfSlides ?? 5}
+                            - Yêu cầu bổ sung: {request.AiPrompt ?? "Tối ưu hóa cho việc giảng dạy trực quan"} 
+                            Với tất cả những thông tin đầu vào trên nếu liên quan đến Hóa học, phương pháp dạy học hoặc cách trình bày thì hãy áp dụng nếu không thì hãy bỏ qua
 
-                            Yêu cầu đặc biệt về BulletPoints (quan trọng):
-                            - Sử dụng cấu trúc phân cấp với Level: 1 (ý chính), 2 (ý phụ), 3 (ý con)...
-                            - Mỗi slide có tối đa 3-5 ý chính (Level 1)
-                            - Mỗi ý chính có thể có 2-3 ý phụ (Level 2) trong Children
-                            - Mỗi ý phụ có thể có 1-2 ý con (Level 3) trong Children (nếu cần thiết)
-                            - Mỗi Content (ý) **không dài quá 20 từ**
-                            - Nội dung phải **ngắn gọn, súc tích, vừa đủ hiển thị trên slide PowerPoint**
-                            - Không viết đoạn văn dài
-                            - Nếu nội dung quá dài, hãy tách thành nhiều slide hợp lý
-                            - Không đưa nội dung vào 2 dấu ** (ví dụ: **đừng làm thế này**)
-                            - Nếu không có Children, set Children = null hoặc []
+                            ### NGUYÊN TẮC SOẠN THẢO NỘI DUNG (BẮT BUỘC):
 
-                            Ví dụ về cấu trúc phân cấp:
-                            - Level 1: "Khái niệm axit mạnh và yếu" 
-                              - Level 2: "Axit mạnh: HCl, H₂SO₄, HNO₃"
-                                - Level 3: "Phân ly hoàn toàn trong nước"
-                              - Level 2: "Axit yếu: CH₃COOH, H₂CO₃"
-                                - Level 3: "Phân ly không hoàn toàn"
+                            1. **Đặc thù môn Hóa học:**
+                               - Phương trình phản ứng phải cân bằng và có điều kiện phản ứng (nếu cần).
+                               - Nội dung cần liên hệ thực tế hoặc thí nghiệm minh họa để bài học không khô khan.
 
-                            Bạn PHẢI trả về dữ liệu JSON với cấu trúc sau:
+                            2. **Cấu trúc Slide (Logic sư phạm):**
+                               - Slide 1: Tiêu đề hấp dẫn + Tên bài học.
+                               - Slide 2: Đặt vấn đề/Mục tiêu (Hook).
+                               - Các slide nội dung: Triển khai kiến thức trọng tâm (chia nhỏ vấn đề).
+
+                            3. **Quy tắc Bullet Points & Trình bày:**
+                               - **Tuyệt đối ngắn gọn:** Mỗi ý (Content) KHÔNG QUÁ 15 từ. Dùng phong cách "điện báo" (telegraphic style), lược bỏ hư từ.
+                               - **Phân cấp rõ ràng:**
+                                 + Level 1: Luận điểm chính/Tên mục.
+                                 + Level 2: Giải thích ngắn/Công thức/Ví dụ.
+                                 + Level 3: Chi tiết nhỏ (hạn chế dùng, chỉ dùng khi liệt kê tính chất).
+                               - Mỗi slide tối đa 3-5 ý chính (Level 1).
+                               - Không sử dụng Markdown đậm nghiêng (**...**) trong nội dung JSON.
+
+                            ### CẤU TRÚC DỮ LIỆU TRẢ VỀ:
+
+                            Bạn PHẢI trả về duy nhất một chuỗi JSON hợp lệ theo cấu trúc sau (không kèm lời dẫn):
+
                             {jsonStructure}
+
+                            ### VÍ DỤ VỀ CÁCH VIẾT NỘI DUNG (MÔN HÓA):
+
+                            - Tốt: 
+                              - Level 1: "Tính chất hóa học của Axit"
+                                - Level 2: "Làm quỳ tím hóa đỏ"
+                                - Level 2: "Tác dụng với kim loại (đứng trước H)"
+                                  - Level 3: "2HCl + Fe → FeCl₂ + H₂"
+
+                            - Xấu (Cần tránh):
+                              - "Axit có tính chất là làm cho quỳ tím chuyển sang màu đỏ và tác dụng được với các kim loại..." (Quá dài dòng).
+                            Hãy bắt đầu tạo nội dung slide ngay bây giờ dựa trên các nguyên tắc trên.
                             """;
 
 
             var settings = new GeminiPromptExecutionSettings
             {
-                ResponseMimeType = "application/json" // Yêu cầu Gemini trả về JSON
+                ResponseMimeType = "application/json"
             };
 
             try
             {
-                // Gọi Gemini và nhận response
                 var result = await _kernel.InvokePromptAsync(
                     userPrompt,
                     new(settings)
@@ -135,13 +153,14 @@ namespace RoboChemist.SlidesService.Service.Implements
                     return null;
                 }
 
-                var jsonOptions = new JsonSerializerOptions 
-                { 
+                JsonSerializerOptions jsonSerializerOptions = new()
+                {
                     PropertyNameCaseInsensitive = true,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     AllowTrailingCommas = true,
                     ReadCommentHandling = JsonCommentHandling.Skip
                 };
+                var jsonOptions = jsonSerializerOptions;
 
                 var responseDto = JsonSerializer.Deserialize<ResponseGenerateDataDto>(
                     jsonResponse,
@@ -154,7 +173,6 @@ namespace RoboChemist.SlidesService.Service.Implements
                     return null;
                 }
 
-                // Validate dữ liệu sau khi parse
                 if (!ValidateResponseDto(responseDto))
                 {
                     _logger.LogWarning("Dữ liệu từ AI không hợp lệ (thiếu field bắt buộc).");
