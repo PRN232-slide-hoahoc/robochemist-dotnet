@@ -1,13 +1,19 @@
-using Ocelot.DependencyInjection;
-using Ocelot.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using MMLib.SwaggerForOcelot.DependencyInjection;
-using MMLib.SwaggerForOcelot;
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load .env file from solution root
+var solutionRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+var envPath = Path.Combine(solutionRoot, ".env");
+Console.WriteLine($"[DEBUG] Looking for .env at: {envPath}");
+Console.WriteLine($"[DEBUG] .env exists: {File.Exists(envPath)}");
+DotNetEnv.Env.Load(envPath);
+builder.Configuration.AddEnvironmentVariables();
 
 // Load Ocelot configuration - environment-specific first, then fallback to main
 builder.Configuration
@@ -23,6 +29,15 @@ builder.Services.AddSwaggerForOcelot(builder.Configuration);
 // Add Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Add HttpClient Factory for service health checks
+builder.Services.AddHttpClient("ServiceHealthCheck", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(2);
+});
+
+// Add HttpContextAccessor for accessing HTTP context in services
+builder.Services.AddHttpContextAccessor();
 
 // Keep a minimal Gateway swagger (useful to document gateway-specific endpoints)
 builder.Services.AddSwaggerGen(options =>
@@ -60,10 +75,13 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// JWT Authentication - Same configuration as AuthService
-var secretKey = "YourSuperSecretKeyMinimum32CharactersLong!@#$%^&*()";
-var issuer = "RoboChemist.AuthService";
-var audience = "RoboChemist.Client";
+// JWT Authentication Configuration
+var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") 
+    ?? throw new InvalidOperationException("JWT_SECRET not found in .env");
+var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+    ?? "RoboChemist.AuthService";
+var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+    ?? "RoboChemist.Client";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer("Bearer", options =>
@@ -83,21 +101,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// CORS
+// CORS - Load allowed origins from .env
+var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")
+    ?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+    ?? new[] { "http://localhost:5173" };
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
 // Configure middleware
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.UseRouting();
 

@@ -15,6 +15,48 @@
       "SwaggerKey": "auth"
     },
     {
+      "DownstreamPathTemplate": "/api/v1/grades/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7205
+        }
+      ],
+      "UpstreamPathTemplate": "/slides/v1/grades/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "slides"
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/topics/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7205
+        }
+      ],
+      "UpstreamPathTemplate": "/slides/v1/topics/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "slides"
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/syllabuses/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7205
+        }
+      ],
+      "UpstreamPathTemplate": "/slides/v1/syllabuses/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "slides"
+    },
+    {
       "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
@@ -30,6 +72,34 @@
       },
       "Priority": 2,
       "SwaggerKey": "slides"
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/questions/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/exam/v1/questions/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "exam"
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/matrices/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/exam/v1/matrices/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "exam"
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",
@@ -64,6 +134,34 @@
       },
       "Priority": 2,
       "SwaggerKey": "wallet"
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/templates",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7206
+        }
+      ],
+      "UpstreamPathTemplate": "/template/v1/templates",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "template"
+    },
+    {
+      "DownstreamPathTemplate": "/api/v1/templates/{id}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7206
+        }
+      ],
+      "UpstreamPathTemplate": "/template/v1/templates/{id}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 1,
+      "SwaggerKey": "template"
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",
