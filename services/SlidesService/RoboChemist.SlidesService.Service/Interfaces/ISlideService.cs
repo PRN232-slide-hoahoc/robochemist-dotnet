@@ -28,5 +28,12 @@ namespace RoboChemist.SlidesService.Service.Interfaces
         /// <param name="slideId">Generated slide unique identifier</param>
         /// <returns>Tuple containing file stream, content type, and filename for download</returns>
         Task<(Stream FileStream, string ContentType, string FileName)> DownloadSlideAsync(Guid slideId);
+
+        /// <summary>
+        /// Change the template of an existing slide and regenerate the PowerPoint file
+        /// </summary>
+        /// <param name="request">Slide id and new template id</param>
+        /// <returns>A new PowerPoint file with same contents but new template</returns>
+        Task<ApiResponse<SlideDto>> ChangeTemplateAsync(ChangeTemplateRequest request);
     }
 }

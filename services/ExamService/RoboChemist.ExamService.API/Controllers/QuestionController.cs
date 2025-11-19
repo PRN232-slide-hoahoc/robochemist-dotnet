@@ -10,7 +10,7 @@ namespace RoboChemist.ExamService.API.Controllers
     /// <summary>
     /// Controller for managing exam questions
     /// </summary>
-    [Route("api/v1/[controller]")]
+    [Route("api/v1/question")]
     [ApiController]
     public class QuestionController : ControllerBase
     {

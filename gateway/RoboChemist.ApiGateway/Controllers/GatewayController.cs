@@ -9,6 +9,23 @@ namespace RoboChemist.ApiGateway.Controllers
     [Route("api/[controller]")]
     public class GatewayController : ControllerBase
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _authServiceUrl;
+        private readonly string _slidesServiceUrl;
+        private readonly string _examServiceUrl;
+        private readonly string _walletServiceUrl;
+        private readonly string _templateServiceUrl;
+
+        public GatewayController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+            _authServiceUrl = Environment.GetEnvironmentVariable("AUTH_SERVICE_URL") ?? "https://localhost:7188";
+            _slidesServiceUrl = Environment.GetEnvironmentVariable("SLIDE_SERVICE_URL") ?? "https://localhost:7205";
+            _examServiceUrl = Environment.GetEnvironmentVariable("EXAM_SERVICE_URL") ?? "https://localhost:7002";
+            _walletServiceUrl = Environment.GetEnvironmentVariable("WALLET_SERVICE_URL") ?? "https://localhost:7100";
+            _templateServiceUrl = Environment.GetEnvironmentVariable("TEMPLATE_SERVICE_URL") ?? "https://localhost:7206";
+        }
+
         /// <summary>
         /// Lấy thông tin về API Gateway và routes
         /// </summary>
@@ -85,83 +102,56 @@ namespace RoboChemist.ApiGateway.Controllers
         [HttpGet("services/status")]
         public async Task<IActionResult> GetServicesStatus()
         {
-            var services = new List<object>();
-            var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(2);
+            var httpClient = _httpClientFactory.CreateClient("ServiceHealthCheck");
 
-            // Check AuthService
-            try
+            // Check all services in parallel
+            var serviceChecks = new[]
             {
-                var response = await httpClient.GetAsync("https://localhost:7188/api/user/public");
-                services.Add(new
-                {
-                    name = "AuthService",
-                    port = 7188,
-                    status = response.IsSuccessStatusCode ? "online" : "offline",
-                    statusCode = (int)response.StatusCode
-                });
-            }
-            catch
-            {
-                services.Add(new { name = "AuthService", port = 7188, status = "offline" });
-            }
+                CheckServiceAsync(httpClient, "AuthService", _authServiceUrl, "swagger/v1/swagger.json"),
+                CheckServiceAsync(httpClient, "SlidesService", _slidesServiceUrl, "swagger/v1/swagger.json"),
+                CheckServiceAsync(httpClient, "ExamService", _examServiceUrl, "swagger/v1/swagger.json"),
+                CheckServiceAsync(httpClient, "WalletService", _walletServiceUrl, "swagger/v1/swagger.json"),
+                CheckServiceAsync(httpClient, "TemplateService", _templateServiceUrl, "swagger/v1/swagger.json")
+            };
 
-            // Check SlidesService
-            try
-            {
-                var response = await httpClient.GetAsync("https://localhost:7205/swagger/index.html");
-                services.Add(new
-                {
-                    name = "SlidesService",
-                    port = 7205,
-                    status = response.IsSuccessStatusCode ? "online" : "offline",
-                    statusCode = (int)response.StatusCode
-                });
-            }
-            catch
-            {
-                services.Add(new { name = "SlidesService", port = 7205, status = "offline" });
-            }
-
-            // Check ExamService
-            try
-            {
-                var response = await httpClient.GetAsync("https://localhost:7002/swagger/index.html");
-                services.Add(new
-                {
-                    name = "ExamService",
-                    port = 7002,
-                    status = response.IsSuccessStatusCode ? "online" : "offline",
-                    statusCode = (int)response.StatusCode
-                });
-            }
-            catch
-            {
-                services.Add(new { name = "ExamService", port = 7002, status = "offline" });
-            }
-
-            // Check WalletService
-            try
-            {
-                var response = await httpClient.GetAsync("https://localhost:7100/swagger/index.html");
-                services.Add(new
-                {
-                    name = "WalletService",
-                    port = 7100,
-                    status = response.IsSuccessStatusCode ? "online" : "offline",
-                    statusCode = (int)response.StatusCode
-                });
-            }
-            catch
-            {
-                services.Add(new { name = "WalletService", port = 7100, status = "offline" });
-            }
+            var services = await Task.WhenAll(serviceChecks);
 
             return Ok(new
             {
                 timestamp = DateTime.UtcNow,
                 services = services
             });
+        }
+
+        private async Task<object> CheckServiceAsync(HttpClient httpClient, string serviceName, string baseUrl, string endpoint)
+        {
+            try
+            {
+                var url = $"{baseUrl}/{endpoint}";
+                var response = await httpClient.GetAsync(url);
+                var port = new Uri(baseUrl).Port;
+                
+                return new
+                {
+                    name = serviceName,
+                    port = port,
+                    status = response.IsSuccessStatusCode ? "online" : "offline",
+                    statusCode = (int)response.StatusCode,
+                    url = baseUrl
+                };
+            }
+            catch (Exception ex)
+            {
+                var port = new Uri(baseUrl).Port;
+                return new
+                {
+                    name = serviceName,
+                    port = port,
+                    status = "offline",
+                    error = ex.Message,
+                    url = baseUrl
+                };
+            }
         }
     }
 }

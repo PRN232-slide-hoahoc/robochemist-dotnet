@@ -33,10 +33,10 @@ namespace RoboChemist.SlidesService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("TemplateService");
                 AuthorizeHttpClient(httpClient);
 
-                var url = $"/template/v1/templates/{templateId}/download";
+                var url = $"/api/v1/templates/{templateId}/download";
                 var response = await httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
@@ -63,7 +63,7 @@ namespace RoboChemist.SlidesService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("TemplateService");
                 AuthorizeHttpClient(httpClient);
 
                 // Create multipart/form-data content
@@ -79,7 +79,7 @@ namespace RoboChemist.SlidesService.Service.HttpClients
 
                 content.Add(streamContent, "File", fileName);
 
-                var url = "/template/v1/files/upload";
+                var url = "/api/v1/files/upload";
                 var response = await httpClient.PostAsync(url, content);
 
                 if (!response.IsSuccessStatusCode)
@@ -108,10 +108,10 @@ namespace RoboChemist.SlidesService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("TemplateService");
                 AuthorizeHttpClient(httpClient);
 
-                var url = $"/template/v1/files/download?objectKey={Uri.EscapeDataString(objectKey)}";
+                var url = $"/api/v1/files/download?objectKey={Uri.EscapeDataString(objectKey)}";
                 var response = await httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)

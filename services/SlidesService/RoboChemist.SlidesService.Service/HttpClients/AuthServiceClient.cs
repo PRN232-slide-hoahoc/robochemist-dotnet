@@ -33,10 +33,10 @@ namespace RoboChemist.SlidesService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("AuthService");
                 AuthorizeHttpClient(httpClient);
 
-                var url = "/auth/v1/users/me";
+                var url = "/api/v1/users/me";
                 var response = await httpClient.GetAsync(url);
 
                 if (response == null || !response.IsSuccessStatusCode)

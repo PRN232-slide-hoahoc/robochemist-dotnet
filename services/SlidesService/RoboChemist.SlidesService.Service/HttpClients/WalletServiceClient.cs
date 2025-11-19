@@ -33,11 +33,11 @@ namespace RoboChemist.SlidesService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("WalletService");
 
                 AuthorizeHttpClient(httpClient);
 
-                var url = "/wallet/v1/wallet/payment";
+                var url = "/api/v1/wallet/payment";
 
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");

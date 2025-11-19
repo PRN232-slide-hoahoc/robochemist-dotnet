@@ -18,7 +18,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("WalletService");
 
                 if (!string.IsNullOrEmpty(authToken))
                 {
@@ -26,7 +26,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
 
-                var url = "/wallet/v1/wallet/payment";
+                var url = "/api/v1/wallet/payment";
                 Console.WriteLine($"[SAGA] WalletService.CreatePayment: {httpClient.BaseAddress}{url}");
                 Console.WriteLine($"[SAGA] Payment Request JSON: {JsonSerializer.Serialize(request)}");
 
@@ -74,7 +74,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                var httpClient = _httpClientFactory.CreateClient("WalletService");
 
                 if (!string.IsNullOrEmpty(authToken))
                 {
@@ -82,7 +82,7 @@ namespace RoboChemist.ExamService.Service.HttpClients
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
                 }
 
-                var url = "/wallet/v1/wallet/refund";
+                var url = "/api/v1/wallet/refund";
                 Console.WriteLine($"[SAGA COMPENSATE] WalletService.RefundPayment: {httpClient.BaseAddress}{url}");
 
                 var json = JsonSerializer.Serialize(request);

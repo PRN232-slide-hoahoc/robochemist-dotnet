@@ -30,7 +30,7 @@ public class WalletServiceClient : IWalletServiceClient
     {
         try
         {
-            var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+            var httpClient = _httpClientFactory.CreateClient("WalletService");
             
             // Forward JWT token from current request
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
@@ -43,7 +43,7 @@ public class WalletServiceClient : IWalletServiceClient
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await httpClient.PostAsync("/wallet/v1/wallet/payment", content);
+            var response = await httpClient.PostAsync("/api/v1/wallet/payment", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
@@ -69,7 +69,7 @@ public class WalletServiceClient : IWalletServiceClient
     {
         try
         {
-            var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+            var httpClient = _httpClientFactory.CreateClient("WalletService");
             
             // Forward JWT token from current request
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
@@ -82,7 +82,7 @@ public class WalletServiceClient : IWalletServiceClient
             var json = JsonSerializer.Serialize(request);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await httpClient.PostAsync("/wallet/v1/wallet/refund", content);
+            var response = await httpClient.PostAsync("/api/v1/wallet/refund", content);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)

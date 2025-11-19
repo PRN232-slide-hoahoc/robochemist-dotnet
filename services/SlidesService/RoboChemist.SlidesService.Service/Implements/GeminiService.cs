@@ -20,7 +20,7 @@ namespace RoboChemist.SlidesService.Service.Implements
             _logger = logger;
         }
 
-        public async Task<ResponseGenerateDataDto?> GenerateSlidesAsync(DataForGenerateSlideRequest request)
+        public async Task<(ResponseGenerateDataDto? dto, string? json)> GenerateSlidesAsync(DataForGenerateSlideRequest request)
         {
             var jsonStructure = """
                             {
@@ -96,7 +96,7 @@ namespace RoboChemist.SlidesService.Service.Implements
                                - Các slide nội dung: Triển khai kiến thức trọng tâm (chia nhỏ vấn đề).
 
                             3. **Quy tắc Bullet Points & Trình bày:**
-                               - **Tuyệt đối ngắn gọn:** Mỗi ý (Content) KHÔNG QUÁ 15 từ. Dùng phong cách "điện báo" (telegraphic style), lược bỏ hư từ.
+                               - **Tuyệt đối ngắn gọn:** Mỗi ý (Content) KHÔNG QUÁ 20 từ. Dùng phong cách "điện báo" (telegraphic style), lược bỏ hư từ.
                                - **Phân cấp rõ ràng:**
                                  + Level 1: Luận điểm chính/Tên mục.
                                  + Level 2: Giải thích ngắn/Công thức/Ví dụ.
@@ -139,48 +139,14 @@ namespace RoboChemist.SlidesService.Service.Implements
                 if (result is null || string.IsNullOrWhiteSpace(result.ToString()))
                 {
                     _logger.LogWarning("AI không trả về kết quả hợp lệ (null hoặc rỗng).");
-                    return null;
+                    return (null, null);
                 }
 
                 // Parse JSON response thành DTO
                 var jsonResponse = result.ToString().Trim();
                 _logger.LogInformation("AI Response: {Response}", jsonResponse);
 
-                // Kiểm tra xem response có phải JSON hợp lệ không
-                if (!jsonResponse.StartsWith('{') && !jsonResponse.StartsWith('}'))
-                {
-                    _logger.LogWarning("AI trả về không phải JSON. Response: {Response}", jsonResponse);
-                    return null;
-                }
-
-                JsonSerializerOptions jsonSerializerOptions = new()
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    AllowTrailingCommas = true,
-                    ReadCommentHandling = JsonCommentHandling.Skip
-                };
-                var jsonOptions = jsonSerializerOptions;
-
-                var responseDto = JsonSerializer.Deserialize<ResponseGenerateDataDto>(
-                    jsonResponse,
-                    jsonOptions
-                );
-
-                if (responseDto is null)
-                {
-                    _logger.LogWarning("Không thể parse JSON từ AI thành ResponseGenerateDataDto. JSON: {Json}", jsonResponse);
-                    return null;
-                }
-
-                if (!ValidateResponseDto(responseDto))
-                {
-                    _logger.LogWarning("Dữ liệu từ AI không hợp lệ (thiếu field bắt buộc).");
-                    return null;
-                }
-
-                _logger.LogInformation("Tạo slide thành công cho: {Lesson}", request.Lesson);
-                return responseDto;
+                return (ParseJsonToSlideDto(jsonResponse), jsonResponse);
             }
             catch (JsonException jsonEx)
             {
@@ -192,6 +158,44 @@ namespace RoboChemist.SlidesService.Service.Implements
                 _logger.LogError(ex, "Lỗi khi gọi Semantic Kernel hoặc Gemini.");
                 throw new InvalidOperationException("Lỗi từ máy chủ AI khi xử lý yêu cầu.", ex);
             }
+        }
+
+        public ResponseGenerateDataDto? ParseJsonToSlideDto(string json)
+        {
+            // Kiểm tra xem response có phải JSON hợp lệ không
+            if (!json.StartsWith('{') && !json.EndsWith('}'))
+            {
+                _logger.LogWarning("AI trả về không phải JSON. Response: {Response}", json);
+                return null;
+            }
+
+            JsonSerializerOptions jsonSerializerOptions = new()
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
+            var jsonOptions = jsonSerializerOptions;
+
+            var responseDto = JsonSerializer.Deserialize<ResponseGenerateDataDto>(
+                json,
+                jsonOptions
+            );
+
+            if (responseDto is null)
+            {
+                _logger.LogWarning("Không thể parse JSON từ AI thành ResponseGenerateDataDto. JSON: {Json}", json);
+                return null;
+            }
+
+            if (!ValidateResponseDto(responseDto))
+            {
+                _logger.LogWarning("Dữ liệu từ AI không hợp lệ (thiếu field bắt buộc).");
+                return null;
+            }
+
+            return responseDto;
         }
 
         /// <summary>

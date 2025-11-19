@@ -308,14 +308,5 @@
         public const string ORDER_STATUS_FAILED = "Thất bại";
 
         #endregion
-
-        #region Payment Reference Types
-
-        /// <summary>
-        /// Payment Reference Type: Template Purchase
-        /// </summary>
-        public const string PAYMENT_REF_TEMPLATE_PURCHASE = "MUA_TEMPLATE";
-
-        #endregion
     }
 }

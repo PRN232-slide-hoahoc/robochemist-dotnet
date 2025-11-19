@@ -11,6 +11,13 @@ namespace RoboChemist.SlidesService.Service.Interfaces
         /// </summary>
         /// <param name="request">Input data including lesson name, topic, grade, learning objectives, content outline, key concepts, desired slide count, and custom AI prompt</param>
         /// <returns>ResponseGenerateDataDto containing complete slide structure, or null if AI returns invalid data or JSON parsing fails</returns>
-        Task<ResponseGenerateDataDto?> GenerateSlidesAsync(DataForGenerateSlideRequest request);
+        Task<(ResponseGenerateDataDto? dto, string? json)> GenerateSlidesAsync(DataForGenerateSlideRequest request);
+
+        /// <summary>
+        /// Parse JSON string to ResponseGenerateDataDto
+        /// </summary>
+        /// <param name="json">JSON data</param>
+        /// <returns>ResponseGenerateDataDto containing complete slide structure</returns>
+        ResponseGenerateDataDto? ParseJsonToSlideDto(string json);
     }
 }
