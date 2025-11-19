@@ -61,5 +61,33 @@ namespace RoboChemist.WalletService.Service.HttpClients
                 throw new HttpRequestException($"Failed to get current user", ex);
             }
         }
+        public async Task<UserDto?> GetUserByIdAsync(Guid id)
+        {
+            try
+            {
+                var httpClient = _httpClientFactory.CreateClient("ApiGateway");
+                AuthorizeHttpClient(httpClient);
+
+                var url = $"/auth/v1/users/{id}";
+                var response = await httpClient.GetAsync(url);
+                if (response == null || !response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+                var json = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<ApiResponse<UserDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                //Return null if response is null or indicates failure
+                if (apiResponse == null || !apiResponse.Success)
+                {
+                    return null;
+                }
+                //Return the user data
+                return apiResponse.Data;
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new HttpRequestException($"Failed to get user by ID: {id}", ex);
+            }
+        }
     }
 }
