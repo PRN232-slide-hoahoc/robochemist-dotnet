@@ -97,6 +97,21 @@ namespace RoboChemist.Shared.DTOs.ExamServiceDTOs
             public DateTime? CreatedAt { get; set; }
 
             /// <summary>
+            /// Tên file đề thi đã export (ObjectKey trong TemplateService)
+            /// </summary>
+            public string? ExportedQuestionFileName { get; set; }
+
+            /// <summary>
+            /// Tên file đáp án đã export (ObjectKey trong TemplateService)
+            /// </summary>
+            public string? ExportedAnswerFileName { get; set; }
+
+            /// <summary>
+            /// Gets or sets the file format associated with the current operation.
+            /// </summary>
+            public string? FileFormat { get; set; }
+
+            /// <summary>
             /// Danh sách câu hỏi trong đề thi
             /// </summary>
             public List<ExamQuestionResponseDto> ExamQuestions { get; set; } = new();

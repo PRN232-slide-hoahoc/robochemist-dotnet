@@ -103,7 +103,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     UserId = userId,
                     Amount = createExamRequestDto.Price,
                     ReferenceId = Guid.NewGuid(),
-                    ReferenceType = "ExamRequest",
+                    ReferenceType = RoboChemistConstants.REFERENCE_TYPE_CREATE_EXAM,
                     Description = $"Thanh toán tạo đề thi từ ma trận {matrix.Name}"
                 };
 
@@ -137,19 +137,30 @@ namespace RoboChemist.ExamService.Service.Implements
                 await _unitOfWork.ExamRequests.CreateAsync(examRequest);
                 Console.WriteLine($"[SAGA] Step 3 SUCCESS: ExamRequest created");
 
-                // SAGA Step 4: Create GeneratedExam with PENDING status
-                Console.WriteLine($"[SAGA] Step 4: Creating GeneratedExam");
+                // SAGA Step 4: Create 2 GeneratedExam records (1 cho đề, 1 cho đáp án)
+                Console.WriteLine($"[SAGA] Step 4: Creating 2 GeneratedExam records");
                 
-                var generatedExam = new Generatedexam
+                var generatedExamQuestions = new Generatedexam
                 {
                     GeneratedExamId = Guid.NewGuid(),
                     ExamRequestId = examRequestId.Value,
                     Status = RoboChemistConstants.GENERATED_EXAM_STATUS_PENDING,
+                    FileFormat = RoboChemistConstants.GENERATED_EXAM_TYPE_QUESTIONS,
                     CreatedAt = DateTime.Now
                 };
+                await _unitOfWork.GeneratedExams.CreateAsync(generatedExamQuestions);
 
-                await _unitOfWork.GeneratedExams.CreateAsync(generatedExam);
-                Console.WriteLine($"[SAGA] Step 4 SUCCESS: GeneratedExam created with ID={generatedExam.GeneratedExamId}");
+                var generatedExamAnswers = new Generatedexam
+                {
+                    GeneratedExamId = Guid.NewGuid(),
+                    ExamRequestId = examRequestId.Value,
+                    Status = RoboChemistConstants.GENERATED_EXAM_STATUS_PENDING,
+                    FileFormat = RoboChemistConstants.GENERATED_EXAM_TYPE_ANSWERS,
+                    CreatedAt = DateTime.Now
+                };
+                await _unitOfWork.GeneratedExams.CreateAsync(generatedExamAnswers);
+                
+                Console.WriteLine($"[SAGA] Step 4 SUCCESS: Created 2 GeneratedExam records - Questions: {generatedExamQuestions.GeneratedExamId}, Answers: {generatedExamAnswers.GeneratedExamId}");
 
                 // SAGA Step 5: Random questions and create ExamQuestion
                 Console.WriteLine($"[SAGA] Step 5: Generating random questions");
@@ -186,7 +197,7 @@ namespace RoboChemist.ExamService.Service.Implements
                         var examQuestion = new Examquestion
                         {
                             ExamQuestionId = Guid.NewGuid(),
-                            GeneratedExamId = generatedExam.GeneratedExamId,
+                            GeneratedExamId = generatedExamQuestions.GeneratedExamId,
                             QuestionId = question.QuestionId,
                             Status = RoboChemistConstants.EXAMQUESTION_STATUS_ACTIVE,
                             CreatedAt = DateTime.Now
@@ -201,14 +212,78 @@ namespace RoboChemist.ExamService.Service.Implements
                 Console.WriteLine($"[SAGA] Step 5 SUCCESS: Created {examQuestions.Count} exam questions");
 
                 // SAGA Step 6: Update statuses
-                generatedExam.Status = RoboChemistConstants.GENERATED_EXAM_STATUS_READY;
-                await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
+                generatedExamQuestions.Status = RoboChemistConstants.GENERATED_EXAM_STATUS_READY;
+                await _unitOfWork.GeneratedExams.UpdateAsync(generatedExamQuestions);
+                
+                generatedExamAnswers.Status = RoboChemistConstants.GENERATED_EXAM_STATUS_READY;
+                await _unitOfWork.GeneratedExams.UpdateAsync(generatedExamAnswers);
 
                 examRequest.Status = RoboChemistConstants.EXAMREQ_STATUS_COMPLETED;
                 await _unitOfWork.ExamRequests.UpdateAsync(examRequest);
                 
                 await _unitOfWork.SaveChangesAsync();
                 Console.WriteLine($"[SAGA] Step 6 SUCCESS: Updated statuses to READY and COMPLETED");
+
+                // SAGA Step 7: Auto export cả đề và đáp án
+                Console.WriteLine($"[SAGA] Step 7: Auto-exporting questions and answers");
+                
+                try
+                {
+                    var questionIds = examQuestions.Select(eq => eq.QuestionId).ToList();
+                    var questions = await _unitOfWork.Questions.GetQuestionsWithOptionsByIdsAsync(questionIds);
+                    
+                    var orderedQuestions = examQuestions
+                        .Select(eq => questions.FirstOrDefault(q => q.QuestionId == eq.QuestionId))
+                        .Where(q => q != null)
+                        .Cast<Question>()
+                        .ToList();
+
+                    // Export đề thi
+                    var questionBytes = await _wordExportService.ExportExamQuestionsOnlyAsync(
+                        matrixName: matrix.Name ?? "Đề thi",
+                        questions: orderedQuestions,
+                        totalQuestions: matrix.TotalQuestion ?? orderedQuestions.Count,
+                        timeLimit: null
+                    );
+                    
+                    var questionFileName = $"{matrix.Name?.Replace(" ", "_") ?? "DeThi"}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                    using (var qMs = new MemoryStream(questionBytes))
+                    {
+                        var qUpload = await _templateServiceClient.UploadFileAsync(qMs, questionFileName);
+                        generatedExamQuestions.ExportedFileName = qUpload.ObjectKey;
+                        generatedExamQuestions.ExportedAt = DateTime.Now;
+                        generatedExamQuestions.ExportedBy = userId;
+                        await _unitOfWork.GeneratedExams.UpdateAsync(generatedExamQuestions);
+                        Console.WriteLine($"[SAGA] Step 7a: Question file uploaded - {qUpload.ObjectKey}");
+                    }
+
+                    // Export đáp án
+                    var answerBytes = await _wordExportService.ExportAnswerKeyOnlyAsync(
+                        matrixName: matrix.Name ?? "Đề thi",
+                        questions: orderedQuestions,
+                        totalQuestions: matrix.TotalQuestion ?? orderedQuestions.Count
+                    );
+                    
+                    var answerFileName = $"DapAn_{matrix.Name?.Replace(" ", "_") ?? "DeThi"}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                    using (var aMs = new MemoryStream(answerBytes))
+                    {
+                        var aUpload = await _templateServiceClient.UploadFileAsync(aMs, answerFileName);
+                        generatedExamAnswers.ExportedFileName = aUpload.ObjectKey;
+                        generatedExamAnswers.ExportedAt = DateTime.Now;
+                        generatedExamAnswers.ExportedBy = userId;
+                        await _unitOfWork.GeneratedExams.UpdateAsync(generatedExamAnswers);
+                        Console.WriteLine($"[SAGA] Step 7b: Answer file uploaded - {aUpload.ObjectKey}");
+                    }
+
+                    await _unitOfWork.SaveChangesAsync();
+                    
+                    Console.WriteLine($"[SAGA] Step 7 SUCCESS: Auto-export completed");
+                }
+                catch (Exception exportEx)
+                {
+                    Console.WriteLine($"[SAGA] Step 7 WARNING: Auto-export failed but exam created: {exportEx.Message}");
+                    // Không throw exception vì đề đã tạo thành công, chỉ export bị lỗi
+                }
 
                 // Map response
                 var response = new ExamRequestResponseDto
@@ -223,18 +298,23 @@ namespace RoboChemist.ExamService.Service.Implements
                     {
                         new GeneratedExamResponseDto
                         {
-                            GeneratedExamId = generatedExam.GeneratedExamId,
-                            ExamRequestId = generatedExam.ExamRequestId,
-                            Status = generatedExam.Status,
-                            CreatedAt = generatedExam.CreatedAt,
-                            ExamQuestions = examQuestions.Select((eq, index) => new ExamQuestionResponseDto
-                            {
-                                ExamQuestionId = eq.ExamQuestionId,
-                                GeneratedExamId = eq.GeneratedExamId,
-                                QuestionId = eq.QuestionId,
-                                QuestionOrder = index + 1,
-                                Points = 1.0m
-                            }).ToList()
+                            GeneratedExamId = generatedExamQuestions.GeneratedExamId,
+                            ExamRequestId = generatedExamQuestions.ExamRequestId,
+                            Status = generatedExamQuestions.Status,
+                            CreatedAt = generatedExamQuestions.CreatedAt,
+                            ExportedQuestionFileName = generatedExamQuestions.ExportedFileName,
+                            ExportedAnswerFileName = null,
+                            FileFormat = generatedExamQuestions.FileFormat
+                        },
+                        new GeneratedExamResponseDto
+                        {
+                            GeneratedExamId = generatedExamAnswers.GeneratedExamId,
+                            ExamRequestId = generatedExamAnswers.ExamRequestId,
+                            Status = generatedExamAnswers.Status,
+                            CreatedAt = generatedExamAnswers.CreatedAt,
+                            ExportedQuestionFileName = null,
+                            ExportedAnswerFileName = generatedExamAnswers.ExportedFileName,
+                            FileFormat = generatedExamAnswers.FileFormat
                         }
                     }
                 };
@@ -346,16 +426,30 @@ namespace RoboChemist.ExamService.Service.Implements
                 {
                     var matrix = await _unitOfWork.Matrices.GetByIdAsync(examRequest.MatrixId);
                     
+                    // Lấy GeneratedExams để map exported file names
+                    var generatedExams = await _unitOfWork.GeneratedExams.GetByExamRequestIdAsync(examRequest.ExamRequestId);
+                    var generatedExamDtos = generatedExams.Select(ge => new GeneratedExamResponseDto
+                    {
+                        GeneratedExamId = ge.GeneratedExamId,
+                        ExamRequestId = ge.ExamRequestId,
+                        Status = ge.Status,
+                        CreatedAt = ge.CreatedAt,
+                        // FileFormat="QUESTIONS" -> đây là file đề, "ANSWERS" -> đây là file đáp án
+                        ExportedQuestionFileName = ge.FileFormat == RoboChemistConstants.GENERATED_EXAM_TYPE_QUESTIONS ? ge.ExportedFileName : null,
+                        ExportedAnswerFileName = ge.FileFormat == RoboChemistConstants.GENERATED_EXAM_TYPE_ANSWERS ? ge.ExportedFileName : null,
+                        FileFormat = ge.FileFormat,
+                        ExamQuestions = new List<ExamQuestionResponseDto>()
+                    }).ToList();
+                    
                     response.Add(new ExamRequestResponseDto
                     {
                         ExamRequestId = examRequest.ExamRequestId,
                         UserId = examRequest.UserId,
                         MatrixId = examRequest.MatrixId,
                         MatrixName = matrix?.Name ?? "Unknown Matrix",
-                        // GradeId, GradeName, Prompt đã BỎ
                         Status = examRequest.Status,
                         CreatedAt = examRequest.CreatedAt,
-                        GeneratedExams = new List<GeneratedExamResponseDto>()
+                        GeneratedExams = generatedExamDtos
                     });
                 }
 
@@ -727,8 +821,19 @@ namespace RoboChemist.ExamService.Service.Implements
                     timeLimit: null
                 );
 
-                var fileName = $"{matrix.Name?.Replace(" ", "_") ?? "DeThi"}.docx";
-                _logger.LogInformation("[ExportExamQuestions] SUCCESS - FileName: {FileName}", fileName);
+                var fileName = $"{matrix.Name?.Replace(" ", "_") ?? "DeThi"}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                
+                // Lưu vào TemplateService
+                using var ms = new MemoryStream(wordBytes);
+                var uploadResponse = await _templateServiceClient.UploadFileAsync(ms, fileName);
+                
+                // Cập nhật GeneratedExam với exported_question_file_name
+                generatedExam.ExportedFileName = uploadResponse.ObjectKey;
+                generatedExam.ExportedAt = DateTime.Now;
+                await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
+                await _unitOfWork.SaveChangesAsync();
+                
+                _logger.LogInformation("[ExportExamQuestions] SUCCESS - FileName: {FileName}, ObjectKey: {ObjectKey}", fileName, uploadResponse.ObjectKey);
 
                 return ApiResponse<byte[]>.SuccessResult(wordBytes, fileName);
             }
@@ -793,8 +898,23 @@ namespace RoboChemist.ExamService.Service.Implements
                     totalQuestions: matrix.TotalQuestion ?? orderedQuestions.Count
                 );
 
-                var fileName = $"DapAn_{matrix.Name?.Replace(" ", "_") ?? "DeThi"}.docx";
-                _logger.LogInformation("[ExportAnswerKey] SUCCESS - FileName: {FileName}", fileName);
+                var fileName = $"DapAn_{matrix.Name?.Replace(" ", "_") ?? "DeThi"}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                
+                // Lưu vào TemplateService
+                using var ms = new MemoryStream(wordBytes);
+                var uploadResponse = await _templateServiceClient.UploadFileAsync(ms, fileName);
+                
+                // Lưu answer file name vào FileFormat (tạm thời dùng field này cho answer)
+                // ExportedFileName = questions file, FileFormat = answers file
+                generatedExam.FileFormat = uploadResponse.ObjectKey;
+                if (generatedExam.ExportedAt == null)
+                {
+                    generatedExam.ExportedAt = DateTime.Now;
+                }
+                await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
+                await _unitOfWork.SaveChangesAsync();
+                
+                _logger.LogInformation("[ExportAnswerKey] SUCCESS - FileName: {FileName}, ObjectKey: {ObjectKey}", fileName, uploadResponse.ObjectKey);
 
                 return ApiResponse<byte[]>.SuccessResult(wordBytes, fileName);
             }
