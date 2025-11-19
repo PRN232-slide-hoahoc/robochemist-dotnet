@@ -122,6 +122,7 @@ public class OrderService : IOrderService
             TotalAmount = o.TotalAmount,
             Status = o.Status,
             ItemCount = o.OrderDetails.Count,
+            TemplateName = o.OrderDetails.FirstOrDefault()?.Template?.TemplateName,
             CreatedAt = o.CreatedAt
         });
 
@@ -130,23 +131,20 @@ public class OrderService : IOrderService
 
     public async Task<ApiResponse<PagedResult<OrderSummaryResponse>>> GetAllOrdersAsync(PaginationParams paginationParams)
     {
-        var query = (await _unitOfWork.Orders.GetAllAsync())
-            .OrderByDescending(o => o.CreatedAt);
+        var (orders, totalCount) = await _unitOfWork.Orders.GetPagedOrdersWithDetailsAsync(
+            paginationParams.PageNumber,
+            paginationParams.PageSize);
 
-        var totalCount = query.Count();
-        var items = query
-            .Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
-            .Take(paginationParams.PageSize)
-            .Select(o => new OrderSummaryResponse
-            {
-                OrderId = o.OrderId,
-                OrderNumber = o.OrderNumber,
-                TotalAmount = o.TotalAmount,
-                Status = o.Status,
-                ItemCount = o.OrderDetails.Count,
-                CreatedAt = o.CreatedAt
-            })
-            .ToList();
+        var items = orders.Select(o => new OrderSummaryResponse
+        {
+            OrderId = o.OrderId,
+            OrderNumber = o.OrderNumber,
+            TotalAmount = o.TotalAmount,
+            Status = o.Status,
+            ItemCount = o.OrderDetails.Count,
+            TemplateName = o.OrderDetails.FirstOrDefault()?.Template?.TemplateName,
+            CreatedAt = o.CreatedAt
+        }).ToList();
 
         var pagedResult = new PagedResult<OrderSummaryResponse>
         {
