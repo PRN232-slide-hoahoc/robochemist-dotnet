@@ -11,6 +11,6 @@ namespace RoboChemist.WalletService.Service.Interfaces
         Task<ApiResponse<WalletTransactionDto>> DepositCallbackAsync(DepositCallbackRequestDto depositCallbackRequestDto);
         Task<ApiResponse<CreateChangeBalanceRequestDto>> CreatePaymentRequestAsync(CreateChangeBalanceRequestDto paymentRequestDTO, Guid userId);
         Task<ApiResponse<CreateChangeBalanceRequestDto>> CreateRefundRequestAsync(CreateChangeBalanceRequestDto paymentRequestDTO, Guid userId);
-        Task<ApiResponse<List<WalletTransactionDto>>> GetAllTransactionAsync(Guid userId);
+        Task<ApiResponse<List<WalletTransactionDto>>> GetAllTransactionAsync();
     }
 }
