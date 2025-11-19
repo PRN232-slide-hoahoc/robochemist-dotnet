@@ -1,96 +1,85 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.AuthService.Model.Models;
-using RoboChemist.AuthService.Services;
+using RoboChemist.AuthService.Service.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
 using System.Security.Claims;
 
 namespace RoboChemist.AuthService.API.Controllers
 {
+    /// <summary>
+    /// Controller quản lý người dùng: đăng ký, đăng nhập, lấy thông tin người dùng, validate token.
+    /// </summary>
     [ApiController]
     [Route("api/v1/users")]
     public class UserController : ControllerBase
     {
-        private readonly UserService _userService;
+        private readonly IUserService _userService;
 
-        public UserController(UserService userService)
+        /// <summary>
+        /// Khởi tạo UserController.
+        /// </summary>
+        /// <param name="userService">Service xử lý nghiệp vụ người dùng.</param>
+        public UserController(IUserService userService)
         {
             _userService = userService;
         }
 
+
         /// <summary>
-        /// Đăng ký tài khoản mới
+        /// Đăng ký tài khoản mới.
         /// </summary>
+        /// <param name="request">Thông tin đăng ký gồm email, password, name...</param>
+        /// <returns>ApiResponse chứa AuthResponse (JWT + User info)</returns>
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult<ApiResponse<AuthResponse>>> Register([FromBody] RegisterRequest request)
         {
             try
             {
                 var response = await _userService.RegisterAsync(request);
-                return Ok(new
-                {
-                    success = true,
-                    message = "Đăng ký thành công",
-                    data = response
-                });
+                return Ok(ApiResponse<AuthResponse>.SuccessResult(response, "Đăng ký thành công"));
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return BadRequest(ApiResponse<AuthResponse>.ErrorResult(ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Có lỗi xảy ra trong quá trình đăng ký",
-                    error = ex.Message
-                });
+                return StatusCode(500,
+                    ApiResponse<AuthResponse>.ErrorResult("Có lỗi xảy ra trong quá trình đăng ký", [ex.Message]));
             }
         }
 
+
         /// <summary>
-        /// Đăng nhập
+        /// Đăng nhập và trả về JWT token.
         /// </summary>
+        /// <param name="request">Thông tin đăng nhập (email + password).</param>
+        /// <returns>ApiResponse chứa AuthResponse (JWT + User info)</returns>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<ApiResponse<AuthResponse>>> Login([FromBody] LoginRequest request)
         {
             try
             {
                 var response = await _userService.LoginAsync(request);
-                return Ok(new
-                {
-                    success = true,
-                    message = "Đăng nhập thành công",
-                    data = response
-                });
+                return Ok(ApiResponse<AuthResponse>.SuccessResult(response, "Đăng nhập thành công"));
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Unauthorized(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
+                return Unauthorized(ApiResponse<AuthResponse>.ErrorResult(ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Có lỗi xảy ra trong quá trình đăng nhập",
-                    error = ex.Message
-                });
+                return StatusCode(500,
+                    ApiResponse<AuthResponse>.ErrorResult("Có lỗi xảy ra trong quá trình đăng nhập", [ex.Message]));
             }
         }
 
+
         /// <summary>
-        /// Lấy thông tin user hiện tại (cần token)
+        /// Lấy thông tin người dùng hiện tại dựa vào token.
         /// </summary>
+        /// <returns>ApiResponse chứa thông tin UserDto.</returns>
         [Authorize]
         [HttpGet("me")]
         public async Task<ActionResult<ApiResponse<UserDto>>> GetCurrentUser()
@@ -101,40 +90,30 @@ namespace RoboChemist.AuthService.API.Controllers
 
                 if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
                 {
-                    return Unauthorized(new
-                    {
-                        success = false,
-                        message = "Token không hợp lệ"
-                    });
+                    return Unauthorized(ApiResponse<UserDto>.ErrorResult("Token không hợp lệ"));
                 }
 
                 var user = await _userService.GetUserByIdAsync(userId);
 
                 if (user == null)
                 {
-                    return NotFound(new
-                    {
-                        success = false,
-                        message = "Không tìm thấy người dùng"
-                    });
+                    return NotFound(ApiResponse<UserDto>.ErrorResult("Không tìm thấy người dùng"));
                 }
 
                 return ApiResponse<UserDto>.SuccessResult(user);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Có lỗi xảy ra",
-                    error = ex.Message
-                });
+                return StatusCode(500,
+                    ApiResponse<UserDto>.ErrorResult("Có lỗi xảy ra", [ex.Message]));
             }
         }
 
+
         /// <summary>
-        /// Kiểm tra token còn hợp lệ không
+        /// Xác thực token xem có hợp lệ hay không.
         /// </summary>
+        /// <returns>Thông tin user từ token.</returns>
         [Authorize]
         [HttpGet("validate-token")]
         public IActionResult ValidateToken()
@@ -149,16 +128,19 @@ namespace RoboChemist.AuthService.API.Controllers
                 message = "Token hợp lệ",
                 data = new
                 {
-                    userId = userId,
-                    email = email,
-                    name = name
+                    userId,
+                    email,
+                    name
                 }
             });
         }
 
+
         /// <summary>
-        /// Lấy thông tin user theo ID (cần token)
+        /// Lấy thông tin người dùng theo ID.
         /// </summary>
+        /// <param name="id">ID của người dùng.</param>
+        /// <returns>Thông tin người dùng nếu tồn tại.</returns>
         [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(Guid id)
@@ -169,46 +151,32 @@ namespace RoboChemist.AuthService.API.Controllers
 
                 if (user == null)
                 {
-                    return NotFound(new
-                    {
-                        success = false,
-                        message = "Không tìm thấy người dùng"
-                    });
+                    return NotFound(ApiResponse<UserDto>.ErrorResult("Không tìm thấy người dùng"));
                 }
 
-                return Ok(new
-                {
-                    success = true,
-                    data = user
-                });
+                return Ok(ApiResponse<UserDto>.SuccessResult(user));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Có lỗi xảy ra",
-                    error = ex.Message
-                });
+                return StatusCode(500,
+                    ApiResponse<UserDto>.ErrorResult("Có lỗi xảy ra", [ex.Message]));
             }
         }
 
+
         /// <summary>
-        /// API test không cần token
+        /// Endpoint công khai dành cho test, không yêu cầu token.
         /// </summary>
         [AllowAnonymous]
         [HttpGet("public")]
         public IActionResult PublicEndpoint()
         {
-            return Ok(new
-            {
-                success = true,
-                message = "Đây là endpoint công khai, không cần token"
-            });
+            return Ok(ApiResponse<string>.SuccessResult("Đây là endpoint công khai, không cần token"));
         }
 
+
         /// <summary>
-        /// API test cần token
+        /// Endpoint bảo vệ, chỉ truy cập khi có JWT.
         /// </summary>
         [Authorize]
         [HttpGet("protected")]
@@ -217,16 +185,11 @@ namespace RoboChemist.AuthService.API.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
-            return Ok(new
+            return Ok(ApiResponse<object>.SuccessResult(new
             {
-                success = true,
-                message = "Đây là endpoint được bảo vệ",
-                data = new
-                {
-                    userId = userId,
-                    email = email
-                }
-            });
+                userId,
+                email
+            }, "Đây là endpoint được bảo vệ"));
         }
     }
 }

@@ -1,16 +1,16 @@
-﻿using System;
+﻿using RoboChemist.AuthService.Model.Models;
+using RoboChemist.AuthService.Repository.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RoboChemist.AuthService.Model;
-using Microsoft.EntityFrameworkCore;
 using RoboChemist.AuthService.Model.Data;
-using RoboChemist.AuthService.Model.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace RoboChemist.AuthService.Repository
+namespace RoboChemist.AuthService.Repository.Implement
 {
-    public class UserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
 
