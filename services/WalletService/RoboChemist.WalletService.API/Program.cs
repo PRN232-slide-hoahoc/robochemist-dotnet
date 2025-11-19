@@ -51,15 +51,12 @@ builder.Services.AddScoped<IAuthServiceClient,AuthServiceClient>();
 // Background Services
 builder.Services.AddHostedService<TransactionStatusUpdateService>();
 
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
-var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
-
-if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
-{
-    throw new Exception("❌ Không tìm thấy thông tin JWT trong appsettings.json!");
-}
-
-var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")
+    ?? throw new Exception("JWT_SECRET not found in .env!");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+    ?? throw new Exception("JWT_ISSUER not found in .env!");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+    ?? throw new Exception("JWT_AUDIENCE not found in .env!");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -74,9 +71,9 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings.Issuer,
-        ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = key,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         ClockSkew = TimeSpan.Zero
     };
 });
