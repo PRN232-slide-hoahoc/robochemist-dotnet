@@ -1,4 +1,6 @@
-﻿namespace RoboChemist.Shared.DTOs.SlideDTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace RoboChemist.Shared.DTOs.SlideDTOs
 {
     public class SlideRequestDTOs
     {
@@ -6,8 +8,10 @@
         {
             public Guid SyllabusId { get; set; }
 
+            [Range(3, 30, ErrorMessage = "Số lượng slide phải nằm trong khoảng từ 3 đến 30.")]
             public int? NumberOfSlides { get; set; }
 
+            [StringLength(300, ErrorMessage = "Hướng dẫn thêm (AiPrompt) không được vượt quá 300 ký tự.")]
             public string? AiPrompt { get; set; }
 
             public Guid? TemplateId { get; set; }
@@ -27,9 +31,9 @@
             public string? GenerationStatus { get; set; }
 
             // Sort parameters
-            public string SortBy { get; set; } = "GeneratedAt"; // GeneratedAt, GradeName, TopicSortOrder, LessonOrder
+            public string SortBy { get; set; } = "GeneratedAt";
 
-            public string SortOrder { get; set; } = "desc"; // asc, desc
+            public string SortOrder { get; set; } = "desc";
         }
 
         public class DataForGenerateSlideRequest
