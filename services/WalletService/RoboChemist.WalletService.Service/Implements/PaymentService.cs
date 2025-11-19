@@ -272,23 +272,48 @@ namespace RoboChemist.WalletService.Service.Implements
                 return ApiResponse<List<WalletTransactionDto>>.ErrorResult("Người dùng không hợp lệ");
             }
 
-            UserWallet wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(user.Id);
-            if (wallet == null)
-            {
-                return ApiResponse<List<WalletTransactionDto>>.ErrorResult("Ví người dùng không tồn tại");
-            }
-
             List<WalletTransaction> transactions = await _unitOfWork.WalletTransactionRepo.GetAllAsync();
             if (transactions == null)
             {
                 return ApiResponse<List<WalletTransactionDto>>.ErrorResult("Không tìm thấy giao dịch");
             }
-            List<WalletTransactionDto> transactionDto = transactions
-                .Where(t => t.WalletId == wallet.WalletId)
-                .Select(t => new WalletTransactionDto
+            var query = transactions.AsQueryable();
+            Guid? userWalletId = null;
+            
+            if (user.Role != ROLE_STAFF)
+            {
+                UserWallet wallet = await _unitOfWork.UserWalletRepo.GetWalletByUserIdAsync(user.Id);
+                if (wallet == null)
+                {
+                    return ApiResponse<List<WalletTransactionDto>>.ErrorResult("Ví người dùng không tồn tại");
+                }
+                userWalletId = wallet.WalletId;
+                query = query.Where(t => t.WalletId == wallet.WalletId);
+            }
+            
+            List<WalletTransactionDto> transactionDto = new List<WalletTransactionDto>();
+            foreach (var t in query.OrderByDescending(t => t.CreateAt).ToList())
+            {
+                Guid userId;
+                UserDto? tempUser = null;
+                if (user.Role == ROLE_STAFF)
+                {
+                    // Lấy UserId từ WalletId cho staff
+                    var wallet = await _unitOfWork.UserWalletRepo.GetByIdAsync(t.WalletId);
+                    userId = wallet?.UserId ?? Guid.Empty;
+                    tempUser = await _authService.GetUserByIdAsync(userId);
+                }
+                else
+                {
+                    userId = user.Id;
+                    tempUser = user;
+                }
+                
+                transactionDto.Add(new WalletTransactionDto
                 {
                     TransactionId = t.TransactionId,
-                    UserId = user.Id,
+                    UserId = userId,
+                    UserName = tempUser?.Fullname,
                     WalletId = t.WalletId,
                     TransactionType = t.TransactionType,
                     Amount = t.Amount,
@@ -299,9 +324,8 @@ namespace RoboChemist.WalletService.Service.Implements
                     Description = t.Description,
                     CreateAt = t.CreateAt,
                     UpdateAt = t.UpdateAt
-                })
-                .OrderByDescending(t => t.CreateAt)
-                .ToList();
+                });
+            }
             return ApiResponse<List<WalletTransactionDto>>.SuccessResult(transactionDto, "Lấy thông tin giao dịch thành công");
         }
         #endregion

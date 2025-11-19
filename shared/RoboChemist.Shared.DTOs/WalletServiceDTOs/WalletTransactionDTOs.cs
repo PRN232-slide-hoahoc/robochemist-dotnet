@@ -8,6 +8,7 @@ namespace RoboChemist.Shared.DTOs.WalletServiceDTOs
         {
             public Guid TransactionId { get; set; }
             public Guid? UserId { get; set; }
+            public string? UserName { get; set; }
             public Guid WalletId { get; set; }
             public string TransactionType { get; set; } = string.Empty;
             public decimal Amount { get; set; }
