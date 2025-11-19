@@ -237,6 +237,10 @@
         /// Transaction Type: Refund
         /// </summary>
         public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
+
+        public const string REFERENCE_TYPE_CREATE_SLIDE = "Tạo slide";
+        public const string REFERENCE_TYPE_CREATE_EXAM = "Tạo đề thi";
+        public const string REFERENCE_TYPE_BUY_TEMPLATE = "Mua template";
         #endregion
 
         #region Order Status
