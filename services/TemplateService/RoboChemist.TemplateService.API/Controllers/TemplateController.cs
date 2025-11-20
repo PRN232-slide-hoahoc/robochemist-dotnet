@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.Common.Constants;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Service.Interfaces;
 
@@ -50,7 +51,7 @@ public class TemplateController : ControllerBase
     /// For Staff/Admin management that needs to see ALL templates (including inactive), use GET /api/v1/templates/staff endpoint.
     /// </remarks>
     [HttpGet]
-    [Authorize(Roles ="User, Staff, Admin")]
+    [Authorize(Roles = $"{RoboChemistConstants.ROLE_USER},{RoboChemistConstants.ROLE_STAFF}")]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<TemplateResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<PagedResult<TemplateResponse>>>> GetAllTemplates([FromQuery] PaginationParams paginationParams)
@@ -85,7 +86,7 @@ public class TemplateController : ControllerBase
     /// Regular users should use GET /api/v1/templates which filters to active templates only.
     /// </remarks>
     [HttpGet("staff")]
-    [Authorize(Roles ="Staff, Admin")]
+    [Authorize(Roles = RoboChemistConstants.ROLE_STAFF)]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<TemplateResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<PagedResult<TemplateResponse>>>> GetAllTemplatesForStaff([FromQuery] PaginationParams paginationParams)
@@ -116,7 +117,7 @@ public class TemplateController : ControllerBase
     /// <response code="404">Template not found</response>
     /// <response code="500">Internal server error occurred</response>
     [HttpGet("{id}")]
-    [Authorize(Roles ="User, Staff, Admin")]
+    [Authorize(Roles = $"{RoboChemistConstants.ROLE_USER},{RoboChemistConstants.ROLE_STAFF}")]
     [ProducesResponseType(typeof(ApiResponse<TemplateResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -157,7 +158,7 @@ public class TemplateController : ControllerBase
     /// The URL provides direct access to the file without authentication.
     /// </remarks>
     [HttpGet("{id}/presigned-url")]
-    [Authorize(Roles ="User, Staff, Admin")]
+    [Authorize(Roles = $"{RoboChemistConstants.ROLE_USER},{RoboChemistConstants.ROLE_STAFF}")]
     [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -201,7 +202,7 @@ public class TemplateController : ControllerBase
     /// The download count will be automatically incremented upon successful download.
     /// </remarks>
     [HttpGet("{id}/download")]
-    [Authorize(Roles ="User, Staff, Admin")]
+    [Authorize(Roles = $"{RoboChemistConstants.ROLE_USER},{RoboChemistConstants.ROLE_STAFF}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -323,7 +324,7 @@ public class TemplateController : ControllerBase
     /// <response code="401">Unauthorized - valid JWT token required</response>
     /// <response code="500">Internal server error occurred</response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Staff, Admin")]
+    [Authorize(Roles = RoboChemistConstants.ROLE_STAFF)]
     [ProducesResponseType(typeof(ApiResponse<Model.Models.Template>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -385,7 +386,7 @@ public class TemplateController : ControllerBase
     /// Only Staff and Admin can delete templates.
     /// </remarks>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Staff, Admin")]
+    [Authorize(Roles = RoboChemistConstants.ROLE_STAFF)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoboChemist.TemplateService.Model.DTOs;
 using RoboChemist.TemplateService.Service.Interfaces;
 using RoboChemist.Shared.DTOs.Common;
+using RoboChemist.Shared.Common.Constants;
 
 namespace RoboChemist.TemplateService.API.Controllers;
 
@@ -28,6 +30,7 @@ public class OrderController : ControllerBase
     /// <response code="200">Order found</response>
     /// <response code="404">Order not found</response>
     [HttpGet("{orderId:guid}")]
+    [Authorize(Roles = $"{RoboChemistConstants.ROLE_USER},{RoboChemistConstants.ROLE_STAFF}")]
     [ProducesResponseType(typeof(ApiResponse<OrderResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<OrderResponse>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<OrderResponse>>> GetOrderById(Guid orderId)
@@ -54,6 +57,7 @@ public class OrderController : ControllerBase
     /// <returns>List of user orders</returns>
     /// <response code="200">Orders retrieved successfully</response>
     [HttpGet("user/{userId:guid}")]
+    [Authorize(Roles = $"{RoboChemistConstants.ROLE_USER},{RoboChemistConstants.ROLE_STAFF}")]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<OrderSummaryResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<OrderSummaryResponse>>), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<IEnumerable<OrderSummaryResponse>>>> GetUserOrders(Guid userId)
@@ -81,6 +85,7 @@ public class OrderController : ControllerBase
     /// <returns>Paginated list of orders</returns>
     /// <response code="200">Orders retrieved successfully</response>
     [HttpGet]
+    [Authorize(Roles = RoboChemistConstants.ROLE_STAFF)]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderSummaryResponse>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<OrderSummaryResponse>>), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<PagedResult<OrderSummaryResponse>>>> GetAllOrders(
