@@ -8,9 +8,5 @@ namespace RoboChemist.TemplateService.Repository.Interfaces;
 /// </summary>
 public interface IOrderDetailRepository : IGenericRepository<OrderDetail>
 {
-    /// <summary>
-    /// Get order details by order ID
-    /// </summary>
-    Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(Guid orderId);
 }
 

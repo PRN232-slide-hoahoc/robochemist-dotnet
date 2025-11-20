@@ -14,11 +14,6 @@ public interface IOrderRepository : IGenericRepository<Order>
     Task<IEnumerable<Order>> GetOrdersByUserIdAsync(Guid userId);
 
     /// <summary>
-    /// Get order by order number
-    /// </summary>
-    Task<Order?> GetOrderByOrderNumberAsync(string orderNumber);
-
-    /// <summary>
     /// Get paginated orders with OrderDetails and Template navigation properties
     /// </summary>
     Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersWithDetailsAsync(int pageNumber, int pageSize);

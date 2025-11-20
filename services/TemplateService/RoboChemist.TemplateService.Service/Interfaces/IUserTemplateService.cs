@@ -19,21 +19,6 @@ public interface IUserTemplateService
     Task<ApiResponse<bool>> CheckTemplateAccessAsync(Guid templateId);
 
     /// <summary>
-    /// Grant template access to current user (for purchase/subscription flow)
-    /// </summary>
-    Task<ApiResponse<UserTemplateResponse>> GrantTemplateAccessAsync(GrantTemplateAccessRequest request);
-
-    /// <summary>
-    /// Revoke template access (Admin only)
-    /// </summary>
-    Task<ApiResponse<bool>> RevokeTemplateAccessAsync(Guid userTemplateId);
-
-    /// <summary>
-    /// Get user templates by userId (Admin/Staff only)
-    /// </summary>
-    Task<ApiResponse<IEnumerable<UserTemplateResponse>>> GetUserTemplatesByUserIdAsync(Guid userId);
-
-    /// <summary>
     /// Purchase a template (orchestrates payment and access granting)
     /// </summary>
     Task<ApiResponse<PurchaseTemplateResponse>> PurchaseTemplateAsync(PurchaseTemplateRequest request);

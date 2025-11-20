@@ -125,7 +125,7 @@ public class TemplateService : ITemplateService
 
     public async Task<UploadTemplateResponse> UploadTemplateAsync(Stream fileStream, string fileName, UploadTemplateRequest request)
     {
-        // Get user information from AuthService (like SlidesService)
+        // Get user information from AuthService
         UserDto? user = await _authServiceClient.GetCurrentUserAsync();
         if (user == null)
         {

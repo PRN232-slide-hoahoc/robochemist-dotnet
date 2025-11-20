@@ -141,56 +141,6 @@ public class UserTemplateService : IUserTemplateService
         return ApiResponse<bool>.SuccessResult(hasAccess, hasAccess ? "User has access" : "User does not have access");
     }
 
-    public async Task<ApiResponse<UserTemplateResponse>> GrantTemplateAccessAsync(GrantTemplateAccessRequest request)
-    {
-        // Get current user
-        UserDto? user = await _authServiceClient.GetCurrentUserAsync();
-        if (user == null)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("User not authenticated");
-        }
-
-        // Validate template exists
-        var template = await _unitOfWork.Templates.GetByIdAsync(request.TemplateId);
-        if (template == null)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("Template not found");
-        }
-
-        // Check if user already has this template
-        bool alreadyHas = await _unitOfWork.UserTemplates.UserHasTemplateAsync(user.Id, request.TemplateId);
-        if (alreadyHas)
-        {
-            return ApiResponse<UserTemplateResponse>.ErrorResult("User already has access to this template");
-        }
-
-        // Create user template
-        var userTemplate = new UserTemplate
-        {
-            UserTemplateId = Guid.NewGuid(),
-            UserId = user.Id,
-            TemplateId = request.TemplateId
-        };
-
-        await _unitOfWork.UserTemplates.CreateAsync(userTemplate);
-
-        var response = new UserTemplateResponse
-        {
-            TemplateId = template.TemplateId,
-            ObjectKey = template.ObjectKey,
-            TemplateName = template.TemplateName,
-            Description = template.Description,
-            SlideCount = template.SlideCount,
-            IsPremium = template.IsPremium,
-            Price = template.Price,
-            DownloadCount = template.DownloadCount,
-            CreatedAt = template.CreatedAt,
-            UpdatedAt = template.UpdatedAt,
-            CreatedBy = template.CreatedBy
-        };
-
-        return ApiResponse<UserTemplateResponse>.SuccessResult(response, "Template access granted successfully");
-    }
 
     public async Task<ApiResponse<bool>> RevokeTemplateAccessAsync(Guid userTemplateId)
     {
