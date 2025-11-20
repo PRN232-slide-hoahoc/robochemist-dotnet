@@ -27,11 +27,6 @@ namespace RoboChemist.ExamService.Repository.Implements
         public IExamquestionRepository ExamQuestions { get; }
         public IOptionRepository Options { get; }
 
-        public async Task<int> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync();
-        }
-
         public void Dispose()
         {
             _context.Dispose();

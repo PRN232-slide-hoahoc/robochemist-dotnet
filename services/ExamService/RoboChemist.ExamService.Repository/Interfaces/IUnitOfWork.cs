@@ -8,8 +8,6 @@
         IExamrequestRepository ExamRequests { get; }
         IGeneratedexamRepository GeneratedExams { get; }
         IExamquestionRepository ExamQuestions { get; }
-        IOptionRepository Options { get; }
-        
-        Task<int> SaveChangesAsync();
+        IOptionRepository Options { get; } 
     }
 }
