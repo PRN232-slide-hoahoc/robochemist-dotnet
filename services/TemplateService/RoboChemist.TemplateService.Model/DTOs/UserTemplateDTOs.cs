@@ -3,17 +3,6 @@ namespace RoboChemist.TemplateService.Model.DTOs;
 #region UserTemplate Requests
 
 /// <summary>
-/// Request to grant template access to user
-/// </summary>
-public class GrantTemplateAccessRequest
-{
-    /// <summary>
-    /// Template ID to grant access
-    /// </summary>
-    public Guid TemplateId { get; set; }
-}
-
-/// <summary>
 /// Request to purchase a template
 /// </summary>
 public class PurchaseTemplateRequest

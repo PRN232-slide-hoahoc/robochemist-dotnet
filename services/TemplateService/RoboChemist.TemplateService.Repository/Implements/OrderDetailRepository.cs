@@ -17,13 +17,5 @@ public class OrderDetailRepository : GenericRepository<OrderDetail>, IOrderDetai
     {
         _appContext = (AppDbContext)context;
     }
-
-    public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderIdAsync(Guid orderId)
-    {
-        return await _appContext.OrderDetails
-            .Where(od => od.OrderId == orderId)
-            .Include(od => od.Template)
-            .ToListAsync();
-    }
 }
 
