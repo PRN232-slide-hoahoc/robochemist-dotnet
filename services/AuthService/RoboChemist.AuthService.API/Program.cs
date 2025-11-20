@@ -4,7 +4,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RoboChemist.AuthService.Model.Data;
 using RoboChemist.AuthService.Repository;
-using RoboChemist.AuthService.Services;
+using RoboChemist.AuthService.Repository.Implement;
+using RoboChemist.AuthService.Repository.Interfaces;
+using RoboChemist.AuthService.Service.Implements;
+using RoboChemist.AuthService.Service.Interfaces;
+
 using System.Text;
 
 namespace RoboChemist.AuthService.API
@@ -37,40 +41,41 @@ namespace RoboChemist.AuthService.API
                 options.UseNpgsql(connectionString));
 
             // Cấu hình Repository & Services
-            builder.Services.AddScoped<UserRepository>();
-            builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IUserService, UserService>();
 
-            // Load JWT settings từ appsettings.json
-            builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
-            var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+            //// Load JWT settings từ appsettings.json
+            //builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+            //var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 
-            if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
-            {
-                throw new Exception("❌ Không tìm thấy thông tin JWT trong appsettings.json!");
-            }
+            //if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key))
+            //{
+            //    throw new Exception("❌ Không tìm thấy thông tin JWT trong appsettings.json!");
+            //}
 
-            // Cấu hình JWT Authentication (không hardcode)
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+            // === JWT Authentication (Use ENV) ===
+            var key = Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? throw new Exception("JWT_SECRET missing!");
+
+            var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidAudience = jwtSettings.Audience,
-                    IssuerSigningKey = key,
-                    ClockSkew = TimeSpan.Zero
-                };
-            });
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidIssuer = issuer,
+                        ValidAudience = audience,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
 
             builder.Services.AddAuthorization();
 
