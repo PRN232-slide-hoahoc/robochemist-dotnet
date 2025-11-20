@@ -247,17 +247,9 @@
         /// Transaction Type: Refund
         /// </summary>
         public const string TRANSACTION_TYPE_REFUND = "Hoàn tiền";
-        /// <summary>
-        /// Reference Type: Create Slide
-        /// </summary>
+
         public const string REFERENCE_TYPE_CREATE_SLIDE = "Tạo slide";
-        /// <summary>
-        /// Reference Type: Create Exam
-        /// </summary>
         public const string REFERENCE_TYPE_CREATE_EXAM = "Tạo đề thi";
-        /// <summary>
-        /// Reference Type: Buy Slide Template
-        /// </summary>
         public const string REFERENCE_TYPE_BUY_TEMPLATE = "Mua template";
         #endregion
 
@@ -306,6 +298,15 @@
         /// Order Status: Failed - Order payment or processing failed
         /// </summary>
         public const string ORDER_STATUS_FAILED = "Thất bại";
+
+        #endregion
+
+        #region Payment Reference Types
+
+        /// <summary>
+        /// Payment Reference Type: Template Purchase
+        /// </summary>
+        public const string PAYMENT_REF_TEMPLATE_PURCHASE = "MUA_TEMPLATE";
 
         #endregion
     }

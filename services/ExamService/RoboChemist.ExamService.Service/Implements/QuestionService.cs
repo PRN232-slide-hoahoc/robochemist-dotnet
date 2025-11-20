@@ -71,7 +71,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     Level = createQuestionDto.Level,
                     IsActive = true,
                     CreatedAt = DateTime.Now,
-                    CreatedBy = currentUser?.Id  // Get from authenticated user
+                    CreatedBy = currentUser?.Id 
                 };
 
                 // Create Options
@@ -89,7 +89,6 @@ namespace RoboChemist.ExamService.Service.Implements
 
                 // Save to database
                 await _unitOfWork.Questions.CreateAsync(question);
-                await _unitOfWork.SaveChangesAsync();
 
                 // Return DTO
                 var result = new QuestionResponseDto
@@ -140,7 +139,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<QuestionResponseDto>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
                 }
 
-                // Get topic name from Slide Service
                 var topicResponse = await _slideServiceClient.GetTopicByIdAsync(question.TopicId ?? Guid.Empty);
                 var topicName = topicResponse?.Success == true ? topicResponse.Data?.Name ?? "" : "";
 
@@ -181,17 +179,14 @@ namespace RoboChemist.ExamService.Service.Implements
         {
             try
             {
-                // ĐỪNG QUERY TRÊN LỚP SERVICE - Gọi Repository method thay thế
                 var questions = await _unitOfWork.Questions.GetQuestionsWithFiltersAsync(topicId, search, level);
 
-                // BATCH GET Topics - Thu thập tất cả TopicIds duy nhất
                 var topicIds = questions
                     .Where(q => q.TopicId.HasValue)
                     .Select(q => q.TopicId!.Value)
                     .Distinct()
                     .ToList();
 
-                // Gọi 1 lần duy nhất để lấy tất cả topics (tránh N+1 query)
                 var topicsDict = await _slideServiceClient.GetTopicsByIdsAsync(topicIds);
 
                 var result = questions.Select(q =>
@@ -290,8 +285,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     newOptions.Add(newOption);
                 }
 
-                await _unitOfWork.SaveChangesAsync();
-
                 var result = new QuestionResponseDto
                 {
                     QuestionId = question.QuestionId,
@@ -336,11 +329,9 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<bool>.ErrorResult($"Không tìm thấy câu hỏi với ID: {id}");
                 }
 
-                // Soft delete
                 question.IsActive = false;
 
                 await _unitOfWork.Questions.UpdateAsync(question);
-                await _unitOfWork.SaveChangesAsync();
 
                 return ApiResponse<bool>.SuccessResult(true, "Xóa câu hỏi thành công");
             }
@@ -360,7 +351,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 // Get current authenticated user
                 var currentUser = await _authServiceClient.GetCurrentUserAsync();
 
-                // Validate Topic existence by calling Slide Service
                 var topicResponse = await _slideServiceClient.GetTopicByIdAsync(bulkCreateDto.TopicId);
 
                 if (topicResponse is null)
@@ -418,8 +408,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     await _unitOfWork.Questions.CreateAsync(question);
                     createdQuestionIds.Add(question.QuestionId);
                 }
-
-                await _unitOfWork.SaveChangesAsync();
 
                 var result = new BulkCreateQuestionsResponseDto
                 {

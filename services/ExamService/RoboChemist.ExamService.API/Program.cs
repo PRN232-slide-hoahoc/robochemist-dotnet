@@ -130,10 +130,6 @@ builder.Services.AddHttpClient("WalletService", client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
-builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
-builder.Services.AddScoped<ITemplateServiceClient, TemplateServiceClient>();
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("EXAM_DB")));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -143,6 +139,10 @@ builder.Services.AddScoped<IMatrixService, MatrixService>();
 builder.Services.AddScoped<IWordExportService, WordExportService>();
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IWalletServiceHttpClient, WalletServiceHttpClient>();
+builder.Services.AddScoped<IAuthServiceClient, AuthServiceClient>();
+builder.Services.AddScoped<ISlidesServiceHttpClient, SlidesServiceHttpClient>();
+builder.Services.AddScoped<ITemplateServiceClient, TemplateServiceClient>();
+
 
 var app = builder.Build();
 
