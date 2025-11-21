@@ -11,12 +11,6 @@ public class CreateOrderItemRequest
 {
     [Required(ErrorMessage = "Template ID is required")]
     public Guid TemplateId { get; set; }
-
-    [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]
-    public int Quantity { get; set; } = 1;
-
-    [Range(0, double.MaxValue, ErrorMessage = "Unit price must be non-negative")]
-    public decimal UnitPrice { get; set; }
 }
 
 #endregion
@@ -32,9 +26,8 @@ public class OrderDetailResponse
     public Guid OrderId { get; set; }
     public Guid TemplateId { get; set; }
     public string TemplateName { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
     public decimal Subtotal { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
 #endregion

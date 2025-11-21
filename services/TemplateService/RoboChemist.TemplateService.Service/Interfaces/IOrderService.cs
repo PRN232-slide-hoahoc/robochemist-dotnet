@@ -10,19 +10,9 @@ namespace RoboChemist.TemplateService.Service.Interfaces;
 public interface IOrderService
 {
     /// <summary>
-    /// Create a new order
-    /// </summary>
-    Task<ApiResponse<OrderResponse>> CreateOrderAsync(CreateOrderRequest request);
-
-    /// <summary>
     /// Get order by ID
     /// </summary>
     Task<ApiResponse<OrderResponse>> GetOrderByIdAsync(Guid orderId);
-
-    /// <summary>
-    /// Get order by order number
-    /// </summary>
-    Task<ApiResponse<OrderResponse>> GetOrderByOrderNumberAsync(string orderNumber);
 
     /// <summary>
     /// Get all orders for a user
@@ -33,19 +23,4 @@ public interface IOrderService
     /// Get all orders (admin)
     /// </summary>
     Task<ApiResponse<PagedResult<OrderSummaryResponse>>> GetAllOrdersAsync(PaginationParams paginationParams);
-
-    /// <summary>
-    /// Update order status
-    /// </summary>
-    Task<ApiResponse<OrderResponse>> UpdateOrderStatusAsync(Guid orderId, UpdateOrderStatusRequest request);
-
-    /// <summary>
-    /// Cancel an order
-    /// </summary>
-    Task<ApiResponse<OrderResponse>> CancelOrderAsync(Guid orderId);
-
-    /// <summary>
-    /// Get order statistics by user
-    /// </summary>
-    Task<ApiResponse<OrderStatistics>> GetOrderStatisticsByUserAsync(Guid userId);
 }

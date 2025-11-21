@@ -24,7 +24,7 @@ namespace RoboChemist.ExamService.Service.Implements
             {
                 using (var doc = DocX.Create(new MemoryStream()))
                 {
-                    // ===== HEADER SECTION =====
+                    //  HEADER SECTION 
                     var title = doc.InsertParagraph("ĐỀ THI TRẮC NGHIỆM HÓA HỌC");
                     title.FontSize(16);
                     title.Bold();
@@ -52,7 +52,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     // Line break
                     doc.InsertParagraph("").SpacingAfter(10);
 
-                    // ===== QUESTIONS SECTION =====
+                    // QUESTIONS SECTION
                     var labels = new[] { "A", "B", "C", "D", "E", "F" };
 
                     for (int i = 0; i < questions.Count; i++)
@@ -78,7 +78,7 @@ namespace RoboChemist.ExamService.Service.Implements
                         doc.InsertParagraph("").SpacingAfter(8);
                     }
 
-                    // ===== ANSWER KEY SECTION =====
+                    //  ANSWER KEY SECTION 
                     doc.InsertParagraph("").SpacingAfter(10);
 
                     // Separator line
@@ -278,10 +278,26 @@ namespace RoboChemist.ExamService.Service.Implements
                         // Giải thích
                         if (!string.IsNullOrWhiteSpace(q.Explanation))
                         {
-                            var explanationPara = doc.InsertParagraph($"Giải thích: {ChemicalFormulaHelper.BeautifyChemicalFormulas(q.Explanation)}");
-                            explanationPara.FontSize(11);
-                            explanationPara.Italic();
-                            explanationPara.SpacingAfter(10);
+                            // Split by newlines to preserve line breaks
+                            var explanationLines = q.Explanation.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                            
+                            // Insert first line with "Giải thích:" prefix
+                            var firstLine = doc.InsertParagraph($"Giải thích: {ChemicalFormulaHelper.BeautifyChemicalFormulas(explanationLines[0])}");
+                            firstLine.FontSize(11);
+                            firstLine.Italic();
+                            firstLine.SpacingAfter(3);
+                            
+                            // Insert remaining lines without prefix
+                            for (int k = 1; k < explanationLines.Length; k++)
+                            {
+                                var line = explanationLines[k];
+                                var linePara = doc.InsertParagraph(ChemicalFormulaHelper.BeautifyChemicalFormulas(line));
+                                linePara.FontSize(11);
+                                linePara.Italic();
+                                linePara.SpacingAfter(3);
+                            }
+                            
+                            doc.InsertParagraph("").SpacingAfter(7);
                         }
                         else
                         {
@@ -297,8 +313,5 @@ namespace RoboChemist.ExamService.Service.Implements
                 }
             });
         }
-
-        // Chemical formula formatting methods have been moved to ChemicalFormulaHelper
-        // in RoboChemist.Shared.Common.Helpers for reuse across services
     }
 }

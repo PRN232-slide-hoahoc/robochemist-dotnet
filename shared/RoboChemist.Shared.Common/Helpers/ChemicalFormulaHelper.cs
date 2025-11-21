@@ -32,8 +32,33 @@ namespace RoboChemist.Shared.Common.Helpers
         {
             if (string.IsNullOrEmpty(input)) return input;
 
+            // Step 0: Protect mathematical expressions and special contexts
+            // Protect multiplication operations like "0.1L * 0.2M" from being split
+            var mathProtectedParts = new Dictionary<string, string>();
+            int protectedIndex = 0;
+            
+            // Only protect when both operands have units (letters), e.g., "0.1L * 0.2M"
+            // Do NOT protect pure number multiplications like "1.0 * 10"
+            input = Regex.Replace(input, @"(\d+\.?\d*[A-Za-z]+)\s*\*\s*(\d+\.?\d*[A-Za-z]+)", match =>
+            {
+                var placeholder = $"__MATH_PROTECTED_{protectedIndex}__";
+                mathProtectedParts[placeholder] = match.Value;
+                protectedIndex++;
+                return placeholder;
+            });
+            
+            // Protect ratio expressions (e.g., "x : y : z = ...")
+            input = Regex.Replace(input, @"([a-z])\s*:\s*([a-z])\s*:\s*([a-z])\s*=", match =>
+            {
+                var placeholder = $"__RATIO_PROTECTED_{protectedIndex}__";
+                mathProtectedParts[placeholder] = match.Value;
+                protectedIndex++;
+                return placeholder;
+            });
+
             // Step 1: Handle arrows (must be before other replacements)
             input = input.Replace("->", "→");
+            input = input.Replace("⟶", "→"); // Normalize arrow variants
             input = input.Replace("<=>", "⇌");
             input = input.Replace("<=", "⇌");
             
@@ -42,6 +67,26 @@ namespace RoboChemist.Shared.Common.Helpers
             
             // Step 3: Handle Delta symbol
             input = Regex.Replace(input, @"\bDelta\b", "Δ", RegexOptions.IgnoreCase);
+            
+            // Step 3a: Handle mathematical functions and notation
+            // sqrt(...) → √(...)
+            input = Regex.Replace(input, @"\bsqrt\s*\(", "√(");
+            
+            // Handle exponents: 10^(-5) → 10⁻⁵, 10^(5) → 10⁵
+            input = Regex.Replace(input, @"(\d+)\^\(([+-]?\d+)\)", match =>
+            {
+                var baseNum = match.Groups[1].Value;
+                var exponent = match.Groups[2].Value;
+                var formattedExp = ToSuperscript(exponent.Replace("+", "").Replace("-", ""));
+                
+                if (exponent.StartsWith("-"))
+                    return $"{baseNum}{ToSuperscript("-")}{formattedExp}";
+                else
+                    return $"{baseNum}{formattedExp}";
+            });
+            
+            // Replace * with × in mathematical contexts (not in protected parts)
+            input = Regex.Replace(input, @"(?<![A-Za-z])\*(?![A-Za-z])", "×");
 
             // Step 4: Handle complex ions: [Cu(NH3)4](2+) → [Cu(NH₃)₄]²⁺
             string complexIonPattern = @"\[([^\]]+)\]\((\d+)([+-])\)";
@@ -82,7 +127,8 @@ namespace RoboChemist.Shared.Common.Helpers
             });
 
             // Step 7: Handle isotope notation: 27Al13 → ²⁷Al₁₃
-            string isotopePattern = @"\b(\d+)([A-Z][a-z]?)(\d+)\b";
+            // Only match when mass number is 2+ digits to avoid matching chemical formulas like 3H2
+            string isotopePattern = @"\b(\d{2,})([A-Z][a-z]?)(\d+)\b";
             input = Regex.Replace(input, isotopePattern, match =>
             {
                 var massNumber = match.Groups[1].Value;
@@ -168,23 +214,30 @@ namespace RoboChemist.Shared.Common.Helpers
                 return $"({formattedFormula})";
             });
 
-            // Step 14: Handle simple charges: Cu(2+), Fe(3+), Cl(-)
-            string chargePattern = @"(?<!\[)([A-Z][a-z]?)\((\d*)([+-])\)";
+            // Step 14: Handle simple charges and polyatomic ions: Cu(2+), Fe(3+), Cl(-), PO4(3-), SO4(2-)
+            string chargePattern = @"(?<!\[)([A-Z][a-z]?\d*)\((\d*)([+-])\)";
             input = Regex.Replace(input, chargePattern, match =>
             {
-                var element = match.Groups[1].Value;
+                var formula = match.Groups[1].Value;
                 var number = match.Groups[2].Value;
                 var sign = match.Groups[3].Value;
                 
+                // Convert numbers in formula to subscript (e.g., PO4 -> PO₄)
+                var formattedFormula = ToSubscript(formula);
                 var superNumber = string.IsNullOrEmpty(number) ? "" : ToSuperscript(number);
                 var superSign = sign == "+" ? "⁺" : "⁻";
                 
-                return $"{element}{superNumber}{superSign}";
+                return $"{formattedFormula}{superNumber}{superSign}";
             });
 
-            // Step 15: Handle general chemical formulas with optional coefficient
+            // Step 15: Fix spacing issues in chemical equations (e.g., "4 0 A g" -> "40Ag")
+            // This handles cases where spaces are incorrectly inserted between digits and letters
+            input = Regex.Replace(input, @"(\d)\s+(\d)\s+([A-Z])\s+([a-z])", "$1$2$3$4");
+            input = Regex.Replace(input, @"(\d)\s+([A-Z][a-z]?)\s+(\d)", "$1$2$3");
+            
+            // Step 16: Handle general chemical formulas with optional coefficient
             string generalPattern = @"(?<![A-Za-z])(-)?(\d+)?\s*([A-Z][A-Za-z0-9()]*)(\([a-zA-Z0-9+\-]+\))?(?![A-Za-z])";
-            return Regex.Replace(input, generalPattern, match =>
+            input = Regex.Replace(input, generalPattern, match =>
             {
                 var dash = match.Groups[1].Value;
                 var coeff = match.Groups[2].Value;
@@ -201,6 +254,14 @@ namespace RoboChemist.Shared.Common.Helpers
                 var formattedFormula = ToSubscript(formula);
                 return $"{dash}{coeff}{formattedFormula}{phase}";
             });
+            
+            // Step 17: Restore protected mathematical expressions
+            foreach (var kvp in mathProtectedParts)
+            {
+                input = input.Replace(kvp.Key, kvp.Value);
+            }
+            
+            return input;
         }
 
         /// <summary>
@@ -258,7 +319,9 @@ namespace RoboChemist.Shared.Common.Helpers
                 ['6'] = '⁶',
                 ['7'] = '⁷',
                 ['8'] = '⁸',
-                ['9'] = '⁹'
+                ['9'] = '⁹',
+                ['+'] = '⁺',
+                ['-'] = '⁻'
             };
 
             var sb = new StringBuilder();

@@ -21,19 +21,6 @@ public class CreateOrderRequest
     public string? Notes { get; set; }
 }
 
-/// <summary>
-/// Request for updating order status
-/// </summary>
-public class UpdateOrderStatusRequest
-{
-    [Required(ErrorMessage = "Status is required")]
-    [RegularExpression("^(pending|completed|cancelled)$", 
-        ErrorMessage = "Status must be one of: pending, completed, cancelled")]
-    public string Status { get; set; } = string.Empty;
-
-    public string? PaymentTransactionId { get; set; }
-}
-
 #endregion
 
 #region Order Responses

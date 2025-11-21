@@ -166,15 +166,15 @@ namespace RoboChemist.ExamService.Service.Implements
                 Console.WriteLine($"[SAGA] Step 5: Generating random questions");
 
                 var examQuestions = new List<Examquestion>();
-                var selectedQuestionIds = new HashSet<Guid>(); // Track đã chọn để tránh trùng
+                var selectedQuestionIds = new HashSet<Guid>(); 
 
                 foreach (var detail in matrixDetails)
                 {
-                    // Lấy random questions từ repository - PHẢI filter theo Level giống như validation ở CreateMatrix
+                    // Lấy random questions 
                     var matchingQuestions = await _unitOfWork.Questions.GetRandomQuestionsByFiltersAsync(
                         detail.TopicId!.Value, 
                         detail.QuestionType,
-                        detail.Level, // Filter theo level để đồng bộ với CreateMatrix
+                        detail.Level, 
                         detail.QuestionCount);
 
                     // Loại bỏ câu hỏi đã được chọn trước đó
@@ -205,7 +205,7 @@ namespace RoboChemist.ExamService.Service.Implements
 
                         await _unitOfWork.ExamQuestions.CreateAsync(examQuestion);
                         examQuestions.Add(examQuestion);
-                        selectedQuestionIds.Add(question.QuestionId); // Mark đã chọn
+                        selectedQuestionIds.Add(question.QuestionId); 
                     }
                 }
 
@@ -221,7 +221,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 examRequest.Status = RoboChemistConstants.EXAMREQ_STATUS_COMPLETED;
                 await _unitOfWork.ExamRequests.UpdateAsync(examRequest);
                 
-                await _unitOfWork.SaveChangesAsync();
                 Console.WriteLine($"[SAGA] Step 6 SUCCESS: Updated statuses to READY and COMPLETED");
 
                 // SAGA Step 7: Auto export cả đề và đáp án
@@ -274,15 +273,12 @@ namespace RoboChemist.ExamService.Service.Implements
                         await _unitOfWork.GeneratedExams.UpdateAsync(generatedExamAnswers);
                         Console.WriteLine($"[SAGA] Step 7b: Answer file uploaded - {aUpload.ObjectKey}");
                     }
-
-                    await _unitOfWork.SaveChangesAsync();
                     
                     Console.WriteLine($"[SAGA] Step 7 SUCCESS: Auto-export completed");
                 }
                 catch (Exception exportEx)
                 {
                     Console.WriteLine($"[SAGA] Step 7 WARNING: Auto-export failed but exam created: {exportEx.Message}");
-                    // Không throw exception vì đề đã tạo thành công, chỉ export bị lỗi
                 }
 
                 // Map response
@@ -381,7 +377,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 // Lấy Matrix info
                 var matrix = await _unitOfWork.Matrices.GetByIdAsync(examRequest.MatrixId);
 
-                // Lấy các GeneratedExam liên quan - Dùng repository method
                 var generatedExams = await _unitOfWork.GeneratedExams.GetByExamRequestIdAsync(examRequestId);
 
                 var response = new ExamRequestResponseDto
@@ -390,7 +385,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     UserId = examRequest.UserId,
                     MatrixId = examRequest.MatrixId,
                     MatrixName = matrix?.Name ?? "Unknown Matrix",
-                    // GradeId, GradeName, Prompt đã BỎ
                     Status = examRequest.Status,
                     CreatedAt = examRequest.CreatedAt,
                     GeneratedExams = generatedExams.Select(ge => new GeneratedExamResponseDto
@@ -418,7 +412,6 @@ namespace RoboChemist.ExamService.Service.Implements
         {
             try
             {
-                // Lấy exam requests từ repository - đã filter và sort
                 var examRequests = await _unitOfWork.ExamRequests.GetExamRequestsByUserAsync(userId, status);
 
                 var response = new List<ExamRequestResponseDto>();
@@ -426,7 +419,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 {
                     var matrix = await _unitOfWork.Matrices.GetByIdAsync(examRequest.MatrixId);
                     
-                    // Lấy GeneratedExams để map exported file names
                     var generatedExams = await _unitOfWork.GeneratedExams.GetByExamRequestIdAsync(examRequest.ExamRequestId);
                     var generatedExamDtos = generatedExams.Select(ge => new GeneratedExamResponseDto
                     {
@@ -434,7 +426,6 @@ namespace RoboChemist.ExamService.Service.Implements
                         ExamRequestId = ge.ExamRequestId,
                         Status = ge.Status,
                         CreatedAt = ge.CreatedAt,
-                        // FileFormat="QUESTIONS" -> đây là file đề, "ANSWERS" -> đây là file đáp án
                         ExportedQuestionFileName = ge.FileFormat == RoboChemistConstants.GENERATED_EXAM_TYPE_QUESTIONS ? ge.ExportedFileName : null,
                         ExportedAnswerFileName = ge.FileFormat == RoboChemistConstants.GENERATED_EXAM_TYPE_ANSWERS ? ge.ExportedFileName : null,
                         FileFormat = ge.FileFormat,
@@ -501,7 +492,7 @@ namespace RoboChemist.ExamService.Service.Implements
                 {
                     GeneratedExamId = Guid.NewGuid(),
                     ExamRequestId = examRequestId,
-                    Status = "Draft", // Trạng thái khởi tạo của đề thi
+                    Status = "Draft", 
                     CreatedAt = DateTime.Now
                 };
 
@@ -513,11 +504,10 @@ namespace RoboChemist.ExamService.Service.Implements
 
                 foreach (var detail in matrixDetails)
                 {
-                    // Lấy random questions từ repository - đã lọc TopicId, QuestionType, IsActive
                     var matchingQuestions = await _unitOfWork.Questions.GetRandomQuestionsByFiltersAsync(
                         detail.TopicId!.Value, 
                         detail.QuestionType,
-                        null, // Không filter theo level
+                        null, 
                         detail.QuestionCount);
 
                     if (matchingQuestions.Count < detail.QuestionCount)
@@ -547,7 +537,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 // 6. Cập nhật trạng thái ExamRequest
                 examRequest.Status = "Completed";
                 await _unitOfWork.ExamRequests.UpdateAsync(examRequest);
-                await _unitOfWork.SaveChangesAsync();
 
                 // 7. Map sang ResponseDto
                 var response = new GeneratedExamResponseDto
@@ -587,10 +576,8 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<GeneratedExamResponseDto>.ErrorResult($"Không tìm thấy đề thi với ID: {generatedExamId}");
                 }
 
-                // Lấy ExamQuestions - Dùng repository method
                 var examQuestions = await _unitOfWork.ExamQuestions.GetByGeneratedExamIdAsync(generatedExamId);
 
-                // Lấy Questions với Options - Dùng repository method
                 var questionIds = examQuestions.Select(eq => eq.QuestionId).ToList();
                 var questions = await _unitOfWork.Questions.GetQuestionsWithOptionsByIdsAsync(questionIds);
 
@@ -647,7 +634,6 @@ namespace RoboChemist.ExamService.Service.Implements
             {
                 _logger.LogInformation("[ExportExamToWord] Starting export for GeneratedExamId: {GeneratedExamId}", generatedExamId);
 
-                // 1. Lấy GeneratedExam từ repository
                 var generatedExam = await _unitOfWork.GeneratedExams.GetByIdAsync(generatedExamId);
                 if (generatedExam == null)
                 {
@@ -655,14 +641,12 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<byte[]>.ErrorResult($"Không tìm thấy đề thi với ID: {generatedExamId}");
                 }
 
-                // 2. Kiểm tra status - chỉ export khi READY
                 if (generatedExam.Status != RoboChemistConstants.GENERATED_EXAM_STATUS_READY)
                 {
                     _logger.LogWarning("[ExportExamToWord] GeneratedExam not ready. Status: {Status}", generatedExam.Status);
                     return ApiResponse<byte[]>.ErrorResult($"Đề thi chưa sẵn sàng để xuất. Trạng thái hiện tại: {generatedExam.Status}");
                 }
 
-                // 3. Lấy ExamRequest và Matrix từ repository
                 var examRequest = await _unitOfWork.ExamRequests.GetByIdAsync(generatedExam.ExamRequestId);
                 if (examRequest == null)
                 {
@@ -677,7 +661,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<byte[]>.ErrorResult("Không tìm thấy ma trận đề thi");
                 }
 
-                // 4. Lấy câu hỏi từ repository
                 var examQuestions = await _unitOfWork.ExamQuestions.GetByGeneratedExamIdAsync(
                     generatedExamId, 
                     RoboChemistConstants.EXAMQUESTION_STATUS_ACTIVE
@@ -689,11 +672,9 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<byte[]>.ErrorResult("Đề thi không có câu hỏi nào");
                 }
 
-                // 5. Lấy full Questions với Options từ repository
                 var questionIds = examQuestions.Select(eq => eq.QuestionId).ToList();
                 var questions = await _unitOfWork.Questions.GetQuestionsWithOptionsByIdsAsync(questionIds);
 
-                // Sắp xếp questions theo thứ tự trong examQuestions
                 var orderedQuestions = examQuestions
                     .Select(eq => questions.FirstOrDefault(q => q.QuestionId == eq.QuestionId))
                     .Where(q => q != null)
@@ -732,7 +713,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 generatedExam.FileFormat = "docx";
                 
                 await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
-                await _unitOfWork.SaveChangesAsync();
 
                 _logger.LogInformation("[ExportExamToWord] SUCCESS - Exported and uploaded. ObjectKey: {ObjectKey}", uploadResponse.ObjectKey);
                 
@@ -831,7 +811,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 generatedExam.ExportedFileName = uploadResponse.ObjectKey;
                 generatedExam.ExportedAt = DateTime.Now;
                 await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
-                await _unitOfWork.SaveChangesAsync();
                 
                 _logger.LogInformation("[ExportExamQuestions] SUCCESS - FileName: {FileName}, ObjectKey: {ObjectKey}", fileName, uploadResponse.ObjectKey);
 
@@ -904,15 +883,12 @@ namespace RoboChemist.ExamService.Service.Implements
                 using var ms = new MemoryStream(wordBytes);
                 var uploadResponse = await _templateServiceClient.UploadFileAsync(ms, fileName);
                 
-                // Lưu answer file name vào FileFormat (tạm thời dùng field này cho answer)
-                // ExportedFileName = questions file, FileFormat = answers file
                 generatedExam.FileFormat = uploadResponse.ObjectKey;
                 if (generatedExam.ExportedAt == null)
                 {
                     generatedExam.ExportedAt = DateTime.Now;
                 }
                 await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
-                await _unitOfWork.SaveChangesAsync();
                 
                 _logger.LogInformation("[ExportAnswerKey] SUCCESS - FileName: {FileName}, ObjectKey: {ObjectKey}", fileName, uploadResponse.ObjectKey);
 
@@ -953,7 +929,6 @@ namespace RoboChemist.ExamService.Service.Implements
 
                 generatedExam.Status = status;
                 await _unitOfWork.GeneratedExams.UpdateAsync(generatedExam);
-                await _unitOfWork.SaveChangesAsync();
 
                 // Get full details
                 var result = await GetGeneratedExamByIdAsync(generatedExamId);
@@ -983,7 +958,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<bool>.ErrorResult($"Không tìm thấy đề thi với ID: {generatedExamId}");
                 }
 
-                // Xóa các ExamQuestion liên quan - Dùng repository method
                 var examQuestions = await _unitOfWork.ExamQuestions.GetByGeneratedExamIdAsync(generatedExamId);
 
                 foreach (var examQuestion in examQuestions)
@@ -991,9 +965,7 @@ namespace RoboChemist.ExamService.Service.Implements
                     await _unitOfWork.ExamQuestions.RemoveAsync(examQuestion);
                 }
 
-                // Xóa GeneratedExam
                 await _unitOfWork.GeneratedExams.RemoveAsync(generatedExam);
-                await _unitOfWork.SaveChangesAsync();
 
                 return ApiResponse<bool>.SuccessResult(true, "Xóa đề thi thành công");
             }

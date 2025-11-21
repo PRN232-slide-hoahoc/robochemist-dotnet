@@ -1,17 +1,22 @@
-﻿// Services/UserService.cs - Plain Text Password (KHÔNG AN TOÀN!)
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using BCrypt.Net;
+﻿using Microsoft.IdentityModel.Tokens;
 using RoboChemist.AuthService.Model.Models;
 using RoboChemist.AuthService.Repository;
+using RoboChemist.AuthService.Repository.Implement;
+using RoboChemist.AuthService.Repository.Interfaces;
+using RoboChemist.AuthService.Service.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace RoboChemist.AuthService.Services
+namespace RoboChemist.AuthService.Service.Implements
 {
-    public class UserService
+    public class UserService : IUserService
     {
-        private readonly UserRepository _userRepository;
+        private readonly IUserRepository _userRepository;
 
         // JWT settings - ĐỌC TỪ ENVIRONMENT VARIABLES
         private readonly string SecretKey;
@@ -19,16 +24,19 @@ namespace RoboChemist.AuthService.Services
         private readonly string Audience;
         private const int ExpirationMinutes = 60;
 
-        public UserService(UserRepository userRepository)
+        
+
+        public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
-            
+
+
             // Đọc từ biến môi trường (.env)
-            SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET") 
+            SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET")
                 ?? throw new Exception("JWT_SECRET not found in environment variables!");
-            Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+            Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
                 ?? throw new Exception("JWT_ISSUER not found in environment variables!");
-            Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+            Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
                 ?? throw new Exception("JWT_AUDIENCE not found in environment variables!");
         }
 
@@ -77,7 +85,7 @@ namespace RoboChemist.AuthService.Services
                 Id = Guid.NewGuid(),
                 Fullname = request.Fullname,
                 Email = request.Email,
-                PasswordHash = hashedPassword, // Lưu plain text (KHÔNG AN TOÀN!)
+                PasswordHash = hashedPassword, 
                 Phone = request.Phone,
                 Role = "User",
                 Status = "Active",
@@ -94,7 +102,7 @@ namespace RoboChemist.AuthService.Services
             {
                 UserId = user.Id,
                 Fullname = user.Fullname,
-               
+
                 Email = user.Email,
                 Token = token,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(ExpirationMinutes)

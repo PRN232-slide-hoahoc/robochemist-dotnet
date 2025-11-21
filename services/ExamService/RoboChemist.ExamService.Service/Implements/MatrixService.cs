@@ -53,7 +53,6 @@ namespace RoboChemist.ExamService.Service.Implements
                     return ApiResponse<MatrixResponseDto>.ErrorResult($"Không tìm thấy ma trận với ID: {id}");
                 }
 
-                // Load MatrixDetails cho matrix này
                 matrix.Matrixdetails = await _unitOfWork.MatrixDetails.GetByMatrixIdAsync(id);
 
                 // Map sang ResponseDto và enrich với TopicName từ SlidesService
@@ -77,7 +76,6 @@ namespace RoboChemist.ExamService.Service.Implements
                 // Lấy thông tin user hiện tại
                 var currentUser = await _authServiceClient.GetCurrentUserAsync();
                 
-                // Lấy matrices từ repository với query logic đã được tối ưu
                 List<Matrix> allMatrices;
                 if (currentUser != null && currentUser.Role == RoboChemistConstants.ROLE_USER)
                 {
@@ -86,17 +84,14 @@ namespace RoboChemist.ExamService.Service.Implements
                 }
                 else
                 {
-                    // Teacher và Admin thấy tất cả
                     allMatrices = await _unitOfWork.Matrices.GetMatricesByStatusAsync(isActive);
                 }
 
-                // Load MatrixDetails cho tất cả matrices
                 foreach (var matrix in allMatrices)
                 {
                     matrix.Matrixdetails = await _unitOfWork.MatrixDetails.GetByMatrixIdAsync(matrix.MatrixId);
                 }
 
-                // BATCH GET Topics - Thu thập TẤT CẢ TopicIds từ TẤT CẢ matrices
                 var allTopicIds = allMatrices
                     .SelectMany(m => m.Matrixdetails)
                     .Where(d => d.TopicId.HasValue)
@@ -104,10 +99,8 @@ namespace RoboChemist.ExamService.Service.Implements
                     .Distinct()
                     .ToList();
 
-                // Gọi 1 LẦN DUY NHẤT để lấy tất cả topics (tránh N+1 query)
                 var topicsDict = await _slidesClient.GetTopicsByIdsAsync(allTopicIds);
 
-                // Map tất cả matrices với topics đã cache
                 var response = allMatrices.Select(matrix => MapToResponseDtoSync(matrix, topicsDict)).ToList();
 
                 return ApiResponse<List<MatrixResponseDto>>.SuccessResult(response, $"Tìm thấy {response.Count} ma trận");
@@ -211,17 +204,14 @@ namespace RoboChemist.ExamService.Service.Implements
                 MatrixDetails = new List<MatrixDetailResponseDto>()
             };
 
-            // BATCH GET Topics - Thu thập tất cả TopicIds duy nhất
             var topicIds = matrix.Matrixdetails
                 .Where(d => d.TopicId.HasValue)
                 .Select(d => d.TopicId!.Value)
                 .Distinct()
                 .ToList();
 
-            // Gọi 1 lần duy nhất để lấy tất cả topics (tránh N+1 query)
             var topicsDict = await _slidesClient.GetTopicsByIdsAsync(topicIds);
 
-            // Map với topics đã cache
             foreach (var detail in matrix.Matrixdetails)
             {
                 var topicId = detail.TopicId ?? Guid.Empty;

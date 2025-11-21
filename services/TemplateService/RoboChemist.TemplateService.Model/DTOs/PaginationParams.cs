@@ -32,18 +32,13 @@ public class PaginationParams
     public string? SearchTerm { get; set; }
 
     /// <summary>
-    /// Optional filter for premium only
+    /// Optional filter for premium templates
     /// </summary>
     public bool? IsPremium { get; set; }
 
     /// <summary>
-    /// Sort field (default: CreatedAt)
+    /// Optional filter for active/inactive templates
     /// </summary>
-    public string SortBy { get; set; } = "CreatedAt";
-
-    /// <summary>
-    /// Sort direction (asc/desc, default: desc)
-    /// </summary>
-    public string SortDirection { get; set; } = "desc";
+    public bool? IsActive { get; set; }
 }
 

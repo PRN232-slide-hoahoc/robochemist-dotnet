@@ -28,14 +28,6 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
             .ToListAsync();
     }
 
-    public async Task<Order?> GetOrderByOrderNumberAsync(string orderNumber)
-    {
-        return await _appContext.Orders
-            .Include(o => o.OrderDetails)
-            .ThenInclude(od => od.Template)
-            .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
-    }
-
     public async Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedOrdersWithDetailsAsync(int pageNumber, int pageSize)
     {
         var query = _appContext.Orders
